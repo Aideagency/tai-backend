@@ -34,5 +34,5 @@ export const typeOrmConfig = new DataSource({
         : false,
   },
   synchronize: false,
-  logging: true,
+  logging: false,
 });

@@ -41,28 +41,6 @@ export class UserRepository extends BaseRepository<
       .getMany();
   }
 
-  async findOneByUsernameWithRelations(
-    username: string,
-  ): Promise<UserEntity | null> {
-    const normalized = (username || '').toLowerCase();
-    return this.repository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.kyc', 'kyc')
-      .where('LOWER(user.userName) = :u', { u: normalized })
-      .getOne();
-  }
-
-  async findOneByCustIdWithRelations(
-    custId: string,
-  ): Promise<UserEntity | null> {
-    const normalized = (custId || '').toLowerCase();
-    return this.repository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.kyc', 'kyc')
-      .where('LOWER(user.custId) = :cid', { cid: normalized })
-      .getOne();
-  }
-
   async findByResetToken(resetToken: string): Promise<UserEntity | undefined> {
     try {
       return await this.repository.findOne({
@@ -74,18 +52,6 @@ export class UserRepository extends BaseRepository<
       this.logger.error(e.stack);
     }
     return undefined;
-  }
-  async findUserWithAccountOfficer(
-    userId: string,
-  ): Promise<UserEntity | undefined> {
-    const queryBuilder = this.repository.createQueryBuilder('user');
-
-    const userWithAccountOfficer = await queryBuilder
-      .leftJoinAndSelect('user.account_officer', 'accountOfficer')
-      .where('user.id = :userId', { userId })
-      .getOne();
-
-    return userWithAccountOfficer;
   }
 
   async isFirstLogin(identifier: string): Promise<boolean> {
