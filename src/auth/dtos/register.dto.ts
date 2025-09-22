@@ -1,5 +1,6 @@
 import { IsEmail, IsOptional, IsPhoneNumber, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserType } from 'src/database/entities/user.entity';
 
 export class RegisterDto {
   @ApiProperty({
@@ -30,15 +31,23 @@ export class RegisterDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ApiProperty({
+    enum: UserType,
+    example: UserType.SINGLE,
+  })
+  user_type: string;
+
+  //   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   deviceName?: string;
 
-  @ApiPropertyOptional()
+  //   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   deviceModel?: string;
 
-  @ApiPropertyOptional()
+  //   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   deviceToken?: string;

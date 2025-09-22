@@ -6,7 +6,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  Logger,
+  // Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -153,62 +153,7 @@ export class CommonHttpService {
 
   private seen = new WeakSet();
 
-  private async logExternalCall(
-    method: string,
-    url: string,
-    startTime: number,
-    status: string,
-    response: any,
-    reason?: string,
-    payload?: any,
-  ): Promise<void> {
-    try {
-      const responseTime = Date.now() - startTime;
 
-      //   this.logger.logExternalCall({
-      //     method,
-      //     url,
-      //     status: status as 'SUCCESS' | 'FAILURE',
-      //     responseTime,
-      //     statusCode: response?.status,
-      //     payload,
-      //     response,
-      //     errorMessage: status === 'FAILURE' ? reason : undefined,
-      //   });
-    } catch (error) {
-      // this.logger.error(`Failed to log external call: ${error.message}`);
-    }
-  }
-
-  private async logCSCSCall(
-    method: string,
-    url: string,
-    startTime: number,
-    status: string,
-    response: any,
-    reason?: string,
-    payload?: any,
-  ): Promise<void> {
-    try {
-      const responseTime = Date.now() - startTime;
-
-      //   this.logger.logExternalCall({
-      //     method,
-      //     url,
-      //     status: status as 'SUCCESS' | 'FAILURE',
-      //     responseTime,
-      //     statusCode: response?.status,
-      //     payload,
-      //     response,
-      //     errorMessage: status === 'FAILURE' ? reason : undefined,
-      //   });
-      this.logger.log(
-        `CSCS call logged successfully: ${method} ${url} - ${status}`,
-      );
-    } catch (error) {
-      this.logger.error(`Failed to log CSCS call: ${error.message}`);
-    }
-  }
 
   private async makeRequest<T = any>({
     url,
@@ -238,74 +183,9 @@ export class CommonHttpService {
       const response: AxiosResponse<T> =
         await this.axiosInstance.request(config);
 
-      // Log success asynchronously
-      this.logExternalCall(
-        method,
-        url,
-        startTime,
-        'SUCCESS',
-        response.data,
-        null,
-        data,
-      ).catch((logError) => {
-        this.logger.error(
-          `Async logging failed for success: ${logError.message}`,
-        );
-      });
-
-      if (url?.includes(this.cscsDomain)) {
-        this.logCSCSCall(
-          method,
-          url || '',
-          startTime,
-          'SUCCESS',
-          response.data,
-          null,
-          data,
-        ).catch((logError) => {
-          this.logger.error(
-            `Async CSCS logging failed for success: ${logError.message}`,
-          );
-        });
-      }
-
       return response.data;
     } catch (error) {
       const errorResponse = error?.response?.data || 'Error making request';
-
-      // Extract safe error response without circular references
-      const safeErrorResponse = this.extractSafeErrorResponse(error);
-
-      // Log error asynchronously with safe error response
-      this.logExternalCall(
-        method,
-        url,
-        startTime,
-        'FAILURE',
-        safeErrorResponse, // ← Now using safe response without circular refs
-        errorResponse,
-        data,
-      ).catch((logError) => {
-        this.logger.error(
-          `Async logging failed for error: ${logError.message}`,
-        );
-      });
-
-      if (url?.includes(this.cscsDomain)) {
-        this.logCSCSCall(
-          method,
-          url || '',
-          startTime,
-          'FAILURE',
-          safeErrorResponse, // ← Now using safe response without circular refs
-          errorResponse,
-          data,
-        ).catch((logError) => {
-          this.logger.error(
-            `Async CSCS logging failed for error: ${logError.message}`,
-          );
-        });
-      }
 
       // Log error details for debugging (but don't include in response)
       this.logger.error('HTTP request failed', {

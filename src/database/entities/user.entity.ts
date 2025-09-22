@@ -1,12 +1,14 @@
 import {
   Column,
   Entity,
-  JoinColumn,
-  ManyToOne,
   OneToMany,
-  OneToOne,
+  // JoinColumn,
+  // ManyToOne,
+  // OneToMany,
+  // OneToOne,
 } from 'typeorm';
 import { CustomEntity } from './custom.entity';
+import { TransactionEntity } from './transaction.entity';
 // import { Document } from './docment.entity';
 // import { Account } from './account.entity';
 // import { TransactionEntity } from './transaction.entity';
@@ -119,6 +121,9 @@ export class UserEntity extends CustomEntity {
 
   @Column({ type: 'text', nullable: true })
   suspensionReason: string;
+
+  @OneToMany(() => TransactionEntity, (transaction) => transaction.user)
+  transactions: TransactionEntity[];
 }
 
 //   @OneToMany(() => Document, (document) => document.user)

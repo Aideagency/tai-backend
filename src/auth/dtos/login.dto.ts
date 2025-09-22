@@ -11,17 +11,17 @@ export class LoginDto {
   @ApiProperty()
   password: string;
 
-  @ApiPropertyOptional()
+  // @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   deviceName?: string;
 
-  @ApiPropertyOptional()
+  // @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   deviceModel?: string;
 
-  @ApiPropertyOptional()
+  // @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   deviceToken?: string;

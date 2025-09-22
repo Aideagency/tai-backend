@@ -7,7 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn'],
+    logger: false,
     cors: true,
     // bufferLogs: true,
   });
@@ -20,9 +20,17 @@ async function bootstrap() {
     }
   });
   const logger = new TracerLogger();
-  app.useLogger(logger);
+  // app.useLogger(logger);
 
   app.use(express().set('trust proxy', 1));
+
+  app.use((err: Error, _req, res, _next) => {
+    const currentTime = new Date().toISOString(); // Get the current time in ISO format
+    console.log(`[${currentTime}] Error:`, err); // Log the current time with the error
+    res.status(500).json({
+      message: 'Error: ' + err.message,
+    });
+  });
 
   // Main API Swagger (automatically includes all modules except Partner routes)
   const config = new DocumentBuilder()
