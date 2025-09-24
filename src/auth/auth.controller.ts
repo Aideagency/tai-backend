@@ -6,9 +6,7 @@ import {
   Request,
   Body,
   BadRequestException,
-  // ValidationPipe,
   Put,
-  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -31,7 +29,7 @@ import { Helper } from 'src/utils/helper';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { JwtGuards } from './jwt.guards';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
-import { SupabaseAuthGuard } from './supabase.guards';
+// import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
 export class AuthController {
