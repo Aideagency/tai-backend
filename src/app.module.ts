@@ -3,11 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-// import { ConfigService } from './config/config.service';
 import { RepositoryModule } from './repository/repository.module';
-// import { CommonModule } from './common/common.module';
 import { LoggerModule } from './logger/logger.module';
 import { DatabaseModule } from './database/database.module';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+// import { PaymentModule } from './payment/payment.module';
+// import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -15,10 +16,12 @@ import { DatabaseModule } from './database/database.module';
       isGlobal: true,
     }),
     DatabaseModule,
+    InfrastructureModule,
     AuthModule,
     RepositoryModule,
-    // CommonModule,
     LoggerModule,
+    // PaymentModule,
+    // CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

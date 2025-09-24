@@ -4,9 +4,9 @@ import {
   HttpCode,
   Post,
   Request,
-  UnauthorizedException,
   Body,
   BadRequestException,
+  Put,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -15,15 +15,21 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TracerLogger } from 'src/logger/logger.service';
 import { LoginResponseDto } from './dtos/login-response.dto';
-import { UserType, UserEntity } from 'src/database/entities/user.entity';
 import { RegisterDto } from './dtos/register.dto';
+import { VerifyEmailDto } from './dtos/verify-email.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { Helper } from 'src/utils/helper';
+import { ChangePasswordDto } from './dtos/change-password.dto';
+import { JwtGuards } from './jwt.guards';
+import { UpdateProfileDto } from './dtos/update-profile.dto';
+// import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
 export class AuthController {
@@ -38,9 +44,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiBody({ type: LoginDto })
   @ApiCreatedResponse({ type: LoginResponseDto })
-  @ApiBadRequestResponse({
-
-  })
+  @ApiBadRequestResponse({})
   async login(@Request() req): Promise<any> {
     const isLoginSuccessful = typeof req.user !== 'string';
 
@@ -51,11 +55,11 @@ export class AuthController {
     const tokens = await this.authService.getJwtTokens({
       first_name: req.user.first_name,
       last_name: req.user.last_name,
-      middle_name: req.user.middle_name,
-      userType: UserType[req.user.user_type],
       email_address: req.user.email_address,
-      phone: req.user.phone_no,
-      phone_no: req.user.id,
+      phone_no: req.user.phone_no,
+      id: req.user.id,
+      // is_parent: req.user.is_parent,
+      // marital_status: req.user.marital_status,
     });
 
     return tokens;
@@ -80,67 +84,130 @@ export class AuthController {
     };
   }
 
-  //   @Post('verify-email')
-  //   @ApiBody({ type: VerifyEmailDto })
-  //   @HttpCode(200)
-  //   async verifyEmail(
-  //     @Body(new ValidationPipe()) dto: VerifyEmailDto,
-  //   ): Promise<any> {
-  //     const result = await this.authService.verifyEmail(dto.email);
+  @Post('verify-email')
+  @ApiBody({ type: VerifyEmailDto, description: 'Email verification' })
+  @HttpCode(200)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<any> {
+    await this.authService.verifyEmail(dto.email_address);
 
-  //     if (!result) {
-  //       return {
-  //         statusCode: 200,
-  //         message: 'Check completed successfully',
-  //         data: result,
-  //         status: false,
-  //       };
-  //     }
+    return {
+      statusCode: 200,
+      message: 'Check completed successfully',
+    };
+  }
 
-  //     return {
-  //       statusCode: 200,
-  //       message: 'Check completed successfully',
-  //       data: result,
-  //       status: true,
-  //     };
-  //   }
+  @Throttle({ default: { limit: 1, ttl: 300000 } })
+  @Post('forgot-password')
+  @ApiBadRequestResponse()
+  @HttpCode(200)
+  async forgetPassword(@Body() dto: VerifyEmailDto): Promise<any> {
+    try {
+      await this.authService.forgetPassword(dto.email_address);
 
-  //   @Throttle({ default: { limit: 1, ttl: 300000 } })
-  //   @Post('forgetPassword')
-  //   @ApiOkResponse({ status: 200 })
-  //   @ApiBadRequestResponse()
-  //   @HttpCode(200)
-  //   async forgetPassword(
-  //     @Body(new ValidationPipe()) dto: ForgetPassDto,
-  //   ): Promise<any> {
-  //     try {
-  //       await this.authService.forgetPassword(dto.CustID);
+      return {
+        statusCode: 200,
+        message: 'OTP sent to your registered email address.',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 
-  //       return {
-  //         message:
-  //           'An OTP has been sent to your email address if you have an account with us.',
-  //       };
-  //     } catch (error) {
-  //       throw error;
-  //     }
-  //   }
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('reset-password')
+  @ApiBadRequestResponse()
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Request() req,
+  ): Promise<any> {
+    await this.authService.resetPassword(dto, Helper.getIpAddress(req));
 
-  //   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  //   @Post('resetPassword')
-  //   @ApiBadRequestResponse()
-  //   async resetPassword(
-  //     @Body(new ValidationPipe()) dto: ResetPasswordDto,
-  //     @Request() req,
-  //   ): Promise<any> {
-  //     const userVal: any = await this.authService.resetPassword(
-  //       dto,
-  //       Helper.getIpAddress(req),
-  //     );
+    return {
+      message: 'Password has been reset successfully',
+    };
+  }
 
-  //     if (!userVal) throw new BadRequestException('Error resetting password');
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @Post('initiate-change-password')
+  @ApiBadRequestResponse()
+  async initiateChangePassword(@Request() req): Promise<any> {
+    await this.authService.intiateChangePassword(req.user.email_address);
 
-  //     return {
-  //       message: 'Password has been reset successfully',
-  //     };
-  //   }
+    return {
+      statusCode: 200,
+      message: 'OTP sent to your registered email address.',
+    };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @Post('change-password')
+  @ApiBadRequestResponse()
+  async changePassword(
+    @Body() dto: ChangePasswordDto,
+    @Request() req,
+  ): Promise<any> {
+    await this.authService.changePassword(
+      req.user.email_address,
+      dto,
+      Helper.getIpAddress(req),
+    );
+
+    return {
+      statusCode: 200,
+      message: 'OTP sent to your registered email address.',
+    };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @HttpCode(200)
+  @Get('profile')
+  @ApiBadRequestResponse()
+  async getProfileInformation(@Request() req): Promise<any> {
+    const user = await this.authService.getProfileInformation(
+      req.user.email_address,
+    );
+
+    return {
+      statusCode: 200,
+      user: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email_address,
+        phone_no: user.phone_no,
+        marital_status: user.marital_status,
+      },
+    };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @HttpCode(200)
+  @Put('profile')
+  @ApiBadRequestResponse()
+  async updateUserProfile(
+    @Body() dto: UpdateProfileDto,
+    @Request() req,
+  ): Promise<any> {
+    const user = await this.authService.getProfileInformation(
+      req.user.email_address,
+    );
+
+    return {
+      statusCode: 200,
+      user: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email_address,
+        phone_no: user.phone_no,
+        category: user.marital_status,
+      },
+    };
+  }
 }
