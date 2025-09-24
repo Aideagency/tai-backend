@@ -59,9 +59,9 @@ export class AuthController {
       last_name: req.user.last_name,
       email_address: req.user.email_address,
       phone_no: req.user.phone_no,
+      id: req.user.id,
       // is_parent: req.user.is_parent,
       // marital_status: req.user.marital_status,
-      id: req.user.id,
     });
 
     return tokens;

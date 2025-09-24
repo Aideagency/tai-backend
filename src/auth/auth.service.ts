@@ -35,7 +35,10 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  async validate(email: string, password: string): Promise<any> {
+  async validate(
+    email: string,
+    password: string,
+  ): Promise<UserEntity | string> {
     try {
       const loginEmail = (email || '').trim().toLowerCase();
       const user: UserEntity | null =
@@ -50,7 +53,7 @@ export class AuthService {
 
       return 'Invalid username or password';
     } catch (e) {
-      //   this.logger.error(e.stack);
+      this.logger.error(e);
       return 'An error occurred during authentication';
     }
   }
