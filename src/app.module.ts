@@ -7,7 +7,8 @@ import { RepositoryModule } from './repository/repository.module';
 import { LoggerModule } from './logger/logger.module';
 import { DatabaseModule } from './database/database.module';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
-import { PaymentModule } from './payment/payment.module';
+// import { PaymentModule } from './payment/payment.module';
+// import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { PaymentModule } from './payment/payment.module';
     AuthModule,
     RepositoryModule,
     LoggerModule,
-    PaymentModule,
+    // PaymentModule,
+    // CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

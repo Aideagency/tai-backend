@@ -14,7 +14,7 @@ export class SupabaseStrategy extends PassportStrategy(
       supabaseKey: process.env.SUPABASE_KEY,
       supabaseOptions: {},
       extractor: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      //   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET,
+    //   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET,
     });
   }
 
@@ -23,6 +23,8 @@ export class SupabaseStrategy extends PassportStrategy(
   }
 
   authenticate(req) {
-    super.authenticate(req);
+    // super.authenticate(req);
+    return super.authenticate(req);
+    // return res;
   }
 }

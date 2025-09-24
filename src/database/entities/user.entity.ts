@@ -1,70 +1,25 @@
-import {
-  Column,
-  Entity,
-  OneToMany,
-  // JoinColumn,
-  // ManyToOne,
-  // OneToMany,
-  // OneToOne,
-} from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { TransactionEntity } from './transaction.entity';
-// import { Document } from './docment.entity';
-// import { Account } from './account.entity';
-// import { TransactionEntity } from './transaction.entity';
-// import { FavoriteStocks } from './favorite-stocks.entity';
-// import { WatchListEntity } from './watchlist.entity';
-// import { KycEntity } from './kyc.entity';
-// import { UserBank } from './user-banks.entity';
-// import { NextOfKin } from './nextOfKin.entity';
-// import { Employer } from './employer.entity';
-// import { Beneficiary } from './beneficiary.entity';
-// import { Contact } from './user-contact.entity';
-// import { Address } from './address.entity';
-// import { Identity } from './identity.entity';
-// import { AccountOfficerEntity } from './account-officer.entity';
-// import { WalletLimit } from './wallet_limit.entity';
-// import { TransferRecipient } from './transfer-recipient.entity';
-// import { WithdrawRequest } from './withdraw_request.entity';
-// import { WalletTransaction } from './wallet-transaction.entity';
-// import { NubanAccount } from './nuban-account.entity';
-// import { CustomerCatgoryEntity } from './cutomer-category.entity';
-// import { FeedbackEntity } from './feedback.entity';
-// import { MutualFundsRedemptionEntity } from './mutual-fund-redemption.entity';
-// import { MutualFundsSubscriptionEntity } from './mutual-fund-subscription.entity';
-// import { CSCSAccountEntity } from './cscs-account.entity';
-// import { KycRequestEntity } from './kyc-request.entity';
-// import { AgencyEntity } from './agency.entity';
-// import { RecurringChargeEntity } from './recurring-charge.entity';
-// import { PartnerEntity } from './partner.entity';
-// import { InvestmentEntity } from './asset-management-investments.entity';
-// import { AdminUpdateRequestEntity } from './admin-update-request.entity';
 
 export enum UserGender {
   MALE = 'MALE',
   FEMALE = 'FEMALE',
 }
 
-export enum UserType {
+export enum MaritalStatus {
+  SINGLE = 'SINGLE',
+  MARRIED = 'MARRIED',
+}
+
+export enum CommunityTag {
   SINGLE = 'SINGLE',
   MARRIED = 'MARRIED',
   PARENT = 'PARENT',
 }
 
-export enum TitleEnum {
-  MR = 'MR',
-  MRS = 'MRS',
-  MISS = 'MISS',
-  DR = 'DR',
-  PROF = 'PROF',
-  REV = 'REV',
-}
-
 @Entity({ name: 'Users' })
 export class UserEntity extends CustomEntity {
-  @Column({ nullable: true, enum: TitleEnum, type: 'enum' })
-  title: string;
-
   @Column({ nullable: false })
   last_name: string;
 
@@ -74,38 +29,38 @@ export class UserEntity extends CustomEntity {
   @Column({ nullable: true })
   middle_name: string;
 
-  @Column({ nullable: true, enum: UserGender, type: 'enum' })
+  @Column({ nullable: false, enum: UserGender, type: 'enum' })
   gender: string;
 
-  @Column({ nullable: true })
-  marital_status: string;
-
-  @Column({ nullable: true })
+  @Column({ nullable: false })
   birth_date: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: false, unique: true })
   email_address: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: false, unique: true })
   phone_no: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: false })
   password: string;
 
-  @Column({ type: 'enum', enum: UserType })
-  user_type: UserType;
+  @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
+  marital_status: MaritalStatus | null;
+
+  @Column({ type: 'boolean', default: false })
+  is_parent: boolean;
 
   @Column({ nullable: true })
-  ResetCode: string;
+  ResetCode: string | null;
 
-  @Column({ nullable: true })
-  resetTokenExpiration: Date;
+  @Column({ nullable: true, type: 'timestamp' })
+  resetTokenExpiration: Date | null;
 
   @Column({ default: false })
   is_email_verified: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastLogonDate: Date;
+  lastLogonDate: Date | null;
 
   @Column({ nullable: true, unique: true })
   userName: string;
@@ -219,3 +174,34 @@ export class UserEntity extends CustomEntity {
 
 //   @OneToMany(() => AdminUpdateRequestEntity, (request) => request.user)
 //   updateRequests: AdminUpdateRequestEntity[];
+
+// import { Document } from './docment.entity';
+// import { Account } from './account.entity';
+// import { TransactionEntity } from './transaction.entity';
+// import { FavoriteStocks } from './favorite-stocks.entity';
+// import { WatchListEntity } from './watchlist.entity';
+// import { KycEntity } from './kyc.entity';
+// import { UserBank } from './user-banks.entity';
+// import { NextOfKin } from './nextOfKin.entity';
+// import { Employer } from './employer.entity';
+// import { Beneficiary } from './beneficiary.entity';
+// import { Contact } from './user-contact.entity';
+// import { Address } from './address.entity';
+// import { Identity } from './identity.entity';
+// import { AccountOfficerEntity } from './account-officer.entity';
+// import { WalletLimit } from './wallet_limit.entity';
+// import { TransferRecipient } from './transfer-recipient.entity';
+// import { WithdrawRequest } from './withdraw_request.entity';
+// import { WalletTransaction } from './wallet-transaction.entity';
+// import { NubanAccount } from './nuban-account.entity';
+// import { CustomerCatgoryEntity } from './cutomer-category.entity';
+// import { FeedbackEntity } from './feedback.entity';
+// import { MutualFundsRedemptionEntity } from './mutual-fund-redemption.entity';
+// import { MutualFundsSubscriptionEntity } from './mutual-fund-subscription.entity';
+// import { CSCSAccountEntity } from './cscs-account.entity';
+// import { KycRequestEntity } from './kyc-request.entity';
+// import { AgencyEntity } from './agency.entity';
+// import { RecurringChargeEntity } from './recurring-charge.entity';
+// import { PartnerEntity } from './partner.entity';
+// import { InvestmentEntity } from './asset-management-investments.entity';
+// import { AdminUpdateRequestEntity } from './admin-update-request.entity';

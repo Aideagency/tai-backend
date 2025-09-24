@@ -8,6 +8,8 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
+import { SupabaseStrategy } from './supabase.strategy';
+import { SupabaseService } from './supabase.service';
 
 @Module({
   imports: [
@@ -19,7 +21,14 @@ import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
       signOptions: { expiresIn: '15m' },
     }),
   ],
-  providers: [AuthService, TracerLogger, LocalStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    TracerLogger,
+    LocalStrategy,
+    JwtStrategy,
+    // SupabaseStrategy,
+    // SupabaseService,
+  ],
   controllers: [AuthController],
   exports: [AuthService, JwtModule, PassportModule],
 })

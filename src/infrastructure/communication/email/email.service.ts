@@ -55,7 +55,7 @@ export class EmailService {
   async sendMail(mailOptions: MailOptions): Promise<void> {
     const { to, subject, template, data, attachments, cc, bcc } = mailOptions;
     try {
-      const appendTring = process.env.NODE_ENV === 'production' ? '' : 'DEV ';
+      const appendTring = process.env.NODE_ENV !== 'development' ? '' : 'DEV: ';
 
       const html = await this.renderTemplate(template, data);
 
@@ -73,7 +73,7 @@ export class EmailService {
         to,
         from: {
           name: 'TAI',
-          email: 'no-reply@cardinalstone.com',
+          email: 'no-reply@tai.com',
         },
         subject: `${appendTring}${subject}`,
         html,

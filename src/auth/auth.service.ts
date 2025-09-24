@@ -2,8 +2,13 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
-import { UserEntity, UserType } from 'src/database/entities/user.entity';
+import {
+  UserEntity,
+  MaritalStatus,
+  CommunityTag,
+} from 'src/database/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from 'src/repository/user/user.repository';
@@ -19,9 +24,9 @@ import { UpdateProfileDto } from './dtos/update-profile.dto';
 export class AuthService {
   private readonly JWT_SECRET = process.env.JWT_SECRET;
   private readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
   private readonly JWT_REFRESH_EXPIRES_IN =
-    process.env.JWT_REFRESH_EXPIRES_IN || '60d';
+    process.env.JWT_REFRESH_EXPIRES_IN || '1d';
 
   constructor(
     private jwtService: JwtService,
@@ -92,29 +97,41 @@ export class AuthService {
         password,
         first_name,
         last_name,
-        middle_name,
         phone_no,
-        user_type,
+        community,
         email_address,
+        birth_date,
+        gender,
       } = body;
+
+      const exists = await this.userRepository.findByEmail(email_address);
+      if (exists) {
+        throw new BadRequestException('Email already in use');
+      }
+
       const hashedPassword = await Helper.hashPassword(password);
       const newUser = new UserEntity();
       newUser.password = hashedPassword;
       newUser.first_name = first_name;
       newUser.last_name = last_name;
-      newUser.middle_name = middle_name;
       newUser.phone_no = phone_no;
-      newUser.user_type = user_type as UserType;
-      newUser.email_address = email_address.toLowerCase();
+      newUser.is_parent = community?.includes(CommunityTag.PARENT) ?? false;
+      newUser.marital_status =
+        (community?.find(
+          (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
+        ) as unknown as MaritalStatus | undefined) ?? null;
+      newUser.email_address = email_address;
+      newUser.birth_date = birth_date;
+      newUser.gender = gender;
 
-      await this.userRepository.save(newUser);
-
-      return newUser;
+      const saved = await this.userRepository.save(newUser);
+      return saved;
+      // const { password: _, ...safe } = saved;
+      // return safe;
     } catch (error) {
       this.logger.error(error);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Could not create user');
     }
   }
 
@@ -352,7 +369,7 @@ export class AuthService {
       user.first_name = dto.first_name || user.first_name;
       user.last_name = dto.last_name || user.last_name;
       user.birth_date = dto.birth_date || user.birth_date;
-      user.user_type = dto.user_type || user.user_type;
+      user.marital_status = dto.marital_status || user.marital_status;
     } catch (error) {
       this.logger.error(error);
       throw new BadRequestException(error);

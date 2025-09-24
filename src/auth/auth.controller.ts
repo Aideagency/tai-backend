@@ -6,8 +6,9 @@ import {
   Request,
   Body,
   BadRequestException,
-  ValidationPipe,
+  // ValidationPipe,
   Put,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -29,8 +30,8 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { Helper } from 'src/utils/helper';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { JwtGuards } from './jwt.guards';
-import { title } from 'process';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
 export class AuthController {
@@ -56,10 +57,10 @@ export class AuthController {
     const tokens = await this.authService.getJwtTokens({
       first_name: req.user.first_name,
       last_name: req.user.last_name,
-      middle_name: req.user.middle_name,
-      userType: req.user.user_type,
       email_address: req.user.email_address,
       phone_no: req.user.phone_no,
+      // is_parent: req.user.is_parent,
+      // marital_status: req.user.marital_status,
       id: req.user.id,
     });
 
@@ -75,7 +76,7 @@ export class AuthController {
     description: 'User registration',
     type: RegisterDto,
   })
-  async createUser(@Body(new ValidationPipe()) dto: RegisterDto): Promise<any> {
+  async createUser(@Body() dto: RegisterDto): Promise<any> {
     await this.authService.createUser(dto);
 
     return {
@@ -88,9 +89,7 @@ export class AuthController {
   @Post('verify-email')
   @ApiBody({ type: VerifyEmailDto, description: 'Email verification' })
   @HttpCode(200)
-  async verifyEmail(
-    @Body(new ValidationPipe()) dto: VerifyEmailDto,
-  ): Promise<any> {
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<any> {
     await this.authService.verifyEmail(dto.email_address);
 
     return {
@@ -103,9 +102,7 @@ export class AuthController {
   @Post('forgot-password')
   @ApiBadRequestResponse()
   @HttpCode(200)
-  async forgetPassword(
-    @Body(new ValidationPipe()) dto: VerifyEmailDto,
-  ): Promise<any> {
+  async forgetPassword(@Body() dto: VerifyEmailDto): Promise<any> {
     try {
       await this.authService.forgetPassword(dto.email_address);
 
@@ -122,7 +119,7 @@ export class AuthController {
   @Post('reset-password')
   @ApiBadRequestResponse()
   async resetPassword(
-    @Body(new ValidationPipe()) dto: ResetPasswordDto,
+    @Body() dto: ResetPasswordDto,
     @Request() req,
   ): Promise<any> {
     await this.authService.resetPassword(dto, Helper.getIpAddress(req));
@@ -152,7 +149,7 @@ export class AuthController {
   @Post('change-password')
   @ApiBadRequestResponse()
   async changePassword(
-    @Body(new ValidationPipe()) dto: ChangePasswordDto,
+    @Body() dto: ChangePasswordDto,
     @Request() req,
   ): Promise<any> {
     await this.authService.changePassword(
@@ -185,8 +182,7 @@ export class AuthController {
         last_name: user.last_name,
         email: user.email_address,
         phone_no: user.phone_no,
-        title: user.title,
-        user_type: user.user_type,
+        marital_status: user.marital_status,
       },
     };
   }
@@ -198,7 +194,7 @@ export class AuthController {
   @Put('profile')
   @ApiBadRequestResponse()
   async updateUserProfile(
-    @Body(new ValidationPipe()) dto: UpdateProfileDto,
+    @Body() dto: UpdateProfileDto,
     @Request() req,
   ): Promise<any> {
     const user = await this.authService.getProfileInformation(
@@ -212,8 +208,7 @@ export class AuthController {
         last_name: user.last_name,
         email: user.email_address,
         phone_no: user.phone_no,
-        title: user.title,
-        user_type: user.user_type,
+        category: user.marital_status,
       },
     };
   }
