@@ -167,6 +167,23 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(200)
   @Get('profile')
+  @ApiOkResponse({
+    schema: {
+      example: {
+        statusCode: 200,
+        user: {
+          id: 4,
+          last_name: 'John',
+          first_name: 'Smith',
+          gender: 'MALE',
+          birth_date: '1990-01-11',
+          email_address: 'johnsmith@gmail.com',
+          phone_no: '+2348080180000',
+          community: ['PARENT', 'SINGLE'],
+        },
+      },
+    },
+  })
   @ApiBadRequestResponse()
   async getProfileInformation(@Request() req): Promise<any> {
     const user = await this.authService.getProfileInformation(
@@ -175,13 +192,7 @@ export class AuthController {
 
     return {
       statusCode: 200,
-      user: {
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email_address,
-        phone_no: user.phone_no,
-        marital_status: user.marital_status,
-      },
+      user,
     };
   }
 
@@ -201,13 +212,7 @@ export class AuthController {
 
     return {
       statusCode: 200,
-      user: {
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email_address,
-        phone_no: user.phone_no,
-        category: user.marital_status,
-      },
+      user,
     };
   }
 }
