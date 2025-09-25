@@ -175,6 +175,17 @@ export class AuthService {
       newUser.gender = gender;
 
       const saved = await this.userRepository.save(newUser);
+
+      this.emailService
+        .sendMail({
+          to: saved.email_address,
+          subject: 'Password Reset Confirmation',
+          template: 'welcome',
+          data: { first_name: saved.first_name },
+        })
+        .then(() => console.log('Email sent'))
+        .catch((err) => this.logger.error(err));
+
       return saved;
       // const { password: _, ...safe } = saved;
       // return safe;
@@ -429,34 +440,19 @@ export class AuthService {
   //     throw new BadRequestException(error);
   //   }
   // }
-  async updateProfileInformation(email: string, dto: UpdateProfileDto) {
+  async updateProfileInformation(
+    email: string,
+    dto: UpdateProfileDto,
+    file?: Express.Multer.File,
+  ) {
     try {
       const user = await this.userRepository.findByEmail(email);
       if (!user) throw new BadRequestException('User not found');
 
-      // 1) Block sensitive fields even if the client tries to send them
-      // const forbiddenKeys = [
-      //   'first_name',
-      //   'last_name',
-      //   'email_address',
-      //   'phone_no',
-      // ] as const;
-      // const attemptedForbidden = forbiddenKeys.filter(
-      //   (k) => (dto as Record<string, unknown>)[k] !== undefined,
-      // );
-      // if (attemptedForbidden.length > 0) {
-      //   throw new ForbiddenException(
-      //     `The following fields cannot be updated: ${attemptedForbidden.join(', ')}`,
-      //   );
-      // }
-
-      // 2) Whitelist allowed fields only
-      //    (adjust these to whatever you actually allow)
       const {
         birth_date,
         gender,
         community, // CommunityTag[]
-        // is_parent, // optional direct boolean override (if you want to allow)
       } = dto;
 
       // Birth date
@@ -497,6 +493,17 @@ export class AuthService {
         }
       }
 
+      if (file) {
+        // Choose a storage strategy; two common options:
+
+        // (A) Store a relative path (frontend prefixes with your static base)
+        user.profilePicture = `profile-pictures/${file.filename}`;
+
+        // or (B) Store an absolute URL if you know it here (requires base URL or CDN)
+        // const baseUrl = this.configService.get<string>('FILES_BASE_URL'); // e.g. https://cdn.example.com/uploads
+        // user.profile_picture_url = `${baseUrl}/profile-pictures/${file.filename}`;
+      }
+
       // // 4) Optional: allow explicit overrides if you want to support them
       // if (typeof is_parent === 'boolean') {
       //   user.is_parent = is_parent;
@@ -506,8 +513,8 @@ export class AuthService {
       // }
 
       const saved = await this.userRepository.save(user);
-      const { password: _pw, ...safe } = saved;
-      return safe;
+      // const { password: _pw, ...safe } = saved;
+      return this.toSubmissionResponse(saved);
     } catch (error) {
       this.logger.error(error);
       if (error instanceof BadRequestException) throw error;
