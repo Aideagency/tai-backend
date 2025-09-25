@@ -21,17 +21,6 @@ export interface MailOptions {
   bcc?: Array<any>;
 }
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  service: process.env.MAIL_SERVICE,
-  auth: {
-    user: process.env.MAIL_USERNAME,
-    pass: process.env.MAIL_PASSWORD,
-  },
-  timeout: 30000,
-  port: 465,
-  secure: true,
-});
 @Injectable()
 export class EmailService {
   private SMTPOptions: SMTPTransport.Options = {

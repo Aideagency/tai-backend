@@ -35,6 +35,42 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
+  private toSubmissionResponse(user: UserEntity) {
+    if (!user) return null;
+
+    // Strip sensitive/internal fields
+    const {
+      password,
+      rejectedBy,
+      suspensionReason,
+      transactions,
+      resetTokenExpiration,
+      is_email_verified,
+      lastLogonDate,
+      userName,
+      reset_token,
+      verification_token,
+      ...safe
+    } = user as any;
+
+    // Rebuild community field from stored flags
+    const community: string[] = [];
+    if (safe.is_parent) {
+      community.push(CommunityTag.PARENT);
+    }
+    if (safe.marital_status === MaritalStatus.SINGLE) {
+      community.push(CommunityTag.SINGLE);
+    }
+    if (safe.marital_status === MaritalStatus.MARRIED) {
+      community.push(CommunityTag.MARRIED);
+    }
+
+    return {
+      ...safe,
+      community,
+    };
+  }
+
   async validate(
     email: string,
     password: string,
@@ -135,6 +171,20 @@ export class AuthService {
       this.logger.error(error);
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException('Could not create user');
+    }
+  }
+
+  async getProfileInformation(email: string) {
+    try {
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) throw new NotFoundException('User not found');
+
+      // Return in the exact same shape as createUser
+      return this.toSubmissionResponse(user);
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Could not fetch profile');
     }
   }
 
@@ -309,7 +359,6 @@ export class AuthService {
   ): Promise<void> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      console.log({ user, dto });
 
       if (!user) {
         throw new NotFoundException('User not found');
@@ -356,26 +405,102 @@ export class AuthService {
     }
   }
 
-  async getProfileInformation(email) {
-    try {
-      return await this.userRepository.findByEmail(email);
-    } catch (error) {
-      this.logger.error(error);
-      throw new BadRequestException(error);
-    }
-  }
-
-  async updateProfileInformation(email, dto: UpdateProfileDto) {
+  // async updateProfileInformation(email, dto: UpdateProfileDto) {
+  //   try {
+  //     const user = await this.userRepository.findByEmail(email);
+  //     if (!user) throw new BadRequestException('User not found');
+  //     user.first_name = dto.first_name || user.first_name;
+  //     user.last_name = dto.last_name || user.last_name;
+  //     user.birth_date = dto.birth_date || user.birth_date;
+  //     user.marital_status = dto.marital_status || user.marital_status;
+  //   } catch (error) {
+  //     this.logger.error(error);
+  //     throw new BadRequestException(error);
+  //   }
+  // }
+  async updateProfileInformation(email: string, dto: UpdateProfileDto) {
     try {
       const user = await this.userRepository.findByEmail(email);
       if (!user) throw new BadRequestException('User not found');
-      user.first_name = dto.first_name || user.first_name;
-      user.last_name = dto.last_name || user.last_name;
-      user.birth_date = dto.birth_date || user.birth_date;
-      user.marital_status = dto.marital_status || user.marital_status;
+
+      // 1) Block sensitive fields even if the client tries to send them
+      // const forbiddenKeys = [
+      //   'first_name',
+      //   'last_name',
+      //   'email_address',
+      //   'phone_no',
+      // ] as const;
+      // const attemptedForbidden = forbiddenKeys.filter(
+      //   (k) => (dto as Record<string, unknown>)[k] !== undefined,
+      // );
+      // if (attemptedForbidden.length > 0) {
+      //   throw new ForbiddenException(
+      //     `The following fields cannot be updated: ${attemptedForbidden.join(', ')}`,
+      //   );
+      // }
+
+      // 2) Whitelist allowed fields only
+      //    (adjust these to whatever you actually allow)
+      const {
+        birth_date,
+        gender,
+        community, // CommunityTag[]
+        // is_parent, // optional direct boolean override (if you want to allow)
+      } = dto;
+
+      // Birth date
+      if (birth_date !== undefined) {
+        user.birth_date = birth_date; // assume DTO validators handle format & future-date checks
+      }
+
+      // Gender
+      if (gender !== undefined) {
+        user.gender = gender;
+      }
+
+      // 3) Community → is_parent & marital_status mapping (same approach as createUser)
+      if (community !== undefined) {
+        // Ensure SINGLE and MARRIED are mutually exclusive
+        const msTags = community.filter(
+          (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
+        );
+        if (msTags.length > 1) {
+          throw new BadRequestException(
+            'Only one of SINGLE or MARRIED is allowed.',
+          );
+        }
+
+        // Update is_parent from tag, if present; otherwise leave as-is
+        const parentFlag = community.includes(CommunityTag.PARENT);
+        user.is_parent = parentFlag;
+
+        // Derive marital_status from community tag when provided
+        const derivedStatus =
+          (community.find(
+            (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
+          ) as unknown as MaritalStatus | undefined) ?? null;
+
+        // If neither SINGLE nor MARRIED present, keep existing value; otherwise set derived
+        if (derivedStatus !== null) {
+          user.marital_status = derivedStatus;
+        }
+      }
+
+      // // 4) Optional: allow explicit overrides if you want to support them
+      // if (typeof is_parent === 'boolean') {
+      //   user.is_parent = is_parent;
+      // }
+      // if (marital_status !== undefined) {
+      //   user.marital_status = marital_status; // must be enum or null per DTO rules
+      // }
+
+      const saved = await this.userRepository.save(user);
+      const { password: _pw, ...safe } = saved;
+      return safe;
     } catch (error) {
       this.logger.error(error);
-      throw new BadRequestException(error);
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Could not update profile');
     }
   }
 }
