@@ -206,8 +206,9 @@ export class AuthController {
     @Body() dto: UpdateProfileDto,
     @Request() req,
   ): Promise<any> {
-    const user = await this.authService.getProfileInformation(
+    const user = await this.authService.updateProfileInformation(
       req.user.email_address,
+      dto,
     );
 
     return {

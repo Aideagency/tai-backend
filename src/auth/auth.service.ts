@@ -416,19 +416,6 @@ export class AuthService {
     }
   }
 
-  // async updateProfileInformation(email, dto: UpdateProfileDto) {
-  //   try {
-  //     const user = await this.userRepository.findByEmail(email);
-  //     if (!user) throw new BadRequestException('User not found');
-  //     user.first_name = dto.first_name || user.first_name;
-  //     user.last_name = dto.last_name || user.last_name;
-  //     user.birth_date = dto.birth_date || user.birth_date;
-  //     user.marital_status = dto.marital_status || user.marital_status;
-  //   } catch (error) {
-  //     this.logger.error(error);
-  //     throw new BadRequestException(error);
-  //   }
-  // }
   async updateProfileInformation(email: string, dto: UpdateProfileDto) {
     try {
       const user = await this.userRepository.findByEmail(email);
@@ -506,8 +493,8 @@ export class AuthService {
       // }
 
       const saved = await this.userRepository.save(user);
-      const { password: _pw, ...safe } = saved;
-      return safe;
+      // const { password: _pw, ...safe } = saved;
+      return this.toSubmissionResponse(saved);
     } catch (error) {
       this.logger.error(error);
       if (error instanceof BadRequestException) throw error;
