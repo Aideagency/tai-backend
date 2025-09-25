@@ -50,18 +50,29 @@ export class AuthService {
       userName,
       reset_token,
       verification_token,
+      marital_status,
+      is_parent,
+      profilePicture,
+      ResetCode,
+      refresh_token,
+      middle_name,
+      suspended,
+      deleted,
+      createdAt,
+      deletedAt,
+      updatedAt,
       ...safe
     } = user as any;
 
     // Rebuild community field from stored flags
     const community: string[] = [];
-    if (safe.is_parent) {
+    if (user.is_parent) {
       community.push(CommunityTag.PARENT);
     }
-    if (safe.marital_status === MaritalStatus.SINGLE) {
+    if (user.marital_status === MaritalStatus.SINGLE) {
       community.push(CommunityTag.SINGLE);
     }
-    if (safe.marital_status === MaritalStatus.MARRIED) {
+    if (user.marital_status === MaritalStatus.MARRIED) {
       community.push(CommunityTag.MARRIED);
     }
 
@@ -178,7 +189,7 @@ export class AuthService {
     try {
       const user = await this.userRepository.findByEmail(email);
       if (!user) throw new NotFoundException('User not found');
-
+      // console.log(this.toSubmissionResponse(user), 'user details');
       // Return in the exact same shape as createUser
       return this.toSubmissionResponse(user);
     } catch (error) {
