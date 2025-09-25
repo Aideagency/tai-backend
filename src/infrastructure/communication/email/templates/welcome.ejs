@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" style="margin:0;padding:0;">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to The Aguda Institute</title>
+  </head>
+  <body style="margin:0;padding:0;background:#ffffff;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+            
+            <!-- Header -->
+            <tr>
+              <td style="background:#DDF6E1;padding:14px 18px;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#1a2155;">
+                      The Aguda Institute
+                    </td>
+                    <td align="right">
+                      <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a2155;">
+                        Welcome
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Greeting -->
+            <tr>
+              <td style="padding:20px 18px 6px 18px;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
+                  Dear <span style="font-weight:600;"><%= first_name || "Member" %></span>,
+                </p>
+              </td>
+            </tr>
+
+            <!-- Message -->
+            <tr>
+              <td style="padding:6px 18px 18px 18px;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
+                  Welcome to The Aguda Institute! We are delighted to have you join our community.  
+                  We look forward to supporting your journey and sharing knowledge, insights, and opportunities with you.  
+                </p>
+              </td>
+            </tr>
+
+            <!-- Call to action -->
+            <tr>
+              <td style="padding:12px 18px 24px 18px;" align="center">
+                <a href="https://tai.org" 
+                   style="background:#1a2155;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;display:inline-block;">
+                  Visit Our Website
+                </a>
+              </td>
+            </tr>
+
+            <!-- Compact footer -->
+            <tr>
+              <td style="padding:12px 18px 26px 18px;background:#DDF6E1;">
+                <table role="presentation" width="100%">
+                  <tr>
+                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
+                      <div style="display:inline-flex;align-items:center;gap:6px;">
+                        <!-- Mail SVG -->
+                        <svg width="14" height="14" viewBox="0 0 24 24" style="display:block;fill:#1a2155;" aria-hidden="true">
+                          <path d="M20 4H4a2 2 0 0 0-2 2v.4l10 6 10-6V6a2 2 0 0 0-2-2Zm0 4.75-8.65 5.19a1 1 0 0 1-1.05 0L4 8.75V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.75Z"/>
+                        </svg>
+                        <a href="mailto:support@tai.org" style="color:#1a2155;text-decoration:none;">support@tai.org</a>
+                      </div>
+                    </td>
+                    <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
+                      © <%= new Date().getFullYear() %> The Aguda Institute
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

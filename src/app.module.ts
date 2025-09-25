@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 // import { PaymentModule } from './payment/payment.module';
 // import { CommonModule } from './common/common.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
     AuthModule,
     RepositoryModule,
     LoggerModule,
+    UserModule,
     // PaymentModule,
     // CommonModule,
   ],

@@ -7,6 +7,8 @@ import {
   Body,
   BadRequestException,
   Put,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -16,6 +18,7 @@ import {
   ApiOkResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UseGuards } from '@nestjs/common';
@@ -29,6 +32,10 @@ import { Helper } from 'src/utils/helper';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { JwtGuards } from './jwt.guards';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import { CommunityTag, UserGender } from 'src/database/entities/user.entity';
 // import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
@@ -202,12 +209,52 @@ export class AuthController {
   @HttpCode(200)
   @Put('profile')
   @ApiBadRequestResponse()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        birth_date: { type: 'string', example: '2000-10-12' },
+        gender: { type: 'string', enum: Object.values(UserGender) },
+        community: {
+          type: 'array',
+          items: { type: 'string', enum: Object.values(CommunityTag) },
+        },
+        profilePicture: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('profilePicture', {
+      storage: diskStorage({
+        destination: './uploads/profile-pictures',
+        filename: (_req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `profile-${uniqueSuffix}${path.extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (_req, file, cb) => {
+        // Allow jpg/jpeg/png/gif
+        if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Unsupported file type'), false);
+        }
+      },
+      limits: {
+        fileSize: 500 * 1024 * 1024, // 500KB
+      },
+    }),
+  )
   async updateUserProfile(
     @Body() dto: UpdateProfileDto,
-    @Request() req,
+    @Request() req: any,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<any> {
-    const user = await this.authService.getProfileInformation(
+    const user = await this.authService.updateProfileInformation(
       req.user.email_address,
+      dto,
+      file, // <-- pass the file
     );
 
     return {
