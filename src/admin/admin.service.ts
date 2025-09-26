@@ -1,0 +1,168 @@
+// src/admin/admin.service.ts
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  UserRepository,
+  UserSearchParams,
+} from 'src/repository/user/user.repository';
+import {
+  CommunityTag,
+  MaritalStatus,
+  UserEntity,
+} from 'src/database/entities/user.entity';
+import { UpdateUserByAdminDto } from './dtos/update-user-by-admin.dto';
+import { Helper } from 'src/utils/helper';
+
+@Injectable()
+export class AdminService {
+  constructor(private readonly userRepo: UserRepository) {}
+
+  private toSubmissionResponse(user: UserEntity) {
+    if (!user) return null;
+
+    const {
+      password,
+      rejectedBy,
+      suspensionReason,
+      transactions,
+      resetTokenExpiration,
+      is_email_verified,
+      lastLogonDate,
+      userName,
+      reset_token,
+      verification_token,
+      profilePicture,
+      refresh_token,
+      middle_name,
+      suspended,
+      deleted,
+      createdAt,
+      deletedAt,
+      updatedAt,
+      ...safe
+    } = user as any;
+
+    const community: string[] = [];
+    if (user.is_parent) community.push(CommunityTag.PARENT);
+    if (user.marital_status === MaritalStatus.SINGLE)
+      community.push(CommunityTag.SINGLE);
+    if (user.marital_status === MaritalStatus.MARRIED)
+      community.push(CommunityTag.MARRIED);
+
+    return { ...safe, community };
+  }
+
+  async listUsers(params: UserSearchParams) {
+    const pageData = await this.userRepo.searchPaginated(params);
+    return {
+      items: pageData.items.map((u) => this.toSubmissionResponse(u)),
+      total: pageData.meta.totalItems,
+      page: pageData.meta.currentPage,
+      pageSize: pageData.meta.itemsPerPage, // nestjs-typeorm-paginate uses `limit`
+    };
+  }
+
+  async getUserById(id: string | number) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+    return this.toSubmissionResponse(user);
+  }
+
+  async updateUserByAdmin(id: string | number, dto: UpdateUserByAdminDto) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (
+      dto.email_address &&
+      (await this.userRepo.emailExists(dto.email_address, user.id))
+    ) {
+      throw new BadRequestException('Email already in use');
+    }
+    if (
+      dto.phone_no &&
+      (await this.userRepo.phoneExists(dto.phone_no, user.id))
+    ) {
+      throw new BadRequestException('Phone number already in use');
+    }
+
+    if (dto.first_name !== undefined) user.first_name = dto.first_name;
+    if (dto.last_name !== undefined) user.last_name = dto.last_name;
+    if (dto.middle_name !== undefined) user.middle_name = dto.middle_name;
+    if (dto.gender !== undefined) user.gender = dto.gender;
+    if (dto.birth_date !== undefined) user.birth_date = dto.birth_date;
+    if (dto.email_address !== undefined)
+      user.email_address = dto.email_address.toLowerCase();
+    if (dto.phone_no !== undefined) user.phone_no = dto.phone_no;
+
+    if (dto.community !== undefined) {
+      const hasSingle = dto.community.includes(CommunityTag.SINGLE);
+      const hasMarried = dto.community.includes(CommunityTag.MARRIED);
+      if (hasSingle && hasMarried) {
+        throw new BadRequestException(
+          'community cannot contain both SINGLE and MARRIED',
+        );
+      }
+      user.is_parent = dto.community.includes(CommunityTag.PARENT);
+      user.marital_status = hasSingle
+        ? MaritalStatus.SINGLE
+        : hasMarried
+          ? MaritalStatus.MARRIED
+          : null;
+    }
+
+    const saved = await this.userRepo.save(user);
+    return this.toSubmissionResponse(saved);
+  }
+
+  async suspendUser(id: string | number, reason: string) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+
+    (user as any).suspended = true;
+    user.suspensionReason = reason;
+    await this.userRepo.save(user);
+    return { success: true, message: 'User suspended' };
+  }
+
+  async unsuspendUser(id: string | number) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+
+    (user as any).suspended = false;
+    user.suspensionReason = null;
+    await this.userRepo.save(user);
+    return { success: true, message: 'User unsuspended' };
+  }
+
+  async deleteUser(id: string | number) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+
+    if ('deletedAt' in user) {
+      await this.userRepo.softDelete(user.id);
+      return { success: true, message: 'User soft-deleted' };
+    }
+    await this.userRepo.hardDelete(user.id);
+    return { success: true, message: 'User deleted' };
+  }
+
+  async restoreUser(id: string | number) {
+    const restored = await this.userRepo.restoreUser(Number(id));
+    if (!restored) {
+      throw new NotFoundException('User not found or could not be restored');
+    }
+    return { success: true, message: 'User restored' };
+  }
+  
+  async resetUserPassword(id: string | number, newPassword: string) {
+    const user = await this.userRepo.findOne({ id: id as any });
+    if (!user) throw new NotFoundException('User not found');
+
+    user.password = await Helper.hashPassword(newPassword);
+    await this.userRepo.save(user);
+    return { success: true, message: 'Password updated' };
+  }
+}
