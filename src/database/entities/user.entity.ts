@@ -18,10 +18,18 @@ export enum CommunityTag {
   PARENT = 'PARENT',
 }
 
+export enum AuthProvider {
+  LOCAL = 'local',
+  GOOGLE = 'google',
+}
+
 @Entity({ name: 'Users' })
 export class UserEntity extends CustomEntity {
   @Column({ nullable: false })
   last_name: string;
+
+  @Column({ type: 'enum', enum: AuthProvider, default: AuthProvider.LOCAL })
+  auth_provider: AuthProvider;
 
   @Column({ nullable: false })
   first_name: string;
@@ -38,8 +46,8 @@ export class UserEntity extends CustomEntity {
   @Column({ nullable: false, unique: true })
   email_address: string;
 
-  @Column({ nullable: false, unique: true })
-  phone_no: string;
+  @Column({ unique: true, nullable: true })
+  phone_no: string | null;
 
   @Column({ nullable: false })
   password: string;

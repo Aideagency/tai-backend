@@ -19,6 +19,8 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConsumes,
+  ApiResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UseGuards } from '@nestjs/common';
@@ -242,7 +244,7 @@ export class AuthController {
         }
       },
       limits: {
-        fileSize: 500 * 1024 * 1024, // 500KB
+        fileSize: 500 * 1024, // 500KB
       },
     }),
   )
@@ -261,5 +263,23 @@ export class AuthController {
       statusCode: 200,
       user,
     };
+  }
+
+  @Get('google')
+  @ApiOperation({ summary: 'Start Google OAuth2 login flow' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to Google consent screen',
+  })
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Nothing needed here; handled by Passport
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Request() req) {
+    // req.user comes from GoogleStrategy.validate()
+    return this.authService.googleLogin(req.user);
   }
 }

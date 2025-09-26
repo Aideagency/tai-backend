@@ -10,6 +10,7 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
 // import { PaymentModule } from './payment/payment.module';
 // import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserModule } from './user/user.module';
     RepositoryModule,
     LoggerModule,
     UserModule,
+    // AdminModule,
     // PaymentModule,
     // CommonModule,
   ],
