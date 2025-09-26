@@ -9,6 +9,7 @@ import {
   Put,
   UseInterceptors,
   UploadedFile,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -19,6 +20,8 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConsumes,
+  ApiResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UseGuards } from '@nestjs/common';
@@ -81,7 +84,7 @@ export class AuthController {
     description: 'User registration',
     type: RegisterDto,
   })
-  async createUser(@Body() dto: RegisterDto): Promise<any> {
+  async createUser(@Body(new ValidationPipe()) dto: RegisterDto): Promise<any> {
     await this.authService.createUser(dto);
 
     return {
@@ -124,7 +127,7 @@ export class AuthController {
   @Post('reset-password')
   @ApiBadRequestResponse()
   async resetPassword(
-    @Body() dto: ResetPasswordDto,
+    @Body(new ValidationPipe()) dto: ResetPasswordDto,
     @Request() req,
   ): Promise<any> {
     await this.authService.resetPassword(dto, Helper.getIpAddress(req));
@@ -242,7 +245,7 @@ export class AuthController {
         }
       },
       limits: {
-        fileSize: 500 * 1024 * 1024, // 500KB
+        fileSize: 500 * 1024, // 500KB
       },
     }),
   )
@@ -261,5 +264,23 @@ export class AuthController {
       statusCode: 200,
       user,
     };
+  }
+
+  @Get('google')
+  @ApiOperation({ summary: 'Start Google OAuth2 login flow' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirects to Google consent screen',
+  })
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Nothing needed here; handled by Passport
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Request() req) {
+    // req.user comes from GoogleStrategy.validate()
+    return this.authService.googleLogin(req.user);
   }
 }

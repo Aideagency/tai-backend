@@ -8,6 +8,7 @@ export class ResetPasswordDto {
   })
   otp: string;
 
+  @IsString()
   @ApiProperty({
     example: 'newPassword$123',
   })

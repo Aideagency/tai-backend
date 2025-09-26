@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { EmailService } from 'src/infrastructure/communication/email/email.service';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private readonly userRepository: UserRepository,
+    private readonly transRepo: TransactionRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
   ) {}
@@ -138,6 +140,7 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (err) {
       this.logger.error(err.stack);
+      throw err
     }
   }
 
@@ -153,12 +156,13 @@ export class AuthService {
         birth_date,
         gender,
       } = body;
-
+      // await this.userRepository.deleteAllEntries();
+      // throw new Error('testing');
       const exists = await this.userRepository.findByEmail(email_address);
-      if (exists) {
-        throw new BadRequestException('Email already in use');
+      const isPhoneExist = await this.userRepository.phoneExists(phone_no);
+      if (exists || isPhoneExist) {
+        throw new BadRequestException('Email or Phone already in use');
       }
-
       const hashedPassword = await Helper.hashPassword(password);
       const newUser = new UserEntity();
       newUser.password = hashedPassword;
@@ -179,7 +183,7 @@ export class AuthService {
       this.emailService
         .sendMail({
           to: saved.email_address,
-          subject: 'Password Reset Confirmation',
+          subject: 'Welcome email',
           template: 'welcome',
           data: { first_name: saved.first_name },
         })
@@ -200,8 +204,6 @@ export class AuthService {
     try {
       const user = await this.userRepository.findByEmail(email);
       if (!user) throw new NotFoundException('User not found');
-      // console.log(this.toSubmissionResponse(user), 'user details');
-      // Return in the exact same shape as createUser
       return this.toSubmissionResponse(user);
     } catch (error) {
       this.logger.error(error);
@@ -219,6 +221,7 @@ export class AuthService {
       }
     } catch (err) {
       this.logger.error(err.stack);
+      throw err
     }
   }
 
@@ -261,6 +264,7 @@ export class AuthService {
       }
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
@@ -323,13 +327,6 @@ export class AuthService {
       // Log the error
       this.logger.error(`Password reset failed:§`, error);
 
-      // Log the failed attempt
-      //   if (error instanceof NotFoundException) {
-      //     await this.logPasswordReset(null, false, 'User not found');
-      //   } else {
-      //     await this.logPasswordReset(null, false, error.message);
-      //   }
-
       // Re-throw the error for the controller to handle
       throw error;
     }
@@ -371,6 +368,7 @@ export class AuthService {
       }
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
@@ -424,22 +422,10 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
-  // async updateProfileInformation(email, dto: UpdateProfileDto) {
-  //   try {
-  //     const user = await this.userRepository.findByEmail(email);
-  //     if (!user) throw new BadRequestException('User not found');
-  //     user.first_name = dto.first_name || user.first_name;
-  //     user.last_name = dto.last_name || user.last_name;
-  //     user.birth_date = dto.birth_date || user.birth_date;
-  //     user.marital_status = dto.marital_status || user.marital_status;
-  //   } catch (error) {
-  //     this.logger.error(error);
-  //     throw new BadRequestException(error);
-  //   }
-  // }
   async updateProfileInformation(
     email: string,
     dto: UpdateProfileDto,
@@ -495,22 +481,12 @@ export class AuthService {
 
       if (file) {
         // Choose a storage strategy; two common options:
-
         // (A) Store a relative path (frontend prefixes with your static base)
-        user.profilePicture = `profile-pictures/${file.filename}`;
-
+        // user.profilePicture = `profile-pictures/${file.filename}`;
         // or (B) Store an absolute URL if you know it here (requires base URL or CDN)
         // const baseUrl = this.configService.get<string>('FILES_BASE_URL'); // e.g. https://cdn.example.com/uploads
         // user.profile_picture_url = `${baseUrl}/profile-pictures/${file.filename}`;
       }
-
-      // // 4) Optional: allow explicit overrides if you want to support them
-      // if (typeof is_parent === 'boolean') {
-      //   user.is_parent = is_parent;
-      // }
-      // if (marital_status !== undefined) {
-      //   user.marital_status = marital_status; // must be enum or null per DTO rules
-      // }
 
       const saved = await this.userRepository.save(user);
       // const { password: _pw, ...safe } = saved;
@@ -520,5 +496,25 @@ export class AuthService {
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException('Could not update profile');
     }
+  }
+
+  async googleLogin(googleUser: any) {
+    let user = await this.userRepository.findByEmail(googleUser.email_address);
+
+    if (!user) {
+      // Auto-create user if not exists
+      const newUser = new UserEntity();
+      newUser.email_address = googleUser.email_address;
+      newUser.first_name = googleUser.first_name;
+      newUser.last_name = googleUser.last_name;
+      newUser.profilePicture = googleUser.profilePicture;
+      newUser.is_email_verified = true; // Google verifies emails
+      newUser.password = ''; // no password needed for Google users
+
+      user = await this.userRepository.save(newUser);
+    }
+
+    // Issue JWT like normal
+    return this.getJwtTokens(this.toSubmissionResponse(user));
   }
 }

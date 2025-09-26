@@ -166,6 +166,10 @@ export abstract class BaseRepository<
     return this.repository.insert(values as any);
   }
 
+  async deleteAllEntries() {
+    await this.repository.deleteAll();
+  }
+
   /** Fire-and-forget insert (never await in request path). */
   insertFireAndForget(
     values: QueryDeepPartialEntity<Entity> | QueryDeepPartialEntity<Entity>[],

@@ -104,7 +104,7 @@ export class EmailService {
     const transporter = nodemailer.createTransport(this.SMTPOptions);
     try {
       await transporter.sendMail(msg);
-      this.logger.info('Email sent successfully with PDF attachment!');
+      this.logger.info('Email sent successfully!');
     } catch (error) {
       this.logger.error('Error sending email:', error);
       throw error;

@@ -10,6 +10,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
 import { SupabaseStrategy } from './supabase.strategy';
 import { SupabaseService } from './supabase.service';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SupabaseService } from './supabase.service';
     TracerLogger,
     LocalStrategy,
     JwtStrategy,
+    GoogleStrategy,
     // SupabaseStrategy,
     // SupabaseService,
   ],
