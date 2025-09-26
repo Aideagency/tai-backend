@@ -9,6 +9,7 @@ import {
   Put,
   UseInterceptors,
   UploadedFile,
+  ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -124,7 +125,7 @@ export class AuthController {
   @Post('reset-password')
   @ApiBadRequestResponse()
   async resetPassword(
-    @Body() dto: ResetPasswordDto,
+    @Body(new ValidationPipe()) dto: ResetPasswordDto,
     @Request() req,
   ): Promise<any> {
     await this.authService.resetPassword(dto, Helper.getIpAddress(req));
