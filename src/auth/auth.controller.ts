@@ -84,7 +84,7 @@ export class AuthController {
     description: 'User registration',
     type: RegisterDto,
   })
-  async createUser(@Body() dto: RegisterDto): Promise<any> {
+  async createUser(@Body(new ValidationPipe()) dto: RegisterDto): Promise<any> {
     await this.authService.createUser(dto);
 
     return {

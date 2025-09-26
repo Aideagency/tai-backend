@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { EmailService } from 'src/infrastructure/communication/email/email.service';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
+import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private readonly userRepository: UserRepository,
+    private readonly transRepo: TransactionRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
   ) {}
@@ -138,6 +140,7 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (err) {
       this.logger.error(err.stack);
+      throw err
     }
   }
 
@@ -153,12 +156,13 @@ export class AuthService {
         birth_date,
         gender,
       } = body;
-
+      // await this.userRepository.deleteAllEntries();
+      // throw new Error('testing');
       const exists = await this.userRepository.findByEmail(email_address);
-      if (exists) {
-        throw new BadRequestException('Email already in use');
+      const isPhoneExist = await this.userRepository.phoneExists(phone_no);
+      if (exists || isPhoneExist) {
+        throw new BadRequestException('Email or Phone already in use');
       }
-
       const hashedPassword = await Helper.hashPassword(password);
       const newUser = new UserEntity();
       newUser.password = hashedPassword;
@@ -179,7 +183,7 @@ export class AuthService {
       this.emailService
         .sendMail({
           to: saved.email_address,
-          subject: 'Password Reset Confirmation',
+          subject: 'Welcome email',
           template: 'welcome',
           data: { first_name: saved.first_name },
         })
@@ -217,6 +221,7 @@ export class AuthService {
       }
     } catch (err) {
       this.logger.error(err.stack);
+      throw err
     }
   }
 
@@ -259,6 +264,7 @@ export class AuthService {
       }
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
@@ -362,6 +368,7 @@ export class AuthService {
       }
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
@@ -415,6 +422,7 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (e) {
       this.logger.error(e.stack);
+      throw e;
     }
   }
 
@@ -473,10 +481,8 @@ export class AuthService {
 
       if (file) {
         // Choose a storage strategy; two common options:
-
         // (A) Store a relative path (frontend prefixes with your static base)
         // user.profilePicture = `profile-pictures/${file.filename}`;
-
         // or (B) Store an absolute URL if you know it here (requires base URL or CDN)
         // const baseUrl = this.configService.get<string>('FILES_BASE_URL'); // e.g. https://cdn.example.com/uploads
         // user.profile_picture_url = `${baseUrl}/profile-pictures/${file.filename}`;
