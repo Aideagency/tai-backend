@@ -39,6 +39,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import { CommunityTag, UserGender } from 'src/database/entities/user.entity';
+import { VerifyAccountDto } from './dtos/verify-account.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 // import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
@@ -62,15 +64,7 @@ export class AuthController {
       throw new BadRequestException(req.user);
     }
 
-    const tokens = await this.authService.getJwtTokens({
-      first_name: req.user.first_name,
-      last_name: req.user.last_name,
-      email_address: req.user.email_address,
-      phone_no: req.user.phone_no,
-      id: req.user.id,
-      // is_parent: req.user.is_parent,
-      // marital_status: req.user.marital_status,
-    });
+    const tokens = await this.authService.getJwtTokens(req.user);
 
     return tokens;
   }
@@ -85,20 +79,25 @@ export class AuthController {
     type: RegisterDto,
   })
   async createUser(@Body(new ValidationPipe()) dto: RegisterDto): Promise<any> {
-    await this.authService.createUser(dto);
+    const data = await this.authService.createUser(dto);
 
     return {
       statusCode: 201,
       message: 'User has been created successfully',
-      //   user,
+      data,
     };
   }
 
   @Post('verify-email')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   @ApiBody({ type: VerifyEmailDto, description: 'Email verification' })
   @HttpCode(200)
-  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<any> {
-    await this.authService.verifyEmail(dto.email_address);
+  async verifyEmail(
+    @Body(new ValidationPipe()) dto: VerifyEmailDto,
+    @Request() req,
+  ): Promise<any> {
+    await this.authService.verifyEmail(dto, req.user.email_address);
 
     return {
       statusCode: 200,
@@ -110,7 +109,7 @@ export class AuthController {
   @Post('forgot-password')
   @ApiBadRequestResponse()
   @HttpCode(200)
-  async forgetPassword(@Body() dto: VerifyEmailDto): Promise<any> {
+  async forgetPassword(@Body() dto: ForgotPasswordDto): Promise<any> {
     try {
       await this.authService.forgetPassword(dto.email_address);
 
@@ -164,6 +163,22 @@ export class AuthController {
       req.user.email_address,
       dto,
       Helper.getIpAddress(req),
+    );
+
+    return {
+      statusCode: 200,
+      message: 'OTP sent to your registered email address.',
+    };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @Post('generate-verification-OTP')
+  @ApiBadRequestResponse()
+  async accountVerification(@Request() req): Promise<any> {
+    await this.authService.generateAcccountVerificationOTP(
+      req.user.email_address,
     );
 
     return {

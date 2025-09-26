@@ -19,7 +19,8 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { EmailService } from 'src/infrastructure/communication/email/email.service';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
-import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
+import { VerifyAccountDto } from './dtos/verify-account.dto';
+import { VerifyEmailDto } from './dtos/verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +33,6 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private readonly userRepository: UserRepository,
-    private readonly transRepo: TransactionRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
   ) {}
@@ -126,7 +126,13 @@ export class AuthService {
     ]);
 
     return {
-      user: user,
+      user: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email_address: user.email_address,
+        id: user.id,
+        is_email_verified: user.is_email_verified,
+      },
       token: at,
       refresh_token: rt,
     };
@@ -140,7 +146,7 @@ export class AuthService {
       await this.userRepository.save(user);
     } catch (err) {
       this.logger.error(err.stack);
-      throw err
+      throw err;
     }
   }
 
@@ -150,47 +156,48 @@ export class AuthService {
         password,
         first_name,
         last_name,
-        phone_no,
-        community,
         email_address,
-        birth_date,
-        gender,
+        // phone_no,
+        // community,
+        // birth_date,
+        // gender,
       } = body;
-      // await this.userRepository.deleteAllEntries();
-      // throw new Error('testing');
       const exists = await this.userRepository.findByEmail(email_address);
-      const isPhoneExist = await this.userRepository.phoneExists(phone_no);
-      if (exists || isPhoneExist) {
+      if (exists) {
         throw new BadRequestException('Email or Phone already in use');
       }
+      // const isPhoneExist = await this.userRepository.phoneExists(phone_no);
       const hashedPassword = await Helper.hashPassword(password);
       const newUser = new UserEntity();
       newUser.password = hashedPassword;
       newUser.first_name = first_name;
       newUser.last_name = last_name;
-      newUser.phone_no = phone_no;
-      newUser.is_parent = community?.includes(CommunityTag.PARENT) ?? false;
-      newUser.marital_status =
-        (community?.find(
-          (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
-        ) as unknown as MaritalStatus | undefined) ?? null;
       newUser.email_address = email_address;
-      newUser.birth_date = birth_date;
-      newUser.gender = gender;
+
+      const resetToken = Helper.randomRange(100000, 999999);
+      const tokenExpiration = new Date();
+      tokenExpiration.setMinutes(tokenExpiration.getMinutes() + 3);
+
+      //save token
+      newUser.ResetCode = resetToken.toString();
+      newUser.resetTokenExpiration = tokenExpiration;
+
+      // await this.userRepository.save(user);
 
       const saved = await this.userRepository.save(newUser);
+      const result = await this.getJwtTokens(saved);
 
       this.emailService
         .sendMail({
           to: saved.email_address,
           subject: 'Welcome email',
           template: 'welcome',
-          data: { first_name: saved.first_name },
+          data: { first_name: saved.first_name, resetToken },
         })
         .then(() => console.log('Email sent'))
         .catch((err) => this.logger.error(err));
 
-      return saved;
+      return result;
       // const { password: _, ...safe } = saved;
       // return safe;
     } catch (error) {
@@ -212,16 +219,52 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(email: string): Promise<void> {
+  async verifyEmail(dto: VerifyEmailDto, email: string): Promise<void> {
     try {
       const user = await this.userRepository.findByEmail(email);
-      if (user) {
-        user.is_email_verified = true;
-        await this.userRepository.save(user);
+      if (!user) {
+        throw new NotFoundException('User not found');
       }
+
+      if (!user.ResetCode) {
+        throw new BadRequestException('Invalid or expired OTP');
+      }
+
+      if (dto.otp !== user.ResetCode) {
+        throw new BadRequestException('Invalid or expired OTP');
+      }
+
+      if (
+        !user.resetTokenExpiration ||
+        user.resetTokenExpiration < new Date()
+      ) {
+        throw new BadRequestException('Invalid or expired OTP');
+      }
+
+      user.ResetCode = null;
+      user.resetTokenExpiration = null;
+      user.lastLogonDate = new Date();
+      user.is_email_verified = true;
+
+      await this.userRepository.save(user);
+
+      // if (user) {
+      //   user.is_email_verified = true;
+      //   user.phone_no = phone_no;
+      //   user.is_parent = community?.includes(CommunityTag.PARENT) ?? false;
+      //   user.marital_status =
+      //     (community?.find(
+      //       (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
+      //     ) as unknown as MaritalStatus | undefined) ?? null;
+      //   user.email_address = email_address;
+      //   user.birth_date = birth_date;
+      //   user.gender = gender;
+      //   await this.userRepository.save(user);
+      // }
+      // throw new Error("Invalid ")
     } catch (err) {
       this.logger.error(err.stack);
-      throw err
+      throw err;
     }
   }
 
@@ -439,6 +482,7 @@ export class AuthService {
         birth_date,
         gender,
         community, // CommunityTag[]
+        phone_no,
       } = dto;
 
       // Birth date
@@ -449,6 +493,10 @@ export class AuthService {
       // Gender
       if (gender !== undefined) {
         user.gender = gender;
+      }
+
+      if (phone_no !== undefined) {
+        user.phone_no = phone_no;
       }
 
       // 3) Community → is_parent & marital_status mapping (same approach as createUser)
@@ -516,5 +564,47 @@ export class AuthService {
 
     // Issue JWT like normal
     return this.getJwtTokens(this.toSubmissionResponse(user));
+  }
+
+  async generateAcccountVerificationOTP(email: string) {
+    try {
+      const user: UserEntity | null =
+        await this.userRepository.findByEmail(email);
+
+      if (user) {
+        const resetToken = Helper.randomRange(100000, 999999);
+        const tokenExpiration = new Date();
+        tokenExpiration.setMinutes(tokenExpiration.getMinutes() + 3);
+
+        //save token
+        user.ResetCode = resetToken.toString();
+        user.resetTokenExpiration = tokenExpiration;
+
+        await this.userRepository.save(user);
+
+        // console.log(user);
+
+        const data = {
+          first_name: user.first_name,
+          otp: user.ResetCode,
+        };
+
+        //send email
+        this.emailService
+          .sendMail({
+            to: email,
+            subject: 'Account Verification',
+            template: 'account-verification',
+            data: data,
+          })
+          .then((res) => {
+            this.logger.log(res);
+          })
+          .catch((err) => this.logger.error(err));
+      }
+    } catch (e) {
+      this.logger.error(e.stack);
+      throw e;
+    }
   }
 }

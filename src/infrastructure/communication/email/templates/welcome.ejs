@@ -49,6 +49,36 @@
               </td>
             </tr>
 
+             <!-- Message -->
+            <tr>
+              <td style="padding:6px 18px 12px 18px;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
+                  Use the one-time code below to verify your account.
+                </p>
+              </td>
+            </tr>
+
+            <!-- OTP Block -->
+            <tr>
+              <td style="padding:6px 18px 18px 18px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+                  <tr>
+                    <td style="background:#DDF6E1;border:1px solid #1a2155;border-radius:8px;padding:14px 18px;">
+                      <div style="display:inline-flex;align-items:center;gap:10px;">
+                        <!-- Key SVG -->
+                        <svg width="18" height="18" viewBox="0 0 24 24" style="display:block;fill:#1a2155;" aria-hidden="true">
+                          <path d="M14 3a5 5 0 0 0-4.58 7.07L2 17.5V22h4.5l1.79-1.79V18H10v-1.71l1.79-1.79A5 5 0 1 0 14 3Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
+                        </svg>
+                        <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;letter-spacing:2px;color:#1a2155;font-weight:700;">
+                          <%= resetToken %>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
             <!-- Compact footer -->
             <tr>
               <td style="padding:12px 18px 26px 18px;background:#DDF6E1;">
