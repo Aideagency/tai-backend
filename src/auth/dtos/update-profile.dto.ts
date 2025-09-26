@@ -6,10 +6,12 @@ import {
   ArrayUnique,
   IsIn,
   ArrayMaxSize,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserGender, CommunityTag } from 'src/database/entities/user.entity';
 import { MaritalExclusive } from './register.dto';
+import { Transform } from 'class-transformer';
 
 export class UpdateProfileDto {
   @IsString()
@@ -18,6 +20,34 @@ export class UpdateProfileDto {
     example: '2000-10-12',
   })
   birth_date: string;
+
+  @ApiProperty({
+    example: '+2348089186735',
+    description:
+      'Phone number in E.164 format. If no country code is provided, defaults to Nigeria (+234).',
+  })
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+
+    // Strip spaces, dashes, parentheses
+    let phone = value.replace(/\s|[-().]/g, '');
+
+    // If user didn’t provide a +country code, assume Nigeria
+    if (!phone.startsWith('+')) {
+      if (phone.startsWith('0')) {
+        // strip leading zero if given like "0808..."
+        phone = phone.substring(1);
+      }
+      phone = `+234${phone}`;
+    }
+
+    return phone;
+  })
+  @Matches(/^\+[1-9]\d{1,14}$/, {
+    message: 'Phone must be in E.164 format (e.g., +2348080183735)',
+  })
+  @IsNotEmpty({ message: 'Phone number is required' })
+  phone_no!: string;
 
   @ApiProperty({
     enum: UserGender,

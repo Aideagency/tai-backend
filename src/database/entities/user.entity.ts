@@ -37,11 +37,11 @@ export class UserEntity extends CustomEntity {
   @Column({ nullable: true })
   middle_name: string;
 
-  @Column({ nullable: false, enum: UserGender, type: 'enum' })
-  gender: string;
+  @Column({ nullable: true, enum: UserGender, type: 'enum' })
+  gender: string | null;
 
-  @Column({ nullable: false })
-  birth_date: string;
+  @Column({ nullable: true })
+  birth_date: string | null;
 
   @Column({ nullable: false, unique: true })
   email_address: string;
@@ -55,7 +55,7 @@ export class UserEntity extends CustomEntity {
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
   marital_status: MaritalStatus | null;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: false, nullable: true })
   is_parent: boolean;
 
   @Column({ nullable: true })
