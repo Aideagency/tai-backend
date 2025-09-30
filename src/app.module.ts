@@ -11,6 +11,7 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
 // import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
+import { NuggetsModule } from './nuggets/nuggets.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     RepositoryModule,
     LoggerModule,
     UserModule,
+    NuggetsModule,
     // AdminModule,
     // PaymentModule,
     // CommonModule,
