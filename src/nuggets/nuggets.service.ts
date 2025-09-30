@@ -9,14 +9,14 @@ import { NuggetRepository } from 'src/repository/nuggets/nugget.repository';
 
 @Injectable()
 export class NuggetService {
-  constructor(private readonly nuggets: NuggetRepository) {}
+  constructor(private readonly nuggetRepository: NuggetRepository) {}
 
   // ---------- Create ----------
   async createNugget(
     dto: CreateNuggetDto,
     adminId?: number | null,
   ): Promise<NuggetEntity | undefined> {
-    return this.nuggets.createNugget({
+    return this.nuggetRepository.createNugget({
       body: dto.body,
       nuggetType: dto.nuggetType,
       publishAt: dto.publishAt ?? null,
@@ -37,9 +37,9 @@ export class NuggetService {
     //   likedByMe: boolean;
     // };
   }> {
-    let nugget = await this.nuggets.getTodayNugget(type);
+    let nugget = await this.nuggetRepository.getTodayNugget(type);
     console.log(nugget);
-    if (!nugget) nugget = await this.nuggets.getLatestNugget(type);
+    if (!nugget) nugget = await this.nuggetRepository.getLatestNugget(type);
     if (!nugget) {
       return {
         nugget: null,
@@ -47,7 +47,7 @@ export class NuggetService {
       };
     }
 
-    // const engagement = await this.nuggets.getEngagementCounts(
+    // const engagement = await this.nuggetRepository.getEngagementCounts(
     //   nugget.id,
     //   currentUserId,
     // );
@@ -57,10 +57,10 @@ export class NuggetService {
 
   // ---------- Details / info with engagement ----------
   async getNuggetInfo(nuggetId: number, currentUserId?: number) {
-    const nugget = await this.nuggets.getNuggetWithAdmin(nuggetId);
+    const nugget = await this.nuggetRepository.getNuggetWithAdmin(nuggetId);
     if (!nugget) throw new NotFoundException('Nugget not found');
 
-    const engagement = await this.nuggets.getEngagementCounts(
+    const engagement = await this.nuggetRepository.getEngagementCounts(
       nugget.id,
       currentUserId,
     );
@@ -70,30 +70,34 @@ export class NuggetService {
 
   // ---------- Likes ----------
   async likeNugget(nuggetId: number, userId: number) {
-    const exists = await this.nuggets.likeExists(nuggetId, userId);
+    const exists = await this.nuggetRepository.likeExists(nuggetId, userId);
     if (exists) throw new BadRequestException('Already liked');
 
     // ensure nugget exists
-    const n = await this.nuggets.findOne({ id: nuggetId });
+    const n = await this.nuggetRepository.findOne({ id: nuggetId });
     if (!n) throw new NotFoundException('Nugget not found');
 
-    await this.nuggets.addLike(nuggetId, userId);
+    await this.nuggetRepository.addLike(nuggetId, userId);
     return { success: true };
   }
 
   async unlikeNugget(nuggetId: number, userId: number) {
     // no error if not liked — idempotent
-    await this.nuggets.removeLike(nuggetId, userId);
+    await this.nuggetRepository.removeLike(nuggetId, userId);
     return { success: true };
   }
 
   // ---------- Comments ----------
   async addComment(nuggetId: number, userId: number, comment: string) {
     // ensure nugget exists
-    const n = await this.nuggets.findOne({ id: nuggetId });
+    const n = await this.nuggetRepository.findOne({ id: nuggetId });
     if (!n) throw new NotFoundException('Nugget not found');
 
-    const saved = await this.nuggets.addComment(nuggetId, userId, comment);
+    const saved = await this.nuggetRepository.addComment(
+      nuggetId,
+      userId,
+      comment,
+    );
     return { success: true, comment: saved };
   }
 
@@ -101,7 +105,7 @@ export class NuggetService {
     commentId: number,
     options: { userId?: number; isAdmin?: boolean },
   ) {
-    const ok = await this.nuggets.deleteComment(commentId, options);
+    const ok = await this.nuggetRepository.deleteComment(commentId, options);
     if (!ok) throw new NotFoundException('Comment not found');
     return { success: true };
   }
@@ -113,7 +117,7 @@ export class NuggetService {
     orderBy: 'createdAt' | 'id' = 'id',
     orderDir: 'ASC' | 'DESC' = 'DESC',
   ) {
-    return this.nuggets.listCommentsPaginated({
+    return this.nuggetRepository.listCommentsPaginated({
       nuggetId,
       page,
       pageSize,
@@ -128,11 +132,13 @@ export class NuggetService {
    * preformatted share text ensuring attribution.
    */
   async shareNugget(nuggetId: number) {
-    const nugget = await this.nuggets.findOne({ id: nuggetId });
+    const nugget = await this.nuggetRepository.findOne({ id: nuggetId });
     if (!nugget) throw new NotFoundException('Nugget not found');
 
     // Increment counter (no-op if your entity lacks shareCount)
-    await this.nuggets.incrementShareCount(nuggetId).catch(() => void 0);
+    await this.nuggetRepository
+      .incrementShareCount(nuggetId)
+      .catch(() => void 0);
 
     const shareText = `${nugget.body}\n\n— via Agudah App`;
     return { success: true, shareText };
