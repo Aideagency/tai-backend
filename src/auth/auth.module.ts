@@ -8,8 +8,8 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
-import { SupabaseStrategy } from './supabase.strategy';
-import { SupabaseService } from './supabase.service';
+// import { SupabaseStrategy } from './supabase.strategy';
+// import { SupabaseService } from './supabase.service';
 import { GoogleStrategy } from './google.strategy';
 
 @Module({

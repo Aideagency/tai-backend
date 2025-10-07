@@ -10,9 +10,13 @@ import {
   Post,
   UseGuards,
   HttpCode,
+  BadRequestException,
+  Request,
+
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOkResponse,
   ApiQuery,
   ApiTags,
@@ -26,6 +30,9 @@ import { ResetUserPasswordDto } from './dtos/reset-user-password.dto';
 import { AdminRole } from 'src/database/entities/admin.entity';
 import { AdminJwtGuard } from './auth/admin-jwt.guard';
 import { Roles, RolesGuard } from './auth/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { LoginDto } from 'src/auth/dtos/login.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Admin - manage users')
 @ApiBearerAuth()
@@ -113,3 +120,4 @@ export class AdminController {
     return this.adminService.resetUserPassword(id, dto.new_password);
   }
 }
+

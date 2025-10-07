@@ -10,6 +10,10 @@ import { NuggetEntity } from 'src/database/entities/nugget.entity';
 import { NuggetCommentEntity } from 'src/database/entities/nugget-comment.entity';
 import { NuggetLikeEntity } from 'src/database/entities/nugget-like.entity';
 import { NuggetRepository } from './nuggets/nugget.repository';
+import { PrayerAmenEntity } from 'src/database/entities/prayer-amen.entity';
+import { PrayerCommentEntity } from 'src/database/entities/prayer-comment.entity';
+import { PrayerWallEntity } from 'src/database/entities/prayer-wall.entity';
+import { PrayerWallRepository } from './prayer/prayer-wall.repository';
 
 @Module({
   imports: [
@@ -20,6 +24,9 @@ import { NuggetRepository } from './nuggets/nugget.repository';
       NuggetEntity,
       NuggetCommentEntity,
       NuggetLikeEntity,
+      PrayerWallEntity,
+      PrayerCommentEntity,
+      PrayerAmenEntity,
     ]),
   ],
   providers: [
@@ -27,12 +34,14 @@ import { NuggetRepository } from './nuggets/nugget.repository';
     TransactionRepository,
     AdminRepository,
     NuggetRepository,
+    PrayerWallRepository,
   ],
   exports: [
     UserRepository,
     TransactionRepository,
     AdminRepository,
     NuggetRepository,
+    PrayerWallRepository,
   ],
 })
 export class RepositoryModule {}

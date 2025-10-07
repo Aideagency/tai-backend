@@ -249,42 +249,4 @@ export class NuggetRepository extends BaseRepository<
     // IMPORTANT: pass the QB itself (no getRawMany here)
     return paginateRaw(qb, { page, limit });
   }
-
-  //   async listCommentsPaginated(params: CommentSearchParams) {
-  //     const page = Math.max(params.page || 1, 1);
-  //     const pageSize = Math.max(params.pageSize || 20, 1);
-
-  //     // const qb = this.commentRepo
-  //     //   .createQueryBuilder('c')
-  //     //   .leftJoinAndSelect('c.user', 'u')
-  //     //   .where('c.id = :id', { id: params.nuggetId })
-  //     //   .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC');
-
-  //     const qb = this.commentRepo
-  //       .createQueryBuilder('c')
-  //       .leftJoin('c.user', 'u') // join, but don't select the whole relation
-  //       .select([
-  //         'c.id AS id',
-  //         'c.comment AS comment',
-  //         'c.createdAt AS createdAt',
-  //         'u.first_name AS first_name',
-  //         'u.last_name AS last_name',
-  //       ])
-  //       .where('c.id = :id', { id: params.nuggetId })
-  //       .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC')
-  //       .getRawMany();
-
-  //     // console.log(qb);
-
-  //     // return qb;
-
-  //     // Reuse BaseRepository.paginate by passing qb through the "query" param
-  //     return this.paginate(
-  //       { page, limit: pageSize },
-  //       {}, // filter already handled in qb
-  //       { id: 'DESC' }, // ignored when qb provided
-  //       {}, // relations handled in qb
-  //       qb,
-  //     );
-  //   }
 }

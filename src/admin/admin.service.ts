@@ -15,10 +15,26 @@ import {
 } from 'src/database/entities/user.entity';
 import { UpdateUserByAdminDto } from './dtos/update-user-by-admin.dto';
 import { Helper } from 'src/utils/helper';
+import { AdminEntity } from 'src/database/entities/admin.entity';
+import { TracerLogger } from 'src/logger/logger.service';
+import * as bcrypt from 'bcrypt';
+import { AdminRepository } from 'src/repository/admin/admin.repository';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly userRepo: UserRepository) {}
+  private readonly JWT_SECRET = process.env.JWT_SECRET;
+  private readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+  private readonly JWT_REFRESH_EXPIRES_IN =
+    process.env.JWT_REFRESH_EXPIRES_IN || '1d';
+
+  constructor(
+    private readonly userRepo: UserRepository,
+    private readonly logger: TracerLogger,
+    private readonly adminRepo: AdminRepository,
+    private jwtService: JwtService,
+  ) {}
 
   private toSubmissionResponse(user: UserEntity) {
     if (!user) return null;
@@ -156,7 +172,7 @@ export class AdminService {
     }
     return { success: true, message: 'User restored' };
   }
-  
+
   async resetUserPassword(id: string | number, newPassword: string) {
     const user = await this.userRepo.findOne({ id: id as any });
     if (!user) throw new NotFoundException('User not found');
@@ -164,5 +180,59 @@ export class AdminService {
     user.password = await Helper.hashPassword(newPassword);
     await this.userRepo.save(user);
     return { success: true, message: 'Password updated' };
+  }
+
+  async validate(
+    email: string,
+    password: string,
+  ): Promise<AdminEntity | string> {
+    try {
+      const loginEmail = (email || '').trim().toLowerCase();
+      const user: AdminEntity | null =
+        await this.adminRepo.findByEmail(loginEmail);
+
+      if (user) {
+        if (await bcrypt.compare(password, user.password)) {
+          if (user.suspended) return 'Account is suspended';
+        }
+        return user;
+      }
+
+      return 'Invalid username or password';
+    } catch (e) {
+      this.logger.error(e);
+      return 'An error occurred during authentication';
+    }
+  }
+
+  async getJwtTokens(user: any) {
+    const payload = {
+      id: user.id,
+      sub: user.id,
+      email: user.email_address,
+    };
+
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.JWT_SECRET,
+        expiresIn: this.JWT_EXPIRES_IN,
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.JWT_REFRESH_SECRET,
+        expiresIn: this.JWT_REFRESH_EXPIRES_IN,
+      }),
+    ]);
+
+    return {
+      user: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email_address: user.email_address,
+        id: user.id,
+        is_email_verified: user.is_email_verified,
+      },
+      token: at,
+      refresh_token: rt,
+    };
   }
 }
