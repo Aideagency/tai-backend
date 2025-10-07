@@ -12,6 +12,7 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { NuggetsModule } from './nuggets/nuggets.module';
+import { PrayerWallModule } from './prayer-wall/prayer-wall.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { NuggetsModule } from './nuggets/nuggets.module';
     LoggerModule,
     UserModule,
     NuggetsModule,
+    PrayerWallModule,
     // AdminModule,
     // PaymentModule,
     // CommonModule,
