@@ -298,4 +298,12 @@ export class AuthController {
     // req.user comes from GoogleStrategy.validate()
     return this.authService.googleLogin(req.user);
   }
+
+  @Post('email-test')
+  // @UseGuards(AuthGuard('google'))
+  async testEmail() {
+    // req.user comes from GoogleStrategy.validate()
+    await this.authService.generateSampleEmail();
+    return 'Email sent';
+  }
 }

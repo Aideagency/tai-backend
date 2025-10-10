@@ -177,25 +177,42 @@ export class NuggetRepository extends BaseRepository<
 
   // ---------- Likes ----------
   async likeExists(nuggetId: number, userId: number) {
+    // Option A: relation-style (fine for find/exist)
     return this.likeRepo.exists({
       where: { nugget: { id: nuggetId }, user: { id: userId } },
     });
   }
 
+  // ✅ ADD — insert without loading entities; rely on unique constraint
   async addLike(nuggetId: number, userId: number) {
-    const like = this.likeRepo.create({
-      nugget: { id: nuggetId } as any,
-      user: { id: userId } as any,
-    });
-    return this.likeRepo.save(like);
+    // If you’re on Postgres, you can use .orIgnore() pattern:
+    return this.likeRepo
+      .createQueryBuilder()
+      .insert()
+      .into(NuggetLikeEntity)
+      .values({
+        nugget: { id: nuggetId } as any,
+        user: { id: userId } as any,
+        // reaction: NuggetReaction.LIKE, // if you need a specific reaction
+      })
+      .orIgnore() // ON CONFLICT DO NOTHING (PG)
+      .execute();
   }
 
   async removeLike(nuggetId: number, userId: number) {
-    await this.likeRepo.delete({
-      nugget: { id: nuggetId } as any,
-      user: { id: userId } as any,
-    });
-    return true;
+    const res = await this.likeRepo
+      .createQueryBuilder()
+      .delete()
+      .from(NuggetLikeEntity) // or 'nugget_likes'
+      .where('nugget_id = :nid AND user_id = :uid', {
+        nid: nuggetId,
+        uid: userId,
+      })
+      .execute();
+
+
+    // optional: return whether anything changed
+    return res.affected ? res.affected > 0 : true;
   }
 
   // ---------- Comments ----------

@@ -1,3 +1,4 @@
+import { Resend } from 'resend';
 import { Injectable } from '@nestjs/common';
 import { MailDataRequired } from '@sendgrid/mail';
 import * as fs from 'fs';
@@ -23,6 +24,7 @@ export interface MailOptions {
 
 @Injectable()
 export class EmailService {
+  private resend = new Resend(process.env.RESEND_KEY);
   private SMTPOptions: SMTPTransport.Options = {
     host: 'smtp.gmail.com',
     service: process.env.MAIL_SERVICE,
@@ -69,6 +71,13 @@ export class EmailService {
         bcc: emailbcc,
       };
 
+      const resendOptions = {
+        subject: `${appendTring}${subject}`,
+        template,
+        data,
+        to: Array.isArray(to) ? to[0] : to,
+      };
+
       // if (cc && cc.length > 0) {
       //   msg.cc = cc;
       // }
@@ -91,9 +100,11 @@ export class EmailService {
       // if (process.env.NODE_ENV !== 'production') {
       //   msg.to = 'it_notifications@cardinalstone.com';
       // }
-      process.env.NODE_ENV !== 'development'
-        ? await this.sendGridClient.send(msg)
-        : await this.sendSMTPEmail(msg as unknown as Mail.Options);
+      // process.env.NODE_ENV !== 'development'
+      //   ? await this.sendGridClient.send(msg)
+      //   : await this.sendSMTPEmail(msg as unknown as Mail.Options);
+      // await this.sendUsingResend(resendOptions);
+      await this.sendSMTPEmail(msg as unknown as Mail.Options);
     } catch (error) {
       console.error('Error sending email', JSON.stringify(error));
       throw error;
@@ -110,6 +121,28 @@ export class EmailService {
       throw error;
     }
   };
+
+  async sendUsingResend({
+    template,
+    data,
+    subject,
+    to,
+  }: {
+    to: string;
+    data: any;
+    template: string;
+    subject: string;
+  }) {
+    const html = await this.renderTemplate(template, data);
+    this.logger.info(to);
+
+    await this.resend.emails.send({
+      from: 'Acme <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      html,
+    });
+  }
 
   async renderTemplate(template: string, data: any): Promise<string> {
     try {

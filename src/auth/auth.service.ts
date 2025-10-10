@@ -607,4 +607,25 @@ export class AuthService {
       throw e;
     }
   }
+
+  async generateSampleEmail() {
+    try {
+      const data = {
+        first_name: 'Mubarak',
+        otp: '12345',
+      };
+
+      this.emailService
+        .sendMail({
+          to: 'mbadekunle97@gmail.com',
+          subject: 'Account Verification',
+          template: 'account-verification',
+          data: data,
+        })
+        .catch((err) => this.logger.error(err));
+    } catch (e) {
+      this.logger.error(e.stack);
+      throw e;
+    }
+  }
 }
