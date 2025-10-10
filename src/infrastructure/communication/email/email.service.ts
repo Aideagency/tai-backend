@@ -101,7 +101,7 @@ export class EmailService {
       //   msg.to = 'it_notifications@cardinalstone.com';
       // }
       process.env.NODE_ENV !== 'development'
-        ? await this.sendUsingResend(resendOptions)
+        ? await this.sendGridClient.send(msg)
         : await this.sendSMTPEmail(msg as unknown as Mail.Options);
       // await this.sendUsingResend(resendOptions);
 
