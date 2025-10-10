@@ -38,7 +38,6 @@ export class NuggetService {
     // };
   }> {
     let nugget = await this.nuggetRepository.getTodayNugget(type);
-    console.log(nugget);
     if (!nugget) nugget = await this.nuggetRepository.getLatestNugget(type);
     if (!nugget) {
       return {
@@ -83,6 +82,8 @@ export class NuggetService {
 
   async unlikeNugget(nuggetId: number, userId: number) {
     // no error if not liked — idempotent
+    const n = await this.nuggetRepository.findOne({ id: nuggetId });
+    if (!n) throw new NotFoundException('Nugget not found');
     await this.nuggetRepository.removeLike(nuggetId, userId);
     return { success: true };
   }

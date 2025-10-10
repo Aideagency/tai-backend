@@ -67,7 +67,9 @@ export class PrayerWallRepository extends BaseRepository<
   private baseQB(
     params: PrayerSearchParams = {},
   ): SelectQueryBuilder<PrayerWallEntity> {
-    const qb = this.query('p').leftJoinAndSelect('p.user', 'u');
+    const qb = this.query('p')
+      .leftJoin('p.user', 'u') // Use leftJoin instead of leftJoinAndSelect
+      .addSelect(['u.first_name', 'u.last_name']);
 
     if (params.q) {
       const q = `%${params.q.toLowerCase()}%`;
@@ -132,11 +134,11 @@ export class PrayerWallRepository extends BaseRepository<
 
   // ---------- Convenience getters ----------
   async getLatestPrayer() {
-    return this.baseQB().orderBy('p.createdAt', 'DESC').limit(1).getOne();
+    return this.baseQB().orderBy('p.createdAt', 'DESC').limit(5).getMany();
   }
 
   async getActivePrayer() {
-    return this.baseQB().orderBy('p.lastActivityAt', 'DESC').limit(1).getOne();
+    return this.baseQB().orderBy('p.lastActivityAt', 'DESC').limit(5).getOne();
   }
 
   async getPrayerWithUser(prayerId: number) {

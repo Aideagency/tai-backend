@@ -1,5 +1,5 @@
 // src/prayerwall/dto/list-prayers.query.dto.ts
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsIn,
@@ -105,3 +105,8 @@ export class ListPrayersQueryDto {
   @IsIn(['ASC', 'DESC'])
   orderDir?: 'ASC' | 'DESC';
 }
+
+export class LatestPrayersQueryDto extends OmitType(ListPrayersQueryDto, [
+  'orderBy',
+  'orderDir',
+] as const) {}

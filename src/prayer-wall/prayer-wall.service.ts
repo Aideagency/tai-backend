@@ -78,11 +78,26 @@ export class PrayerWallService {
     return this.getPrayer(id);
   }
 
-  async getLatest() {
-    const item = await this.prayerRepo.getLatestPrayer();
-    if (!item) throw new NotFoundException('No prayers yet');
-    return item;
+  async getLatestPaginated(params: PrayerSearchParams = {}) {
+    const page = params.page ?? 1;
+    const limit = params.pageSize ?? 20;
+
+    return this.prayerRepo.searchPaginated({
+      ...params,
+      orderBy: 'createdAt',
+      orderDir: 'DESC',
+    });
   }
+
+  async getLatest(params: PrayerSearchParams = {}) {
+    return this.getLatestPaginated(params);
+  }
+
+  // async getLatest() {
+  //   const item = await this.prayerRepo.getLatestPrayer();
+  //   if (!item) throw new NotFoundException('No prayers yet');
+  //   return item;
+  // }
 
   async getActive() {
     const item = await this.prayerRepo.getActivePrayer();

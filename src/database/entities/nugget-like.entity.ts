@@ -1,4 +1,12 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index, Unique } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  Unique,
+  RelationId,
+} from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { NuggetEntity } from './nugget.entity';
 import { UserEntity } from './user.entity';
@@ -21,6 +29,12 @@ export class NuggetLikeEntity extends CustomEntity {
   @JoinColumn({ name: 'user_id' })
   @Index('idx_nugget_like_user_id')
   user: UserEntity;
+
+  @RelationId((like: NuggetLikeEntity) => like.nugget)
+  nuggetId: number;
+
+  @RelationId((like: NuggetLikeEntity) => like.user)
+  userId: number;
 
   @Column({ type: 'enum', enum: NuggetReaction, default: NuggetReaction.LIKE })
   reaction: NuggetReaction;

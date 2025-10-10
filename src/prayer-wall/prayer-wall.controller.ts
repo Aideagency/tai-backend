@@ -16,7 +16,10 @@ import { UpdatePrayerDto } from './dto/update-prayer.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { AmenDto } from './dto/amen.dto';
 import { PrayerSearchParams } from 'src/repository/prayer/prayer-wall.repository';
-import { ListPrayersQueryDto } from './dto/list-prayers.query.dto';
+import {
+  ListPrayersQueryDto,
+  LatestPrayersQueryDto,
+} from './dto/list-prayers.query.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtGuards } from 'src/auth/jwt.guards';
 
@@ -41,16 +44,17 @@ export class PrayerWallController {
   }
 
   // --- Create ---
-  @Post()
+  @Post('create')
   @ApiOperation({ summary: 'Create a new prayer' })
   create(@Body() dto: CreatePrayerDto, @Req() req: any) {
     return this.service.createPrayer(dto, this.getUserId(req));
   }
 
   // --- List / feeds ---
-  @Get()
+  @Get('my-prayers')
   @ApiOperation({
-    summary: 'List prayers (supports search, filters, sorting, and pagination)',
+    summary:
+      'List all user prayers (supports search, filters, sorting, and pagination)',
   })
   list(@Req() req: any, @Query() query: ListPrayersQueryDto) {
     const params: PrayerSearchParams = {
@@ -71,9 +75,22 @@ export class PrayerWallController {
 
   // Handy feeds
   @Get('latest')
-  @ApiOperation({ summary: 'Get the most recent prayers' })
-  latest() {
-    return this.service.getLatest();
+  @ApiOperation({
+    summary:
+      'Get the most recent prayers (supports search, filters, sorting, and pagination)',
+  })
+  latest(@Query() query: LatestPrayersQueryDto) {
+    const params: PrayerSearchParams = {
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? 20,
+      q: query.q || undefined,
+      isAnswered: query.isAnswered,
+      isVisible: query.isVisible,
+      dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
+      dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
+    };
+
+    return this.service.getLatest(params);
   }
 
   @Get('active')
