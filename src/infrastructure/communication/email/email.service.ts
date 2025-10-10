@@ -100,11 +100,11 @@ export class EmailService {
       // if (process.env.NODE_ENV !== 'production') {
       //   msg.to = 'it_notifications@cardinalstone.com';
       // }
-      process.env.NODE_ENV !== 'development'
-        ? await this.sendGridClient.send(msg)
-        : await this.sendSMTPEmail(msg as unknown as Mail.Options);
+      // process.env.NODE_ENV !== 'development'
+      //   ? await this.sendGridClient.send(msg)
+      //   : await this.sendSMTPEmail(msg as unknown as Mail.Options);
       // await this.sendUsingResend(resendOptions);
-
+      await this.sendSMTPEmail(msg as unknown as Mail.Options);
     } catch (error) {
       console.error('Error sending email', JSON.stringify(error));
       throw error;
