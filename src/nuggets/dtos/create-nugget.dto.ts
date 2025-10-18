@@ -13,7 +13,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NuggetType } from 'src/database/entities/nugget.entity';
 
 /** Trim + collapse internal whitespace for free-text inputs. */
-function sanitizeString() {
+export function sanitizeString() {
   return Transform(({ value }) =>
     typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : value,
   );

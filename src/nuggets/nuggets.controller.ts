@@ -18,7 +18,7 @@ import { CommentDto } from './dtos/comment.dto';
 import { ListCommentsQuery } from './dtos/list-comments.query';
 import { NuggetType } from 'src/database/entities/nugget.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 /**
  * NOTE:
@@ -42,6 +42,12 @@ export class NuggetController {
   @ApiBearerAuth()
   // Daily nugget (fallback to latest). Optional type filter.
   @Get('daily')
+  @ApiQuery({
+    name: 'type',
+    required: false, // optional query parameter
+    enum: NuggetType, // Assuming NuggetType is an enum
+    description: 'Type of the nugget (optional, fallback to latest)',
+  })
   getDaily(@Query('type') type?: NuggetType, @Req() req?: any) {
     console.log(req.user, type);
     const userId = req?.user?.id;

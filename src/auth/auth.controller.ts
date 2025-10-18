@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -228,6 +229,9 @@ export class AuthController {
   @Put('profile')
   @ApiBadRequestResponse()
   @ApiConsumes('multipart/form-data')
+  @UsePipes(
+    new ValidationPipe({ whitelist: true, skipMissingProperties: true }),
+  )
   @ApiBody({
     schema: {
       type: 'object',
@@ -237,6 +241,8 @@ export class AuthController {
         community: {
           type: 'array',
           items: { type: 'string', enum: Object.values(CommunityTag) },
+          description: 'Optional array of community tags',
+          nullable: true, // Ensure Swagger treats this as nullable
         },
         profilePicture: { type: 'string', format: 'binary' },
       },
@@ -260,7 +266,7 @@ export class AuthController {
         }
       },
       limits: {
-        fileSize: 500 * 1024, // 500KB
+        fileSize: 300 * 1024,
       },
     }),
   )

@@ -94,6 +94,29 @@ export abstract class BaseRepository<
     return undefined;
   }
 
+  async remove(model: Entity): Promise<Entity | undefined> {
+    try {
+      await this.repository.remove(model);
+
+      return model;
+    } catch (e) {
+      this.logger.error(e.stack);
+      console.log({ error: e });
+    }
+
+    return undefined;
+  }
+
+  async removeAll(models: Entity[]): Promise<Entity[] | undefined> {
+    try {
+      return await this.repository.remove(models);
+    } catch (e) {
+      this.logger.error(e.st);
+    }
+
+    return undefined;
+  }
+
   async softDelete(modelId: number): Promise<boolean | undefined> {
     try {
       await this.repository.softDelete(modelId);

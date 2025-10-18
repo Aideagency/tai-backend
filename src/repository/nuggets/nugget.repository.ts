@@ -200,19 +200,17 @@ export class NuggetRepository extends BaseRepository<
   }
 
   async removeLike(nuggetId: number, userId: number) {
-    const res = await this.likeRepo
-      .createQueryBuilder()
-      .delete()
-      .from(NuggetLikeEntity) // or 'nugget_likes'
-      .where('nugget_id = :nid AND user_id = :uid', {
-        nid: nuggetId,
-        uid: userId,
-      })
-      .execute();
-
-
-    // optional: return whether anything changed
-    return res.affected ? res.affected > 0 : true;
+    try {
+      const like = await this.likeRepo.findOne({
+        where: { nugget: { id: nuggetId }, user: { id: userId } },
+        relations: { nugget: true, user: true },
+      });
+      if (!like) return false;
+      await this.likeRepo.delete(like.id);
+      return true;
+    } catch (error) {
+      throw Error(error);
+    }
   }
 
   // ---------- Comments ----------
@@ -260,7 +258,7 @@ export class NuggetRepository extends BaseRepository<
         'c.createdAt AS "createdAt"',
         `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."userName", '') AS "displayName"`,
       ])
-      .where('c.id = :id', { id: params.nuggetId }) // <-- correct filter
+      .where('c.nugget.id = :id', { id: params.nuggetId }) // <-- correct filter
       .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC');
 
     // IMPORTANT: pass the QB itself (no getRawMany here)

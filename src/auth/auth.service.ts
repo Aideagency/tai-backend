@@ -94,10 +94,14 @@ export class AuthService {
         await this.userRepository.findByEmail(loginEmail);
 
       if (user) {
-        if (await bcrypt.compare(password, user.password)) {
+        const checkIfPasswordTrue = await bcrypt.compare(
+          password,
+          user.password,
+        );
+        if (checkIfPasswordTrue) {
           if (user.suspended) return 'Account is suspended';
+          return user;
         }
-        return user;
       }
 
       return 'Invalid username or password';
@@ -616,8 +620,8 @@ export class AuthService {
       };
 
       this.emailService
-        .sendMail({
-          to: 'mbadekunle97@gmail.com',
+        .sendUsingResend({
+          to: 'bmubarak88@gmail.com',
           subject: 'Account Verification',
           template: 'account-verification',
           data: data,
