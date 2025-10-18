@@ -17,18 +17,18 @@ import {
 // import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 // import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
-  EnrollChallengeDto,
+  // EnrollChallengeDto,
   ListAvailableChallengesQueryDto,
-  PaginationQueryDto,
+  // PaginationQueryDto,
   PartnerConfirmDto,
-  ReflectionCreateDto,
+  // ReflectionCreateDto,
   ToggleTaskCompletionDto,
 } from './dtos/user-challenges.dtos';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { ChallengesService } from './challenges.service';
-import { CreateChallengeDto } from './dtos/create-challenge.dto';
+// import { CreateChallengeDto } from './dtos/create-challenge.dto';
 import { EnrollmentSearchParams } from 'src/repository/challenge/user-challenge.repository';
-import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
+// import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
 // Import your services
 // import { UserChallengesService } from './user-challenges.service';
@@ -36,18 +36,18 @@ import { ChallengeSearchParams } from 'src/repository/challenge/challenge.reposi
 // import { BadgesService } from './badges.service';
 
 @Controller('challenges')
-// @UseGuards(JwtGuards)
+@UseGuards(JwtGuards)
 export class ChallengesController {
   constructor(private challengeService: ChallengesService) {} // private readonly badgesService: BadgesService, // private readonly reflectionsService: ReflectionsService, // private readonly userChallengesService: UserChallengesService, // private readonly challengesService: ChallengesService,
-  @Post('create-challenge')
-  @HttpCode(HttpStatus.CREATED)
-  async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
-    await this.challengeService.createChallenge(dto);
-    return {
-      message: 'Challenge Created Successfully!',
-      status: 201,
-    };
-  }
+  // @Post('create-challenge')
+  // @HttpCode(HttpStatus.CREATED)
+  // async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
+  //   await this.challengeService.createChallenge(dto);
+  //   return {
+  //     message: 'Challenge Created Successfully!',
+  //     status: 201,
+  //   };
+  // }
 
   @Get('available')
   async listAvailable(
