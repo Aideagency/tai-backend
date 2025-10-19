@@ -133,15 +133,20 @@ export class EmailService {
     template: string;
     subject: string;
   }) {
-    const html = await this.renderTemplate(template, data);
-    this.logger.info(to);
+    try {
+      const html = await this.renderTemplate(template, data);
+      this.logger.info(to);
 
-    await this.resend.emails.send({
-      from: 'Acme <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html,
-    });
+      const response = await this.resend.emails.send({
+        from: 'noreply@myferry.space',
+        to: [to],
+        subject,
+        html,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async renderTemplate(template: string, data: any): Promise<string> {

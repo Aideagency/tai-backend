@@ -1,12 +1,12 @@
 import {
   IsString,
   IsOptional,
-  IsNotEmpty,
   IsArray,
   ArrayUnique,
   IsIn,
   ArrayMaxSize,
   Matches,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserGender, CommunityTag } from 'src/database/entities/user.entity';
@@ -16,12 +16,13 @@ import { Transform } from 'class-transformer';
 export class UpdateProfileDto {
   @IsString()
   @IsOptional()
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '2000-10-12',
   })
-  birth_date: string;
+  birth_date?: string; // Made optional by adding `?`
 
-  @ApiProperty({
+  @IsOptional()
+  @ApiPropertyOptional({
     example: '+2348089186735',
     description:
       'Phone number in E.164 format. If no country code is provided, defaults to Nigeria (+234).',
@@ -46,16 +47,15 @@ export class UpdateProfileDto {
   @Matches(/^\+[1-9]\d{1,14}$/, {
     message: 'Phone must be in E.164 format (e.g., +2348080183735)',
   })
-  @IsNotEmpty({ message: 'Phone number is required' })
-  phone_no!: string;
+  phone_no?: string; // Made optional by adding `?`
 
-  @ApiProperty({
+  @IsOptional()
+  @ApiPropertyOptional({
     enum: UserGender,
     example: UserGender.MALE,
     description: 'Must be one of MALE, FEMALE, OTHER',
   })
-  @IsNotEmpty({ message: 'Gender is required' })
-  gender: string;
+  gender?: string; // Made optional by adding `?`
 
   @ApiPropertyOptional({
     type: [String],
@@ -64,7 +64,8 @@ export class UpdateProfileDto {
     description: 'Up to 2 values; must be one of SINGLE, MARRIED, PARENT',
     maxItems: 2,
   })
-  @IsOptional() // allow “none”
+  @IsOptional()
+  @ValidateIf((o) => o.community !== undefined) // Only validate if community is provided
   @IsArray()
   @ArrayMaxSize(2)
   @ArrayUnique({ message: 'community has duplicate values' })
@@ -72,5 +73,5 @@ export class UpdateProfileDto {
   @MaritalExclusive({
     message: 'community cannot contain both SINGLE and MARRIED',
   })
-  community?: CommunityTag[];
+  community?: CommunityTag[]; // Made optional by adding `?`
 }
