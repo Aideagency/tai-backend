@@ -15,7 +15,7 @@ export interface ChallengeSearchParams {
 
   // filters
   q?: string; // title/description/book
-  community?: CommunityType;
+  community?: CommunityType | CommunityType[];
   status?: ChallengeStatus;
   visibility?: Visibility;
   activeOnly?: boolean; // shorthand for status = ACTIVE
@@ -56,8 +56,20 @@ export class ChallengeRepository extends BaseRepository<
       );
     }
 
-    if (params.community) {
-      qb.andWhere('c.community = :community', { community: params.community });
+    // if (params.community) {
+    //   qb.andWhere('c.community = :community', { community: params.community });
+    // }
+
+    const communities: CommunityType[] = Array.isArray(params.community)
+      ? params.community.filter(Boolean)
+      : params.community
+        ? [params.community]
+        : [];
+
+    // Only filter if the array has values; empty means "no filter"
+    if (communities.length > 0) {
+      qb.andWhere('c.community IN (:...communities)', { communities });
+      // Postgres alternative: qb.andWhere('c.community = ANY(:communities)', { communities });
     }
 
     if (params.activeOnly) {
@@ -95,9 +107,8 @@ export class ChallengeRepository extends BaseRepository<
     );
   }
 
-  /** Lightweight list optimized for the Today/Available cards */
   async listAvailableForCommunity(
-    community: CommunityType,
+    community: CommunityType[],
     opts: Omit<ChallengeSearchParams, 'community' | 'status' | 'activeOnly'> & {
       page?: number;
       pageSize?: number;

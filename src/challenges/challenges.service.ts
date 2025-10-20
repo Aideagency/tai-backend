@@ -203,7 +203,7 @@ export class ChallengesService {
     community,
     params,
   }: {
-    community: CommunityTag;
+    community: CommunityTag[];
     params: ChallengeSearchParams;
   }) {
     const challenges = await this.challengeRepo.listAvailableForCommunity(

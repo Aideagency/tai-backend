@@ -236,15 +236,19 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        birth_date: { type: 'string', example: '2000-10-12' },
-        gender: { type: 'string', enum: Object.values(UserGender) },
+        birth_date: { type: 'string', example: '2000-10-12', nullable: true },
+        gender: {
+          type: 'string',
+          enum: Object.values(UserGender),
+          nullable: true,
+        },
         community: {
           type: 'array',
           items: { type: 'string', enum: Object.values(CommunityTag) },
           description: 'Optional array of community tags',
           nullable: true, // Ensure Swagger treats this as nullable
         },
-        profilePicture: { type: 'string', format: 'binary' },
+        profilePicture: { type: 'string', format: 'binary', nullable: true },
       },
     },
   })
