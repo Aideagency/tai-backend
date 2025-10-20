@@ -1,9 +1,12 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, Logger } from '@nestjs/common';
 import { TracerLogger } from './logger.service';
 
 @Global()
 @Module({
-  providers: [TracerLogger],
-  exports: [TracerLogger],
+  providers: [
+    TracerLogger,
+    { provide: Logger, useExisting: TracerLogger }, // <-- alias
+  ],
+  exports: [TracerLogger, Logger], // <-- export both tokens
 })
 export class LoggerModule {}
