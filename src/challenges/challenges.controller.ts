@@ -11,11 +11,9 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
-  ValidationPipe,
+  // ValidationPipe,
   Req,
 } from '@nestjs/common';
-// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-// import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
   // EnrollChallengeDto,
   ListAvailableChallengesQueryDto,
@@ -28,17 +26,25 @@ import { JwtGuards } from 'src/auth/jwt.guards';
 import { ChallengesService } from './challenges.service';
 // import { CreateChallengeDto } from './dtos/create-challenge.dto';
 import { EnrollmentSearchParams } from 'src/repository/challenge/user-challenge.repository';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { UserRepository } from 'src/repository/user/user.repository';
+import { UserService } from 'src/user/user.service';
+import { AuthService } from 'src/auth/auth.service';
 // import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
 // Import your services
 // import { UserChallengesService } from './user-challenges.service';
 // import { ReflectionsService } from './reflections.service';
 // import { BadgesService } from './badges.service';
-
 @Controller('challenges')
 @UseGuards(JwtGuards)
+@ApiBearerAuth()
 export class ChallengesController {
-  constructor(private challengeService: ChallengesService) {} // private readonly badgesService: BadgesService, // private readonly reflectionsService: ReflectionsService, // private readonly userChallengesService: UserChallengesService, // private readonly challengesService: ChallengesService,
+  constructor(
+    private challengeService: ChallengesService,
+    private userRepo: UserRepository,
+    private authService: AuthService,
+  ) {} // private readonly badgesService: BadgesService, // private readonly reflectionsService: ReflectionsService, // private readonly userChallengesService: UserChallengesService, // private readonly challengesService: ChallengesService,
   // @Post('create-challenge')
   // @HttpCode(HttpStatus.CREATED)
   // async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
@@ -51,29 +57,24 @@ export class ChallengesController {
 
   @Get('available')
   async listAvailable(
-    // @CurrentUser() user: { id: number },
     @Req() req,
     @Query() query: ListAvailableChallengesQueryDto,
   ) {
+    console.log(req.user.community);
+    const user = this.authService.toSubmissionResponse(
+      await this.userRepo.findByEmail(req.user.email),
+    );
+    console.log(user);
     const challenges = await this.challengeService.listAllChallenges({
-      community: req.user.community,
+      community: user.community,
       params: query,
     });
     return {
-      message: 'Challenge Created Successfully!',
+      message: 'Available Challenge fetched Successfully!',
       data: challenges,
       status: 200,
     };
-    // return this.challengesService.listAvailableForUser(user.id, query);
   }
-
-  // @Get(':challengeId')
-  // async getChallengeDetail(
-  //   @Param('challengeId', ParseIntPipe) challengeId: number,
-  // ) {
-  //   return await this.challengeService.getChallenge(challengeId);
-  //   // return this.challengesService.getDetailForUser(user.id, challengeId);
-  // }
 
   @Post(':challengeId/enroll/:startDate')
   @HttpCode(HttpStatus.CREATED)

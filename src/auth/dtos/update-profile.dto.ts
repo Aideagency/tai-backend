@@ -57,6 +57,25 @@ export class UpdateProfileDto {
   })
   gender?: string; // Made optional by adding `?`
 
+  // @IsOptional()
+  // @ApiPropertyOptional({
+  //   type: [String],
+  //   enum: CommunityTag,
+  //   example: [CommunityTag.MARRIED, CommunityTag.PARENT],
+  //   description: 'Up to 2 values; must be one of SINGLE, MARRIED, PARENT',
+  //   maxItems: 2,
+  // })
+  // @ValidateIf((o) => o.community !== undefined)
+  // @IsArray()
+  // @ArrayMaxSize(2)
+  // @ArrayUnique({ message: 'community has duplicate values' })
+  // @IsIn(Object.values(CommunityTag), { each: true })
+  // @MaritalExclusive({
+  //   message: 'community cannot contain both SINGLE and MARRIED',
+  // })
+  // community?: CommunityTag[]; // Made optional by adding `?`
+
+  @IsOptional()
   @ApiPropertyOptional({
     type: [String],
     enum: CommunityTag,
@@ -64,8 +83,28 @@ export class UpdateProfileDto {
     description: 'Up to 2 values; must be one of SINGLE, MARRIED, PARENT',
     maxItems: 2,
   })
-  @IsOptional()
-  @ValidateIf((o) => o.community !== undefined) // Only validate if community is provided
+  @Transform(({ value }) => {
+    // treat undefined/empty as "not provided"
+    if (value === undefined || value === null || value === '') return undefined;
+
+    // already an array (e.g., sent as community[]=SINGLE&community[]=PARENT)
+    if (Array.isArray(value)) return value;
+
+    // try JSON array string: '["SINGLE","PARENT"]'
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        // fall through
+      }
+      // fallback: comma-separated "SINGLE,PARENT"
+      return value.split(',').map((s) => s.trim());
+    }
+
+    // final fallback: wrap single value
+    return [value];
+  })
   @IsArray()
   @ArrayMaxSize(2)
   @ArrayUnique({ message: 'community has duplicate values' })
@@ -73,5 +112,13 @@ export class UpdateProfileDto {
   @MaritalExclusive({
     message: 'community cannot contain both SINGLE and MARRIED',
   })
-  community?: CommunityTag[]; // Made optional by adding `?`
+  community?: CommunityTag[];
+
+  @IsOptional()
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Optional profile picture upload (PNG/JPG/GIF).',
+  })
+  profilePicture?: any;
 }

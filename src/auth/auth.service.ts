@@ -37,7 +37,7 @@ export class AuthService {
     private readonly emailService: EmailService,
   ) {}
 
-  private toSubmissionResponse(user: UserEntity) {
+  toSubmissionResponse(user: UserEntity) {
     if (!user) return null;
 
     // Strip sensitive/internal fields
@@ -490,21 +490,25 @@ export class AuthService {
       } = dto;
 
       // Birth date
-      if (birth_date !== undefined) {
+      if (birth_date) {
         user.birth_date = birth_date; // assume DTO validators handle format & future-date checks
       }
 
       // Gender
-      if (gender !== undefined) {
+      if (gender) {
         user.gender = gender;
       }
 
-      if (phone_no !== undefined) {
+      if (phone_no) {
         user.phone_no = phone_no;
       }
 
       // 3) Community → is_parent & marital_status mapping (same approach as createUser)
-      if (community !== undefined) {
+      if (
+        community !== undefined &&
+        Array.isArray(community) &&
+        community.length > 0
+      ) {
         // Ensure SINGLE and MARRIED are mutually exclusive
         const msTags = community.filter(
           (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
@@ -542,6 +546,7 @@ export class AuthService {
 
       const saved = await this.userRepository.save(user);
       // const { password: _pw, ...safe } = saved;
+      console.log(saved);
       return this.toSubmissionResponse(saved);
     } catch (error) {
       this.logger.error(error);
