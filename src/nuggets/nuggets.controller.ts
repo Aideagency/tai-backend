@@ -49,7 +49,6 @@ export class NuggetController {
     description: 'Type of the nugget (optional, fallback to latest)',
   })
   getDaily(@Query('type') type?: NuggetType, @Req() req?: any) {
-    console.log(req.user, type);
     const userId = req?.user?.id;
     return this.nuggetService.getDailyNugget(
       type as NuggetType | undefined,

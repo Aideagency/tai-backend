@@ -546,7 +546,6 @@ export class AuthService {
 
       const saved = await this.userRepository.save(user);
       // const { password: _pw, ...safe } = saved;
-      console.log(saved);
       return this.toSubmissionResponse(saved);
     } catch (error) {
       this.logger.error(error);
