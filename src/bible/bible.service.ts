@@ -6,11 +6,12 @@ import { ContentType } from './dto/get-book-chapter.dto'; // enum: 'html' | 'jso
 export class BibleService {
   private readonly apiKey = process.env.BIBLE_KEY;
   private readonly bibleURL = 'https://api.scripture.api.bible/v1';
+  readonly bibleId = process.env.BIBLE_ID;
 
   constructor(private httpService: CommonHttpService) {}
 
   async getBooks({
-    bibleId = 'de4e12af7f28f599-01',
+    bibleId = this.bibleId,
     includeChapters = false,
     includeSections = false,
   }: {
@@ -34,7 +35,7 @@ export class BibleService {
   }
 
   async getBookChapters({
-    bibleId = 'de4e12af7f28f599-01',
+    bibleId = this.bibleId,
     bookId,
   }: {
     bibleId?: string;
@@ -56,7 +57,7 @@ export class BibleService {
   }
 
   async getChapterDetails({
-    bibleId = 'de4e12af7f28f599-01',
+    bibleId = this.bibleId,
     chapterId,
     contentType,
     includeNotes,
@@ -100,7 +101,7 @@ export class BibleService {
   }
 
   async getChapterVerses({
-    bibleId = 'de4e12af7f28f599-01',
+    bibleId = this.bibleId,
     chapterId,
   }: {
     bibleId?: string;
@@ -125,7 +126,7 @@ export class BibleService {
   }
 
   async searchBible({
-    bibleId = 'de4e12af7f28f599-01',
+    bibleId = this.bibleId,
     query,
     limit = 10,
     offset = 0,

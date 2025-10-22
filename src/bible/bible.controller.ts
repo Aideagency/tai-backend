@@ -1,5 +1,10 @@
-import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BibleService } from './bible.service';
 
 // DTOs
@@ -9,6 +14,7 @@ import { SearchBibleQueryDto } from './dto/search-bible.dto';
 import { JwtGuards } from 'src/auth/jwt.guards';
 
 @ApiTags('Bible')
+@ApiBearerAuth()
 @UseGuards(JwtGuards)
 @Controller('bible')
 export class BibleController {
@@ -16,9 +22,9 @@ export class BibleController {
 
   @Get('get-books')
   @ApiOperation({ summary: 'List all books in KJV bible' })
-  async getBooks(@Req() _req: any, @Query() query: ListBooksDto) {
+  async getBooks(@Query() query: ListBooksDto) {
     const params = {
-      bibleId: 'de4e12af7f28f599-01',
+      bibleId: this.bibleService.bibleId,
       includeChapters: query.includeChapters ?? false,
       includeSections: query.includeSections ?? false,
     };
@@ -33,7 +39,7 @@ export class BibleController {
     // @Query('bibleId') bibleId?: string,
   ) {
     const data = await this.bibleService.getBookChapters({
-      bibleId: 'de4e12af7f28f599-01',
+      bibleId: this.bibleService.bibleId,
       bookId,
     });
     return { status: 200, data, message: 'Chapters fetched successfully' };
@@ -43,7 +49,7 @@ export class BibleController {
   @ApiOperation({ summary: 'Get chapter details in a book (KJV)' })
   async getBookChapterInformation(@Query() query: GetBookChapterDto) {
     const params = {
-      bibleId: 'de4e12af7f28f599-01',
+      bibleId: this.bibleService.bibleId,
       chapterId: query.chapterId,
       contentType: (query.contentType ?? ContentType.JSON) as ContentType,
       includeNotes: query.includeNotes ?? false,
@@ -60,7 +66,7 @@ export class BibleController {
   @ApiOperation({ summary: 'Get chapter verses in a book (KJV)' })
   async getChapterVerses(@Param('chapterId') chapterId: string) {
     const params = {
-      bibleId: 'de4e12af7f28f599-01',
+      bibleId: this.bibleService.bibleId,
       chapterId,
     };
     const data = await this.bibleService.getChapterVerses(params);
@@ -115,7 +121,7 @@ export class BibleController {
     @Query() query: SearchBibleQueryDto & { bibleId?: string; range?: string },
   ) {
     const params = {
-      bibleId: 'de4e12af7f28f599-01',
+      bibleId: this.bibleService.bibleId,
       query: query.keyword ?? '',
       limit: query.limit ?? 10,
       offset: query.offset ?? 0,
