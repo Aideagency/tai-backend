@@ -8,12 +8,13 @@ import { LoggerModule } from './logger/logger.module';
 import { DatabaseModule } from './database/database.module';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 // import { PaymentModule } from './payment/payment.module';
-// import { CommonModule } from './common/common.module';
+import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { NuggetsModule } from './nuggets/nuggets.module';
 import { PrayerWallModule } from './prayer-wall/prayer-wall.module';
 import { ChallengesModule } from './challenges/challenges.module';
+import { BibleModule } from './bible/bible.module';
 
 @Module({
   imports: [
@@ -29,9 +30,10 @@ import { ChallengesModule } from './challenges/challenges.module';
     NuggetsModule,
     PrayerWallModule,
     ChallengesModule,
+    CommonModule,
+    BibleModule,
     // AdminModule,
     // PaymentModule,
-    // CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

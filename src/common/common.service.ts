@@ -6,7 +6,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
-  // Logger,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -41,14 +41,10 @@ export const httpsAgent = new https.Agent({ keepAlive: false });
 @Injectable()
 export class CommonHttpService {
   private readonly axiosInstance;
-  private readonly cscsDomain = 'cscs.ng';
 
   constructor(
-    @Inject('Logger')
     private readonly logger: TracerLogger,
     private readonly httpService: HttpService,
-    // private readonly externalCallLogsRepository: ExternalCallLogRepository,
-    // private readonly cscsCallLogRepository: CSCSCallLogRepository,
   ) {
     this.logger.setContext(CommonHttpService.name);
 
@@ -152,8 +148,6 @@ export class CommonHttpService {
   }
 
   private seen = new WeakSet();
-
-
 
   private async makeRequest<T = any>({
     url,
