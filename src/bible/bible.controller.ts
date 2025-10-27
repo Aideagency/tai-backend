@@ -91,7 +91,7 @@ export class BibleController {
     name: 'offset',
     required: false,
     description: 'Pagination offset',
-    example: 10,
+    example: 1,
   })
   @ApiQuery({
     name: 'sort',
@@ -115,7 +115,7 @@ export class BibleController {
     name: 'range',
     required: false,
     description: 'Search range',
-    example: 'gen.1.1-gen.3.5',
+    example: 'gen.1.1-gen.4.5',
   })
   async searchBible(
     @Query() query: SearchBibleQueryDto & { bibleId?: string; range?: string },

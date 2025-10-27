@@ -27,6 +27,7 @@ export class BibleService {
       });
       return res?.data ?? [];
     } catch (error: any) {
+      console.error(error);
       throw new HttpException(
         error?.response?.data ?? error?.message ?? 'Failed to fetch books',
         error?.response?.status ?? 500,
