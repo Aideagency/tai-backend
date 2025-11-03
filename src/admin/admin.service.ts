@@ -8,11 +8,7 @@ import {
   UserRepository,
   UserSearchParams,
 } from 'src/repository/user/user.repository';
-import {
-  CommunityTag,
-  MaritalStatus,
-  UserEntity,
-} from 'src/database/entities/user.entity';
+import { CommunityTag, MaritalStatus } from 'src/database/entities/user.entity';
 import { UpdateUserByAdminDto } from './dtos/update-user-by-admin.dto';
 import { Helper } from 'src/utils/helper';
 import { AdminEntity } from 'src/database/entities/admin.entity';
@@ -36,59 +32,18 @@ export class AdminService {
     private jwtService: JwtService,
   ) {}
 
-  private toSubmissionResponse(user: UserEntity) {
-    if (!user) return null;
-
-    const {
-      password,
-      rejectedBy,
-      suspensionReason,
-      transactions,
-      resetTokenExpiration,
-      is_email_verified,
-      lastLogonDate,
-      userName,
-      reset_token,
-      verification_token,
-      profilePicture,
-      refresh_token,
-      middle_name,
-      suspended,
-      deleted,
-      createdAt,
-      deletedAt,
-      updatedAt,
-      ...safe
-    } = user as any;
-
-    const community: string[] = [];
-    if (user.is_parent) community.push(CommunityTag.PARENT);
-    if (user.marital_status === MaritalStatus.SINGLE)
-      community.push(CommunityTag.SINGLE);
-    if (user.marital_status === MaritalStatus.MARRIED)
-      community.push(CommunityTag.MARRIED);
-
-    return { ...safe, community };
-  }
-
   async listUsers(params: UserSearchParams) {
-    const pageData = await this.userRepo.searchPaginated(params);
-    return {
-      items: pageData.items.map((u) => this.toSubmissionResponse(u)),
-      total: pageData.meta.totalItems,
-      page: pageData.meta.currentPage,
-      pageSize: pageData.meta.itemsPerPage, // nestjs-typeorm-paginate uses `limit`
-    };
+    return this.userRepo.searchPaginated(params);
   }
 
   async getUserById(id: string | number) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
-    return this.toSubmissionResponse(user);
+    return this.userRepo.toSubmissionResponse(user);
   }
 
   async updateUserByAdmin(id: string | number, dto: UpdateUserByAdminDto) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
 
     if (
@@ -130,11 +85,11 @@ export class AdminService {
     }
 
     const saved = await this.userRepo.save(user);
-    return this.toSubmissionResponse(saved);
+    return this.userRepo.toSubmissionResponse(saved);
   }
 
   async suspendUser(id: string | number, reason: string) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
 
     (user as any).suspended = true;
@@ -144,7 +99,7 @@ export class AdminService {
   }
 
   async unsuspendUser(id: string | number) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
 
     (user as any).suspended = false;
@@ -154,7 +109,7 @@ export class AdminService {
   }
 
   async deleteUser(id: string | number) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
 
     if ('deletedAt' in user) {
@@ -174,7 +129,7 @@ export class AdminService {
   }
 
   async resetUserPassword(id: string | number, newPassword: string) {
-    const user = await this.userRepo.findOne({ id: id as any });
+    const user = await this.userRepo.findByUserId(Number(id));
     if (!user) throw new NotFoundException('User not found');
 
     user.password = await Helper.hashPassword(newPassword);

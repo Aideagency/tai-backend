@@ -25,6 +25,13 @@ import { ChallengeTaskEntity } from 'src/database/entities/challenge-task.entity
 import { ChallengeReflectionEntity } from 'src/database/entities/challenge-reflection.entity';
 import { UserChallengeEntity } from 'src/database/entities/user-challenge.entity';
 import { ChallengeTaskRepository } from './challenge/challenge-task.repository';
+import { FollowRepository } from './connection/follow.repository';
+import { FollowEntity } from 'src/database/entities/follow.entity';
+import { PostRepository } from './post/post.repository';
+import { PostEntity } from 'src/database/entities/post.entity';
+import { PostLikeEntity } from 'src/database/entities/post-like.entity';
+import { PostCommentEntity } from 'src/database/entities/post-comment.entity';
+import { PostShareEntity } from 'src/database/entities/post-share.entity';
 
 @Module({
   imports: [
@@ -45,6 +52,11 @@ import { ChallengeTaskRepository } from './challenge/challenge-task.repository';
       UserBadgeEntity,
       UserTaskProgressEntity,
       UserChallengeEntity,
+      FollowEntity,
+      PostEntity,
+      PostLikeEntity,
+      PostCommentEntity,
+      PostShareEntity,
     ]),
   ],
   providers: [
@@ -57,6 +69,8 @@ import { ChallengeTaskRepository } from './challenge/challenge-task.repository';
     UserChallengesRepository,
     UserTaskProgressRepository,
     ChallengeTaskRepository,
+    FollowRepository,
+    PostRepository,
   ],
   exports: [
     UserRepository,
@@ -68,6 +82,8 @@ import { ChallengeTaskRepository } from './challenge/challenge-task.repository';
     UserChallengesRepository,
     UserTaskProgressRepository,
     ChallengeTaskRepository,
+    FollowRepository,
+    PostRepository,
   ],
 })
 export class RepositoryModule {}

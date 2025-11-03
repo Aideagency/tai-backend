@@ -72,34 +72,6 @@ export class RegisterDto {
   })
   password: string;
 
-  // @ApiProperty({
-  //   example: '+2348089186735',
-  //   description:
-  //     'Phone number in E.164 format. If no country code is provided, defaults to Nigeria (+234).',
-  // })
-  // @Transform(({ value }) => {
-  //   if (typeof value !== 'string') return value;
-
-  //   // Strip spaces, dashes, parentheses
-  //   let phone = value.replace(/\s|[-().]/g, '');
-
-  //   // If user didn’t provide a +country code, assume Nigeria
-  //   if (!phone.startsWith('+')) {
-  //     if (phone.startsWith('0')) {
-  //       // strip leading zero if given like "0808..."
-  //       phone = phone.substring(1);
-  //     }
-  //     phone = `+234${phone}`;
-  //   }
-
-  //   return phone;
-  // })
-  // @Matches(/^\+[1-9]\d{1,14}$/, {
-  //   message: 'Phone must be in E.164 format (e.g., +2348080183735)',
-  // })
-  // @IsNotEmpty({ message: 'Phone number is required' })
-  // phone_no!: string;
-
   @ApiProperty({ example: 'Biola' })
   @IsNotEmpty({ message: 'First Name is required' })
   first_name: string;
@@ -107,52 +79,4 @@ export class RegisterDto {
   @ApiProperty({ example: 'Chukwudi' })
   @IsNotEmpty({ message: 'Last Name is required' })
   last_name: string;
-
-  // @ApiProperty({ example: '1995-06-23', description: 'YYYY-MM-DD' })
-  // @IsNotEmpty({ message: 'Birth Date is required' })
-  // @Matches(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, {
-  //   message: 'Birth date must be in YYYY-MM-DD format',
-  // })
-  // @IsYYYYMMDDDate()
-  // @NoFutureDate() // optional
-  // birth_date: string;
-
-  // @ApiProperty({
-  //   enum: UserGender,
-  //   example: UserGender.MALE,
-  //   description: 'Must be one of MALE, FEMALE, OTHER',
-  // })
-  // @IsNotEmpty({ message: 'Gender is required' })
-  // gender: string;
-
-  // @ApiPropertyOptional({
-  //   type: [String],
-  //   enum: CommunityTag,
-  //   example: [MaritalStatus.MARRIED, CommunityTag.PARENT],
-  //   description: 'Up to 2 values; must be one of SINGLE, MARRIED, PARENT',
-  //   maxItems: 2,
-  // })
-  // @IsArray()
-  // @ArrayNotEmpty()
-  // @ArrayMaxSize(2)
-  // @IsIn(Object.values(CommunityTag), { each: true })
-  // @Type(() => String) // ensures transformation if input is not already array of strings
-  // community: string[];
-
-  // @ApiPropertyOptional({
-  //   type: [String],
-  //   enum: CommunityTag,
-  //   example: [CommunityTag.MARRIED, CommunityTag.PARENT],
-  //   description: 'Up to 2 values; must be one of SINGLE, MARRIED, PARENT',
-  //   maxItems: 2,
-  // })
-  // @IsOptional() // allow “none”
-  // @IsArray()
-  // @ArrayMaxSize(2)
-  // @ArrayUnique({ message: 'community has duplicate values' })
-  // @IsIn(Object.values(CommunityTag), { each: true })
-  // @MaritalExclusive({
-  //   message: 'community cannot contain both SINGLE and MARRIED',
-  // })
-  // community?: CommunityTag[];
 }
