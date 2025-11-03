@@ -22,6 +22,7 @@ import {
 import { ConnectionsService } from './connections.service';
 import { FollowListQueryDto } from './dtos/follow-list-query.dto';
 import { JwtGuards } from 'src/auth/jwt.guards';
+import { UserSearchQueryDto } from './dtos/user-search-query.dto';
 
 @ApiTags('connections')
 @Controller('connections')
@@ -71,7 +72,6 @@ export class ConnectionsController {
   ) {
     await this.connections.unfollow(req.user.id, targetUserId);
   }
-
 
   @ApiOperation({
     summary: 'Check if I am following :targetUserId',
@@ -131,41 +131,28 @@ export class ConnectionsController {
 
   @ApiOperation({
     summary: 'Accept a pending follow request',
-    description:
-      'Accepts a PENDING follow request from :followerId → :meId (useful for private accounts).',
-  })
-  @ApiParam({
-    name: 'meId',
-    description: 'The private account owner (followee)',
+    description: 'Accepts a PENDING follow request from :followerId.',
   })
   @ApiParam({ name: 'followerId', description: 'The requester (follower)' })
-  @Post(':meId/requests/:followerId/accept')
+  @Post('requests/:followerId/accept')
   async acceptFollowRequest(
-    @Param('meId') meId: string,
+    @Request() req: any,
     @Param('followerId') followerId: string,
   ) {
-    return this.connections.acceptFollowRequest(followerId, meId);
+    return this.connections.acceptFollowRequest(followerId, req.user.id);
   }
 
   @ApiOperation({
     summary: 'Decline a pending follow request',
   })
-  @ApiParam({
-    name: 'meId',
-    description: 'The private account owner (followee)',
-  })
   @ApiParam({ name: 'followerId', description: 'The requester (follower)' })
-  @Post(':meId/requests/:followerId/decline')
+  @Post('requests/:followerId/decline')
   async declineFollowRequest(
-    @Param('meId') meId: string,
+    @Request() req: any,
     @Param('followerId') followerId: string,
   ) {
-    return this.connections.declineFollowRequest(followerId, meId);
+    return this.connections.declineFollowRequest(followerId, req.user.id);
   }
-
-  // -----------------------------
-  // (Optional) Raw edge fetch
-  // -----------------------------
 
   @ApiOperation({
     summary: 'Get a specific follow edge',
@@ -176,6 +163,17 @@ export class ConnectionsController {
   @ApiParam({ name: 'bId', description: 'Followee ID' })
   @Get('edge/:aId/:bId')
   async getEdge(@Param('aId') aId: string, @Param('bId') bId: string) {
-    return this.connections.getEdge(aId, bId);
+    return {
+      status: 200,
+      data: this.connections.getEdge(aId, bId),
+    };
+  }
+
+  @Get('search')
+  async search(@Request() req: any, @Query() query: UserSearchQueryDto) {
+    return {
+      status: 200,
+      data: await this.connections.searchPaginated(query, req.user.id),
+    };
   }
 }

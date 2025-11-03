@@ -16,6 +16,9 @@ import { PrayerWallModule } from './prayer-wall/prayer-wall.module';
 import { ChallengesModule } from './challenges/challenges.module';
 import { BibleModule } from './bible/bible.module';
 import { ConnectionsModule } from './connections/connections.module';
+import { PostService } from './post/post.service';
+import { PostController } from './post/post.controller';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -34,10 +37,11 @@ import { ConnectionsModule } from './connections/connections.module';
     CommonModule,
     BibleModule,
     ConnectionsModule,
+    PostModule,
     // AdminModule,
     // PaymentModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, PostController],
+  providers: [AppService, PostService],
 })
 export class AppModule {}

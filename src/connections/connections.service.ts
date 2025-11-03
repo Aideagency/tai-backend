@@ -4,10 +4,17 @@ import {
   FollowRepository,
   FollowListParams,
 } from 'src/repository/connection/follow.repository';
+import {
+  UserRepository,
+  UserSearchParams,
+} from 'src/repository/user/user.repository';
 
 @Injectable()
 export class ConnectionsService {
-  constructor(private readonly follows: FollowRepository) {}
+  constructor(
+    private readonly follows: FollowRepository,
+    private readonly userRepo: UserRepository,
+  ) {}
 
   /** Create (or restore) a follow edge: me -> target */
   async follow(meId: number | string, targetUserId: number | string) {
@@ -67,5 +74,9 @@ export class ConnectionsService {
   /** (Optional) Fetch raw edge with joined users */
   async getEdge(meId: number | string, otherUserId: number | string) {
     return this.follows.getEdge(meId, otherUserId);
+  }
+
+  async searchPaginated(params: UserSearchParams, id: number) {
+    return this.userRepo.searchPaginated({ ...params, excludeId: id });
   }
 }

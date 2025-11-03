@@ -3,7 +3,11 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseRepository } from '../base.repository';
-import { UserEntity } from 'src/database/entities/user.entity';
+import {
+  CommunityTag,
+  MaritalStatus,
+  UserEntity,
+} from 'src/database/entities/user.entity';
 
 export interface UserSearchParams {
   page?: number;
@@ -73,20 +77,31 @@ export class UserRepository extends BaseRepository<
     return !!found;
   }
 
-  private baseQB(params: UserSearchParams): SelectQueryBuilder<UserEntity> {
+  private baseQB(
+    params: UserSearchParams & { excludeId?: number },
+  ): SelectQueryBuilder<UserEntity> {
     const qb = this.query('u');
 
     if (params.q) {
       const q = `%${params.q.toLowerCase()}%`;
       qb.andWhere(
-        '(LOWER(u.first_name) ILIKE :q OR LOWER(u.last_name) ILIKE :q OR LOWER(u.email_address) ILIKE :q OR u.phone_no ILIKE :q)',
+        `(
+        LOWER(u.first_name) ILIKE :q OR
+        LOWER(u.last_name)  ILIKE :q OR
+        LOWER(u.email_address) ILIKE :q OR
+        u.phone_no ILIKE :q
+      )`,
         { q },
       );
     }
 
     if (typeof params.suspended === 'boolean') {
-      // If `suspended` is a real column on User/CustomEntity:
       qb.andWhere('u.suspended = :s', { s: params.suspended });
+    }
+
+    // 🧩 exclude the searching user
+    if (params.excludeId) {
+      qb.andWhere('u.id <> :excludeId', { excludeId: params.excludeId });
     }
 
     const orderBy = params.orderBy || 'id';
@@ -96,19 +111,39 @@ export class UserRepository extends BaseRepository<
     return qb;
   }
 
-  async searchPaginated(params: UserSearchParams) {
+  async searchPaginated(params: UserSearchParams & { excludeId?: number }) {
     const page = Math.max(params.page || 1, 1);
     const pageSize = Math.max(params.pageSize || 20, 1);
     const qb = this.baseQB(params);
 
-    return this.paginate(
+    const result = await this.paginate(
       { page, limit: pageSize },
-      {}, // filter already in qb
-      { id: 'DESC' }, // ignored when qb present
-      {}, // relations
+      {}, // no static filter
+      { id: 'DESC' },
+      {}, // no relations
       qb,
     );
+
+    // Transform every user through toSubmissionResponse
+    return {
+      ...result,
+      items: result.items.map((u) => this.toSubmissionResponse(u)),
+    };
   }
+
+  // async searchPaginated(params: UserSearchParams) {
+  //   const page = Math.max(params.page || 1, 1);
+  //   const pageSize = Math.max(params.pageSize || 20, 1);
+  //   const qb = this.baseQB(params);
+
+  //   return this.paginate(
+  //     { page, limit: pageSize },
+  //     {}, // filter already in qb
+  //     { id: 'DESC' }, // ignored when qb present
+  //     {}, // relations
+  //     qb,
+  //   );
+  // }
 
   async restoreUser(userId: number): Promise<boolean> {
     try {
@@ -118,5 +153,67 @@ export class UserRepository extends BaseRepository<
       this.logger.error(e.stack);
       return false;
     }
+  }
+
+  async searchUsersPaginated(params: UserSearchParams) {
+    const qb = this.baseQB(params);
+    const page = Math.max(params.page || 1, 1);
+    const pageSize = Math.max(params.pageSize || 20, 1);
+
+    return this.paginate({ page, limit: pageSize }, {}, { id: 'DESC' }, {}, qb);
+  }
+
+  async findOneSafe(where: Partial<UserEntity>) {
+    const user = await this.repository.findOne({ where });
+    return this.toSubmissionResponse(user);
+  }
+
+  async findManySafe(where?: Partial<UserEntity>) {
+    const users = await this.repository.find({ where });
+    return users.map((u) => this.toSubmissionResponse(u));
+  }
+
+  toSubmissionResponse(user: UserEntity) {
+    if (!user) return null;
+
+    // Strip sensitive fields
+    const {
+      is_parent,
+      marital_status,
+      email_address,
+      // is_email_verified,
+      middle_name,
+      first_name,
+      last_name,
+      gender,
+      birth_date,
+      phone_no,
+      profilePicture,
+    } = user;
+
+    // Rebuild community field from stored flags
+    const community: string[] = [];
+    if (is_parent) {
+      community.push(CommunityTag.PARENT);
+    }
+    if (marital_status === MaritalStatus.SINGLE) {
+      community.push(CommunityTag.SINGLE);
+    }
+    if (marital_status === MaritalStatus.MARRIED) {
+      community.push(CommunityTag.MARRIED);
+    }
+
+    return {
+      first_name,
+      last_name,
+      middle_name,
+      email_address,
+      // is_email_verified,
+      gender,
+      birth_date,
+      phone_no,
+      profilePicture,
+      community,
+    };
   }
 }
