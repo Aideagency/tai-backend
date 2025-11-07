@@ -111,6 +111,21 @@ export class ConnectionsController {
   }
 
   @ApiOperation({
+    summary: 'List pending followers of a user',
+    description:
+      'Returns pending follows of a user. Supports pagination, sorting, and optional quick search.',
+  })
+  @Get('pending-followers')
+  async listPendingFollowers(@Request() req: any, @Query() query: FollowListQueryDto) {
+    const params = {
+      ...query,
+      includePending: true,
+      includeDeleted: true,
+    };
+    return this.connections.listPendingFollowers(req.user.id, params);
+  }
+
+  @ApiOperation({
     summary: 'List following of a user',
     description:
       'Returns users that :userId is following. Supports pagination, sorting, and optional quick search.',
