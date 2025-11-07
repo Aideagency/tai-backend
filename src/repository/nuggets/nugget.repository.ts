@@ -150,6 +150,17 @@ export class NuggetRepository extends BaseRepository<
       .getOne();
   }
 
+  async getRandomNugget() {
+    const qb = this.baseQB();
+
+    // Random ordering depends on your DB:
+    // PostgreSQL: RANDOM()
+    // MySQL/MariaDB: RAND()
+    qb.orderBy('RANDOM()').limit(1);
+
+    return qb.getOne();
+  }
+
   // ---------- Engagement / details ----------
   async getEngagementCounts(nuggetId: number, currentUserId?: number) {
     const [likesCount, commentsCount, likedByMe] = await Promise.all([

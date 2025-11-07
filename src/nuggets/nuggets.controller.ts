@@ -20,27 +20,29 @@ import { NuggetType } from 'src/database/entities/nugget.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
-/**
- * NOTE:
- * - Replace all `req.user?.id` with your actual auth user extractor (e.g. @CurrentUser() deco).
- * - Add guards/roles where appropriate (e.g. only admins can create nuggets).
- */
-
 @Controller('nuggets')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class NuggetController {
   constructor(private readonly nuggetService: NuggetService) {}
 
-  // Admin-only (add Guard/Role decorator as needed)
   @Post()
   create(@Body() dto: CreateNuggetDto, @Req() req: any) {
     const adminId = req.user?.id ?? undefined;
     return this.nuggetService.createNugget(dto, adminId);
   }
 
+  // @Get('all-nuggets-json')
+  // async addAllNuggetsFromJson() {
+  //   console.log('Adding nuggets from JSON file...');
+  //   await this.nuggetService.addNuggetsFromJson();
+  //   return {
+  //     status: 200,
+  //     message: 'Nuggets added successfully from JSON file',
+  //   };
+  // }
+
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  // Daily nugget (fallback to latest). Optional type filter.
   @Get('daily')
   @ApiQuery({
     name: 'type',
@@ -58,7 +60,6 @@ export class NuggetController {
 
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  // Nugget details + engagement
   @Get(':id')
   getInfo(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     const userId = req.user?.id;
@@ -67,7 +68,6 @@ export class NuggetController {
 
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  // Likes
   @Post(':id/like')
   like(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     const userId = req.user?.id;
@@ -82,7 +82,6 @@ export class NuggetController {
 
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  // Comments
   @Post(':id/comments')
   comment(
     @Param('id', ParseIntPipe) id: number,
@@ -122,9 +121,11 @@ export class NuggetController {
 
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  // Share
   @Post(':id/share')
   share(@Param('id', ParseIntPipe) id: number) {
     return this.nuggetService.shareNugget(id);
   }
+
+  // @UseGuards(JwtGuards)
+  // @ApiBearerAuth()
 }
