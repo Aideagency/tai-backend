@@ -46,6 +46,10 @@ export class ConnectionsService {
     return this.follows.listFollowing(userId, params);
   }
 
+  async listPendingFollowers(userId: number | string, params: FollowListParams = {}) {
+    return this.follows.listPendingFollowers(userId, params);
+  }
+
   /** Quick counters */
   async counts(userId: number | string) {
     const [followers, following] = await Promise.all([

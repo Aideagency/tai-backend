@@ -197,6 +197,26 @@ export class FollowRepository extends BaseRepository<
     );
   }
 
+  async listPendingFollowers(userId: string | number, params: FollowListParams = {}) {
+    const page = Math.max(params.page || 1, 1);
+    const pageSize = Math.max(params.pageSize || 20, 1);
+
+    const qb = this.pendingFollowersQB(userId, params);
+
+    // Join followee user so you can return their profile fields
+    qb.leftJoinAndSelect('f.followee', 'followee');
+
+    this.applyUserQuickSearch(qb, params, 'followee');
+
+    return this.paginate(
+      { page, limit: pageSize },
+      {},
+      { id: 'DESC' },
+      { follower: false, followee: true },
+      qb,
+    );
+  }
+
   /**
    * Retrieve a specific follow edge.
    */
@@ -256,6 +276,25 @@ export class FollowRepository extends BaseRepository<
 
   private baseQB(): SelectQueryBuilder<FollowEntity> {
     return this.repository.createQueryBuilder('f');
+  }
+
+  private pendingFollowersQB(
+    userId: string | number,
+    params: FollowListParams,
+  ): SelectQueryBuilder<FollowEntity> {
+    const qb = this.baseQB()
+      .where('f.followee_id = :uid', { uid: userId })
+      .andWhere('f.status = :st', { st: FollowStatus.PENDING });
+
+    if (!params.includeDeleted && this.hasIsDeletedColumn()) {
+      qb.andWhere('f.isDeleted = false');
+    }
+
+    const orderBy = params.orderBy || 'created_at';
+    const orderDir = params.orderDir || 'DESC';
+    qb.orderBy(`f.${orderBy}`, orderDir);
+
+    return qb;
   }
 
   private followersQB(
