@@ -431,15 +431,6 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      if (
-        !user.ResetCode ||
-        !user.resetTokenExpiration ||
-        dto.otp !== user.ResetCode ||
-        user.resetTokenExpiration < new Date()
-      ) {
-        throw new BadRequestException('Invalid or expired OTP');
-      }
-
       const checkOldPassword = await bcrypt.compare(
         dto.old_password,
         user.password,
@@ -449,8 +440,6 @@ export class AuthService {
       }
 
       user.password = await Helper.hashPassword(dto.new_password);
-      user.ResetCode = null;
-      user.resetTokenExpiration = null;
 
       const emailData = {
         first_name: user.first_name,
@@ -487,11 +476,26 @@ export class AuthService {
         gender,
         community, // CommunityTag[]
         phone_no,
+        first_name,
+        last_name,
+        email_address,
       } = dto;
 
       // Birth date
       if (birth_date) {
-        user.birth_date = birth_date; // assume DTO validators handle format & future-date checks
+        user.birth_date = birth_date;
+      }
+
+      if (first_name) {
+        user.first_name = first_name;
+      }
+
+      if (last_name) {
+        user.last_name = last_name;
+      }
+
+      if (email_address) {
+        user.email_address = email_address;
       }
 
       // Gender
@@ -503,13 +507,12 @@ export class AuthService {
         user.phone_no = phone_no;
       }
 
-      // 3) Community → is_parent & marital_status mapping (same approach as createUser)
       if (
         community !== undefined &&
         Array.isArray(community) &&
         community.length > 0
       ) {
-        // Ensure SINGLE and MARRIED are mutually exclusive
+
         const msTags = community.filter(
           (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
         );

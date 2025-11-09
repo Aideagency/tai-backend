@@ -7,6 +7,8 @@ import {
   ArrayMaxSize,
   Matches,
   ValidateIf,
+  IsNotEmpty,
+  IsEmail,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserGender, CommunityTag } from 'src/database/entities/user.entity';
@@ -121,4 +123,20 @@ export class UpdateProfileDto {
     description: 'Optional profile picture upload (PNG/JPG/GIF).',
   })
   profilePicture?: any;
+
+  @ApiProperty({ example: 'Biola' })
+  @IsNotEmpty({ message: 'First Name is required' })
+  first_name: string;
+
+  @ApiProperty({ example: 'Chukwudi' })
+  @IsNotEmpty({ message: 'Last Name is required' })
+  last_name: string;
+
+  @ApiProperty({ example: 'sample@email.com' })
+  @IsEmail()
+  @IsNotEmpty({ message: 'Email is required' })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  email_address: string;
 }
