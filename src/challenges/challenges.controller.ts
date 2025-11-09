@@ -13,6 +13,7 @@ import {
   HttpStatus,
   // ValidationPipe,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   // EnrollChallengeDto,
@@ -21,6 +22,7 @@ import {
   PartnerConfirmDto,
   // ReflectionCreateDto,
   ToggleTaskCompletionDto,
+  CombinedChallengesQueryDto,
 } from './dtos/user-challenges.dtos';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { ChallengesService } from './challenges.service';
@@ -60,11 +62,9 @@ export class ChallengesController {
     @Req() req,
     @Query() query: ListAvailableChallengesQueryDto,
   ) {
-    console.log(req.user.community);
     const user = this.authService.toSubmissionResponse(
       await this.userRepo.findByEmail(req.user.email),
     );
-    console.log(user);
     const challenges = await this.challengeService.listAllChallenges({
       community: user.community,
       params: query,
@@ -76,13 +76,57 @@ export class ChallengesController {
     };
   }
 
+  @Get('available/:id')
+  async getSingleChallenge(@Req() req, @Param('id', ParseIntPipe) id: string) {
+    // const user = this.authService.toSubmissionResponse(
+    //   await this.userRepo.findByEmail(req.user.email),
+    // );
+    const challenges = await this.challengeService.getSingleChallenge(id);
+    return {
+      message: 'Challlenge details fetched Successfully!',
+      data: challenges,
+      status: 200,
+    };
+  }
+
+  @Get('combined-challenges')
+  async combinedChallenges(
+    @Req() req,
+    @Query() query: CombinedChallengesQueryDto,
+  ) {
+    const params: any = {
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? 20,
+      archived: false,
+      // orderBy: query.orderBy,
+      // orderDir: query.orderDir,
+    };
+    const myChallenges = await this.challengeService.listCombinedForUser({
+      userId: req.user.id,
+      params,
+    });
+
+    return {
+      status: 200,
+      data: myChallenges,
+      message: 'Challenge details fetched successfully!',
+    };
+  }
+
   @Post(':challengeId/enroll/:startDate')
   @HttpCode(HttpStatus.CREATED)
   async enroll(
     @Req() req,
     @Param('challengeId', ParseIntPipe) challengeId: number,
-    @Param('startDate', ParseIntPipe) date?: Date,
+    @Param('startDate') startDate?: Date,
   ) {
+    const date = startDate ? new Date(startDate) : undefined;
+    if (startDate && isNaN(date.getTime())) {
+      throw new BadRequestException(
+        'Invalid startDate (use ISO format e.g. 2025-11-09)',
+      );
+    }
+
     await this.challengeService.joinChallenge({
       userId: req.user.id,
       challengeId: challengeId,
@@ -96,7 +140,7 @@ export class ChallengesController {
 
   @Get('my-challenges')
   async myChallenges(@Req() req, @Query() query: EnrollmentSearchParams) {
-    const params: EnrollmentSearchParams = {
+    const params: any = {
       page: query.page ?? 1,
       pageSize: query.pageSize ?? 20,
       archived: query.archived,

@@ -238,6 +238,21 @@ export class AuthController {
       properties: {
         birth_date: { type: 'string', example: '2000-10-12', nullable: true },
         phone_no: { type: 'string', example: '+23480809090', nullable: true },
+        email_address: {
+          type: 'string',
+          example: 'sample@email.com',
+          nullable: true,
+        },
+        first_name: {
+          type: 'string',
+          example: 'Chukwudi',
+          nullable: true,
+        },
+        last_name: {
+          type: 'string',
+          example: 'Biola',
+          nullable: true,
+        },
         gender: {
           type: 'string',
           enum: Object.values(UserGender),

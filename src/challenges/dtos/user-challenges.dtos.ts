@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 
 export class ListAvailableChallengesQueryDto {
   @ApiPropertyOptional({
@@ -156,3 +156,8 @@ export class PaginationQueryDto {
   @Max(100)
   pageSize?: number = 20;
 }
+
+export class CombinedChallengesQueryDto extends OmitType(
+  ListAvailableChallengesQueryDto,
+  ['q'] as const,
+) {}

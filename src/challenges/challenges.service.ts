@@ -213,6 +213,16 @@ export class ChallengesService {
     return challenges;
   }
 
+  async getSingleChallenge(id: string) {
+    const challenge = await this.challengeRepo.findByIdWithDetails(
+      parseInt(id),
+      {
+        withTasks: true,
+      },
+    );
+    return challenge;
+  }
+
   async listMyChallenges({
     userId,
     params,
@@ -333,5 +343,30 @@ export class ChallengesService {
       console.error('Error getting challenge enrollment details:', error);
       throw new Error('Failed to get enrollment detail');
     }
+  }
+
+  async listCombinedForUser({
+    userId,
+    community,
+    params,
+    prioritizeEnrolled = true,
+  }: {
+    userId: number;
+    community?: CommunityTag[]; // optional filter
+    params: ChallengeSearchParams;
+    prioritizeEnrolled?: boolean;
+  }) {
+    const mergedParams: ChallengeSearchParams = {
+      ...params,
+      ...(community ? { community } : {}),
+      // Common for listing available
+      visibility: params.visibility,
+      activeOnly: params.activeOnly,
+    };
+
+    return this.challengeRepo.listCombinedForUser(userId, {
+      ...mergedParams,
+      prioritizeEnrolled,
+    });
   }
 }
