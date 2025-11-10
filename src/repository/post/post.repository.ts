@@ -388,6 +388,7 @@ export class PostRepository extends BaseRepository<
         'c.createdAt AS "createdAt"',
         `COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u."userName") AS "displayName"`,
         'u.profilePicture AS "profile_picture"',
+        'u.id AS "userId"'
       ])
       .where('p.id = :id', { id: params.postId })
       .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC')

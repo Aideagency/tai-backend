@@ -365,6 +365,7 @@ export class PrayerWallRepository extends BaseRepository<
         'c.comment AS comment',
         'c.createdAt AS "createdAt"',
         `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."userName", '') AS "displayName"`,
+        'u.id AS "userId"',
       ])
       // IMPORTANT: filter by prayer_id (bug fixed vs nugget version)
       .where('c.prayer_id = :pid', { pid: params.prayerId })

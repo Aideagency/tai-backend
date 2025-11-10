@@ -268,6 +268,7 @@ export class NuggetRepository extends BaseRepository<
         'c.comment AS comment',
         'c.createdAt AS "createdAt"',
         `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."userName", '') AS "displayName"`,
+        'u.id AS userId',
       ])
       .where('c.nugget.id = :id', { id: params.nuggetId }) // <-- correct filter
       .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC');
