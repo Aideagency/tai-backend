@@ -20,8 +20,9 @@ import {
   ListPrayersQueryDto,
   LatestPrayersQueryDto,
 } from './dto/list-prayers.query.dto';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtGuards } from 'src/auth/jwt.guards';
+import { IsOptional } from 'class-validator';
 
 function toBool(v: any): boolean | undefined {
   if (v === undefined) return undefined;
@@ -177,6 +178,10 @@ export class PrayerWallController {
   // --- Comments ---
   @Get(':id/comments')
   @ApiOperation({ summary: 'List comments on a prayer (with pagination)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'pageSize', required: false })
+  @ApiQuery({ name: 'orderBy', required: false, enum: ['createdAt', 'id'] })
+  @ApiQuery({ name: 'orderDir', required: false, enum: ['ASC', 'DESC'] })
   listComments(
     @Param('id') id: string,
     @Query('page') page?: string,
