@@ -69,7 +69,7 @@ export class PrayerWallRepository extends BaseRepository<
   ): SelectQueryBuilder<PrayerWallEntity> {
     const qb = this.query('p')
       .leftJoin('p.user', 'u') // Use leftJoin instead of leftJoinAndSelect
-      .addSelect(['u.first_name', 'u.last_name']);
+      .addSelect(['u.first_name', 'u.last_name', 'u.id']);
 
     if (params.q) {
       const q = `%${params.q.toLowerCase()}%`;

@@ -1,50 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsString, IsInt } from 'class-validator';
 
-export class InitialisePaystackPaymentDto {
+export class InitializePaymentDto {
   @ApiProperty({
-    description: 'Amount to be charged in kobo (e.g., 5000 = N50)',
+    description: 'Amount to be payemnt in naira',
     example: 5000,
+    minimum: 1000,
   })
+  @IsInt()
   amount: number;
 
   @ApiProperty({
     description: 'Email of the customer',
-    example: 'customer@example.com',
+    example: 'sample@email.com',
   })
+  @IsString()
   email: string;
-
-  @ApiProperty({
-    description: 'Channels for payment',
-    example: ['card', 'bank transfer'],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  channels: string[];
-
-  @ApiProperty({
-    description: 'Paystack private key',
-    example: 'sk_test178272872878728728',
-  })
-  secret: string;
-
-  @ApiProperty({
-    description: 'Paystack reference',
-    example: 'nsmsAnlslkjsj',
-  })
-  reference: string;
 
   @ApiProperty({
     description: 'Callback URL to redirect the customer after payment',
     example: 'https://example.com/callback',
     required: false,
   })
+  @IsString()
   callback_url?: string;
-
-  @ApiProperty({
-    description: 'Optional metadata for the transaction',
-    required: false,
-    type: Object,
-  })
-  metadata?: Record<string, any>;
 }
