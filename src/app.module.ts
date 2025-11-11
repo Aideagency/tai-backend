@@ -7,7 +7,7 @@ import { RepositoryModule } from './repository/repository.module';
 import { LoggerModule } from './logger/logger.module';
 import { DatabaseModule } from './database/database.module';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
-// import { PaymentModule } from './payment/payment.module';
+import { PaymentModule } from './payment/payment.module';
 import { CommonModule } from './common/common.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
@@ -19,6 +19,7 @@ import { ConnectionsModule } from './connections/connections.module';
 import { PostService } from './post/post.service';
 import { PostController } from './post/post.controller';
 import { PostModule } from './post/post.module';
+import { ZohoModule } from './zoho/zoho.module';
 
 @Module({
   imports: [
@@ -38,6 +39,8 @@ import { PostModule } from './post/post.module';
     BibleModule,
     ConnectionsModule,
     PostModule,
+    // PaymentModule,
+    // ZohoModule,
     // AdminModule,
     // PaymentModule,
   ],

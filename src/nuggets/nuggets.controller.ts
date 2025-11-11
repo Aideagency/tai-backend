@@ -126,6 +126,13 @@ export class NuggetController {
     return this.nuggetService.shareNugget(id);
   }
 
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @Delete(':id/delete')
+  delete(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.nuggetService.deleteComment(id, { userId: req.user.id });
+  }
+
   // @UseGuards(JwtGuards)
   // @ApiBearerAuth()
 }

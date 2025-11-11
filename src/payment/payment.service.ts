@@ -3,7 +3,8 @@ import { CommonHttpService } from 'src/common/common.service';
 import { TransactionEntity } from 'src/database/entities/transaction.entity';
 import { TracerLogger } from 'src/logger/logger.service';
 import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
-import { InitialisePaystackPaymentDto } from './dto/initialize-payment.dto';
+import crypto from 'crypto';
+// import { InitialisePaystackPaymentDto } from './dto/initialize-payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -19,7 +20,7 @@ export class PaymentService {
     // this.logger.setContext(PaystackService.name);
   }
 
-  async initializePayment(data: {
+  private async initializePayment(data: {
     email: string;
     amount: string;
   }): Promise<any> {
@@ -41,191 +42,189 @@ export class PaymentService {
     }
   }
 
-  //   async verifyPayment(reference: string, secret: string): Promise<any> {
-  //     try {
-  //       const response = await this.commonhttpService.get(
-  //         `${this.paystackBaseUrl}/transaction/verify/${reference}`,
-  //         {
-  //           Authorization: `Bearer ${secret}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       );
-  //       return response.data;
-  //     } catch (error) {
-  //       throw new HttpException(
-  //         error.response?.data || 'Payment verification failed',
-  //         HttpStatus.BAD_REQUEST,
-  //       );
-  //     }
-  //   }
+  async verifyPayment(reference: string, secret: string): Promise<any> {
+    try {
+      const response = await this.commonhttpService.get(
+        `${this.paystackBaseUrl}/transaction/verify/${reference}`,
+        {
+          Authorization: `Bearer ${process.env.PAYSTACK_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      );
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Payment verification failed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 
-  //   async verifyWebhookSignaturWithoutReference(
-  //     req: any,
-  //     secret: string,
-  //   ): Promise<{ isVerified: boolean }> {
-  //     try {
-  //       const hash = crypto
-  //         .createHmac('sha512', secret)
-  //         .update(JSON.stringify(req.body))
-  //         .digest('hex');
+  async verifyWebhookSignaturWithoutReference(
+    req: any,
+    secret: string,
+  ): Promise<{ isVerified: boolean }> {
+    try {
+      const hash = crypto
+        .createHmac('sha512', secret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
 
-  //       if (hash === req.headers['x-paystack-signature']) {
-  //         const forwarded = req.headers['x-forwarded-for'];
-  //         const ip = Array.isArray(forwarded)
-  //           ? forwarded[0]
-  //           : forwarded?.split(',')[0];
-  //         this.logger.log({ ip: ip || req.ip });
+      if (hash === req.headers['x-paystack-signature']) {
+        const forwarded = req.headers['x-forwarded-for'];
+        const ip = Array.isArray(forwarded)
+          ? forwarded[0]
+          : forwarded?.split(',')[0];
+        this.logger.log({ ip: ip || req.ip });
 
-  //         const isIncorrectIp = ![
-  //           '52.31.139.75',
-  //           '52.49.173.169',
-  //           '52.214.14.220',
-  //         ].includes(ip);
+        const isIncorrectIp = ![
+          '52.31.139.75',
+          '52.49.173.169',
+          '52.214.14.220',
+        ].includes(ip);
 
-  //         this.logger.log({ body: req.body.data });
+        this.logger.log({ body: req.body.data });
 
-  //         if (isIncorrectIp) {
-  //           return { isVerified: false };
-  //         }
+        if (isIncorrectIp) {
+          return { isVerified: false };
+        }
 
-  //         return { isVerified: true };
-  //       }
+        return { isVerified: true };
+      }
 
-  //       return { isVerified: false };
-  //     } catch (err) {
-  //       this.logger.error(err);
-  //       return { isVerified: false };
-  //     }
-  //   }
+      return { isVerified: false };
+    } catch (err) {
+      this.logger.error(err);
+      return { isVerified: false };
+    }
+  }
 
-  //   async verifyWebhookSignatureOnly(
-  //     req: any,
-  //     secret: string,
-  //   ): Promise<{ isVerified: boolean; txRef: string }> {
-  //     try {
-  //       const hash = crypto
-  //         .createHmac('sha512', secret)
-  //         .update(JSON.stringify(req.body))
-  //         .digest('hex');
+  async verifyWebhookSignatureOnly(
+    req: any,
+    secret: string,
+  ): Promise<{ isVerified: boolean; txRef: string }> {
+    try {
+      const hash = crypto
+        .createHmac('sha512', secret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
 
-  //       this.logger.log({
-  //         verifyWebhookSignatureOnlyHash: hash,
-  //         paystackHash: req.headers['x-paystack-signature'],
-  //         compareHash: hash === req.headers['x-paystack-signature'],
-  //       });
+      this.logger.log({
+        verifyWebhookSignatureOnlyHash: hash,
+        paystackHash: req.headers['x-paystack-signature'],
+        compareHash: hash === req.headers['x-paystack-signature'],
+      });
 
-  //       if (hash === req.headers['x-paystack-signature']) {
-  //         const txRef = req.body?.data?.reference;
+      if (hash === req.headers['x-paystack-signature']) {
+        const txRef = req.body?.data?.reference;
 
-  //         const forwarded = req.headers['x-forwarded-for'];
-  //         const ip = Array.isArray(forwarded)
-  //           ? forwarded[0]
-  //           : forwarded?.split(',')[0];
-  //         this.logger.log({ ip: ip || req.ip });
+        const forwarded = req.headers['x-forwarded-for'];
+        const ip = Array.isArray(forwarded)
+          ? forwarded[0]
+          : forwarded?.split(',')[0];
+        this.logger.log({ ip: ip || req.ip });
 
-  //         const isIncorrectIp = ![
-  //           '52.31.139.75',
-  //           '52.49.173.169',
-  //           '52.214.14.220',
-  //         ].includes(ip);
+        const isIncorrectIp = ![
+          '52.31.139.75',
+          '52.49.173.169',
+          '52.214.14.220',
+        ].includes(ip);
 
-  //         this.logger.log({ body: req.body.data });
+        this.logger.log({ body: req.body.data });
 
-  //         this.logger.log({
-  //           ipNuban: ip,
-  //           isIncorrectIp,
-  //           paystackAmount: req.body.data?.requested_amount,
-  //           transactionAmount: req.body.data?.requested_amount / 100,
-  //         });
+        this.logger.log({
+          ipNuban: ip,
+          isIncorrectIp,
+          paystackAmount: req.body.data?.requested_amount,
+          transactionAmount: req.body.data?.requested_amount / 100,
+        });
 
-  //         if (isIncorrectIp) {
-  //           return { isVerified: false, txRef: '' };
-  //         }
+        if (isIncorrectIp) {
+          return { isVerified: false, txRef: '' };
+        }
 
-  //         return { isVerified: true, txRef };
-  //       }
+        return { isVerified: true, txRef };
+      }
 
-  //       return { isVerified: false, txRef: '' };
-  //     } catch (err) {
-  //       this.logger.error(err);
-  //       return { isVerified: false, txRef: '' };
-  //     }
-  //   }
+      return { isVerified: false, txRef: '' };
+    } catch (err) {
+      this.logger.error(err);
+      return { isVerified: false, txRef: '' };
+    }
+  }
 
-  //   async verifyWebhookSignature(
-  //     req: any,
-  //     secret: string,
-  //   ): Promise<{ isVerified: boolean; txRef: string }> {
-  //     try {
-  //       const hash = crypto
-  //         .createHmac('sha512', secret)
-  //         .update(JSON.stringify(req.body))
-  //         .digest('hex');
+  async verifyWebhookSignature(
+    req: any,
+    secret: string,
+  ): Promise<{ isVerified: boolean; txRef: string }> {
+    try {
+      const hash = crypto
+        .createHmac('sha512', secret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
 
-  //       if (hash === req.headers['x-paystack-signature']) {
-  //         const txRef = req.body?.data?.reference;
-  //         const transaction = await this.transactionRepository.findOne(
-  //           {
-  //             transaction_ref: txRef,
-  //           },
-  //           {
-  //             user: true,
-  //           },
-  //         );
+      if (hash === req.headers['x-paystack-signature']) {
+        const txRef = req.body?.data?.reference;
+        const transaction = await this.transactionRepository.findOne(
+          {
+            transaction_ref: txRef,
+          },
+          {
+            user: true,
+          },
+        );
 
-  //         if (transaction.user) {
-  //           const activityLogEntry = ActivityLogEntry.getLogMessage(
-  //             ActivityType.WebhookResponse,
-  //             transaction.user,
-  //             `${transaction.amount}, ${transaction.transaction_ref}, `,
-  //             JSON.stringify(req.body),
-  //             null,
-  //           );
+        // if (transaction.user) {
+        //   const activityLogEntry = ActivityLogEntry.getLogMessage(
+        //     ActivityType.WebhookResponse,
+        //     transaction.user,
+        //     `${transaction.amount}, ${transaction.transaction_ref}, `,
+        //     JSON.stringify(req.body),
+        //     null,
+        //   );
 
-  //           await this.activityLogRepository.save(activityLogEntry);
-  //         }
+        //   await this.activityLogRepository.save(activityLogEntry);
+        // }
 
-  //         const forwarded = req.headers['x-forwarded-for'];
-  //         const ip = Array.isArray(forwarded)
-  //           ? forwarded[0]
-  //           : forwarded?.split(',')[0];
-  //         this.logger.log({ ip: ip || req.ip });
+        const forwarded = req.headers['x-forwarded-for'];
+        const ip = Array.isArray(forwarded)
+          ? forwarded[0]
+          : forwarded?.split(',')[0];
+        this.logger.log({ ip: ip || req.ip });
 
-  //         const isIncorrectIp = ![
-  //           '52.31.139.75',
-  //           '52.49.173.169',
-  //           '52.214.14.220',
-  //         ].includes(ip);
+        const isIncorrectIp = ![
+          '52.31.139.75',
+          '52.49.173.169',
+          '52.214.14.220',
+        ].includes(ip);
 
-  //         this.logger.log({ body: req.body.data });
+        this.logger.log({
+          ip,
+          isIncorrectIp,
+          paystackAmount: req.body.data?.requested_amount,
+          transactionAmount: transaction?.actualAmount * 100,
+        });
 
-  //         this.logger.log({
-  //           ip,
-  //           isIncorrectIp,
-  //           paystackAmount: req.body.data?.requested_amount,
-  //           transactionAmount: transaction?.actualAmount * 100,
-  //         });
+        if (isIncorrectIp) {
+          return { isVerified: false, txRef: '' };
+        }
 
-  //         if (isIncorrectIp) {
-  //           return { isVerified: false, txRef: '' };
-  //         }
+        if (
+          req.body.data?.requested_amount !==
+          transaction?.actualAmount * 100
+        ) {
+          return { isVerified: false, txRef: '' };
+        }
 
-  //         if (
-  //           req.body.data?.requested_amount !==
-  //           transaction?.actualAmount * 100
-  //         ) {
-  //           return { isVerified: false, txRef: '' };
-  //         }
+        return { isVerified: true, txRef };
+      }
 
-  //         return { isVerified: true, txRef };
-  //       }
-
-  //       return { isVerified: false, txRef: '' };
-  //     } catch (err) {
-  //       this.logger.error(err);
-  //       return { isVerified: false, txRef: '' };
-  //     }
-  //   }
+      return { isVerified: false, txRef: '' };
+    } catch (err) {
+      this.logger.error(err);
+      return { isVerified: false, txRef: '' };
+    }
+  }
 
   async updatePaymentAction(txRef, status) {
     try {
