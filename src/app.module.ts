@@ -41,7 +41,7 @@ import { EventModule } from './event/event.module';
     ConnectionsModule,
     PostModule,
     PaymentModule,
-    EventModule,
+    // EventModule,
     // ZohoModule,
     // AdminModule,
     // PaymentModule,

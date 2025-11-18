@@ -125,9 +125,10 @@ export class PaymentService {
         .update(JSON.stringify(req.body))
         .digest('hex');
 
+      console.log({ hash });
+
       if (hash === req.headers['x-paystack-signature']) {
         const txRef = req.body?.data?.reference;
-
         const forwarded = req.headers['x-forwarded-for'];
         const ip = Array.isArray(forwarded)
           ? forwarded[0]
@@ -155,6 +156,7 @@ export class PaymentService {
           return { isVerified: true, txRef };
         }
 
+        console.log({ txRef, transaction });
         await this.updatePaymentStatus(txRef, TransactionStatus.Failure);
         return { isVerified: false, txRef: '' };
       }
