@@ -32,6 +32,15 @@ import { PostEntity } from 'src/database/entities/post.entity';
 import { PostLikeEntity } from 'src/database/entities/post-like.entity';
 import { PostCommentEntity } from 'src/database/entities/post-comment.entity';
 import { PostShareEntity } from 'src/database/entities/post-share.entity';
+import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
+import { EventTicketRepository } from './event/event-ticket.repository';
+import { EventRepository } from './event/event.repository';
+import { EventRegistrationRepository } from './event/event-registration.repository';
+import { EventTicketEntity } from 'src/database/entities/event-ticket.entity';
+import { EventTicketTypeEntity } from 'src/database/entities/event-ticket-type.entity';
+import { EventEntity } from 'src/database/entities/event.entity';
+import { RefundRequestEntity } from 'src/database/entities/refund-request.entity';
+import { RefundRequestRepository } from './event/refund-request.repository';
 
 @Module({
   imports: [
@@ -57,6 +66,11 @@ import { PostShareEntity } from 'src/database/entities/post-share.entity';
       PostLikeEntity,
       PostCommentEntity,
       PostShareEntity,
+      EventTicketEntity,
+      EventTicketTypeEntity,
+      EventEntity,
+      RefundRequestEntity,
+      EventRegistrationEntity,
     ]),
   ],
   providers: [
@@ -71,6 +85,10 @@ import { PostShareEntity } from 'src/database/entities/post-share.entity';
     ChallengeTaskRepository,
     FollowRepository,
     PostRepository,
+    EventRegistrationRepository,
+    EventRepository,
+    EventTicketRepository,
+    RefundRequestRepository,
   ],
   exports: [
     UserRepository,
@@ -84,6 +102,10 @@ import { PostShareEntity } from 'src/database/entities/post-share.entity';
     ChallengeTaskRepository,
     FollowRepository,
     PostRepository,
+    EventRegistrationRepository,
+    EventRepository,
+    EventTicketRepository,
+    RefundRequestRepository,
   ],
 })
 export class RepositoryModule {}

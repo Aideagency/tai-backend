@@ -20,6 +20,7 @@ import { PostService } from './post/post.service';
 import { PostController } from './post/post.controller';
 import { PostModule } from './post/post.module';
 import { ZohoModule } from './zoho/zoho.module';
+import { EventModule } from './event/event.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { ZohoModule } from './zoho/zoho.module';
     BibleModule,
     ConnectionsModule,
     PostModule,
-    // PaymentModule,
+    PaymentModule,
+    EventModule,
     // ZohoModule,
     // AdminModule,
     // PaymentModule,

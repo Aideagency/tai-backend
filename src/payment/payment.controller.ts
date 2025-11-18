@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
 
 @Controller('payment')
@@ -16,10 +16,20 @@ export class PaymentController {
   @Post('initialize')
   @ApiOperation({ summary: 'Create a new prayer' })
   create(@Body() dto: InitializePaymentDto, @Req() req: any) {
-    // return this.paymentService.initializePayment({
-    //   email: 'bmubarak88@gmail.com',
-    //   amount: '10000',
-    // });
-    // return this.service.createPrayer(dto, this.getUserId(req));
+    return this.paymentService.initializePayment({
+      email: 'bmubarak88@gmail.com',
+      amount: '10000',
+    });
+  }
+
+  @Post('process-payments')
+  @ApiOperation({ summary: 'Processing paystack transactions' })
+  @ApiExcludeEndpoint()
+  async processPayment(@Req() req: any) {
+    await this.paymentService.verifyWebhookSignature(req);
+    return {
+      status: 200,
+      message: 'Transaction Processed',
+    };
   }
 }

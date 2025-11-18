@@ -65,6 +65,98 @@ export class EventRepository extends BaseRepository<
   }
 
   /** ---------- Base QB with common filters ---------- */
+  // private baseQB(
+  //   params: EventSearchParams = {},
+  // ): SelectQueryBuilder<EventEntity> {
+  //   const qb = this.query('e');
+
+  //   if (params.q) {
+  //     const q = `%${params.q.toLowerCase()}%`;
+  //     qb.andWhere(
+  //       `(
+  //         LOWER(e.title) ILIKE :q OR
+  //         LOWER(e.description) ILIKE :q OR
+  //         LOWER(e.locationText) ILIKE :q
+  //       )`,
+  //       { q },
+  //     );
+  //   }
+
+  //   // Type filter (supports array)
+  //   const types = Array.isArray(params.type)
+  //     ? params.type.filter(Boolean)
+  //     : params.type
+  //       ? [params.type]
+  //       : [];
+  //   if (types.length > 0) {
+  //     qb.andWhere('e.type IN (:...types)', { types });
+  //   }
+
+  //   if (params.onlyPublished) {
+  //     qb.andWhere('e.status = :st', { st: EventStatus.PUBLISHED });
+  //   } else if (params.status) {
+  //     qb.andWhere('e.status = :st', { st: params.status });
+  //   }
+
+  //   // Date window (startsAt)
+  //   if (params.startsFrom) {
+  //     qb.andWhere('e.startsAt >= :sf', { sf: params.startsFrom });
+  //   }
+  //   if (params.startsTo) {
+  //     qb.andWhere('e.startsAt <= :st', { st: params.startsTo });
+  //   }
+
+  //   // Upcoming / Past semantic filters
+  //   const now = new Date();
+  //   if (params.upcomingOnly) qb.andWhere('e.startsAt >= :now', { now });
+  //   if (params.pastOnly) qb.andWhere('e.endsAt < :now', { now });
+
+  //   // Price filters using EXISTS on ticket types
+  //   if (params.freeOnly) {
+  //     qb.andWhere((sub) =>
+  //       sub
+  //         .subQuery()
+  //         .select('1')
+  //         .from(EventTicketTypeEntity, 'tt')
+  //         .where('tt.event.id = e.id')
+  //         .andWhere('tt.isActive = true')
+  //         .andWhere('tt.price = 0')
+  //         .getQuery(),
+  //     );
+  //   }
+  //   if (params.paidOnly) {
+  //     qb.andWhere((sub) =>
+  //       sub
+  //         .subQuery()
+  //         .select('1')
+  //         .from(EventTicketTypeEntity, 'tt')
+  //         .where('tt.event.id = e.id')
+  //         .andWhere('tt.isActive = true')
+  //         .andWhere('tt.price > 0')
+  //         .getQuery(),
+  //     );
+  //   }
+
+  //   // Handy counts
+  //   qb.loadRelationCountAndMap('e.ticketTypeCount', 'e.ticketTypes');
+
+  //   // participantsCount via subquery (no need for relation on EventEntity)
+  //   qb.addSelect(
+  //     (sub) =>
+  //       sub
+  //         .select('COUNT(r.id)')
+  //         .from(EventRegistrationEntity, 'r')
+  //         .where('r.event.id = e.id')
+  //         .andWhere(`r.status IN ('CONFIRMED','PENDING_PAYMENT')`),
+  //     'participantsCount',
+  //   );
+
+  //   const orderBy = params.orderBy || 'startsAt';
+  //   const orderDir = params.orderDir || 'ASC';
+  //   qb.orderBy(`e.${orderBy}`, orderDir);
+
+  //   return qb;
+  // }
   private baseQB(
     params: EventSearchParams = {},
   ): SelectQueryBuilder<EventEntity> {
@@ -158,6 +250,35 @@ export class EventRepository extends BaseRepository<
     return qb;
   }
 
+  /** Paginated browse/search with filters */
+  async getPaginatedEvents(params: EventSearchParams): Promise<any> {
+    const page = Math.max(params.page || 1, 1);
+    const pageSize = Math.max(params.pageSize || 20, 1);
+    const qb = this.baseQB(params);
+
+    const pageResult = await this.paginate(
+      { page, limit: pageSize },
+      {},
+      { id: 'DESC' }, // ignored with qb
+      {},
+      qb,
+    );
+
+    // Attach raw participantsCount
+    const { raw } = await qb.getRawAndEntities();
+    const map = new Map<number, number>();
+    raw.forEach((r) => {
+      map.set(Number(r['e_id']), Number(r['participantsCount']) || 0);
+    });
+
+    const items = pageResult.items.map((e: any) => ({
+      ...e,
+      participantsCount: map.get(e.id) ?? 0,
+    }));
+
+    return { ...pageResult, items };
+  }
+
   /** Paginated browse/search */
   async searchPaginated(params: EventSearchParams) {
     const page = Math.max(params.page || 1, 1);
@@ -192,7 +313,7 @@ export class EventRepository extends BaseRepository<
     id: number,
     opts: { withTicketTypes?: boolean; onlyPublished?: boolean } = {},
   ) {
-    const { withTicketTypes = true, onlyPublished = false } = opts;
+    const { withTicketTypes = true, onlyPublished = true } = opts;
 
     const qb = this.query('e').where('e.id = :id', { id });
 

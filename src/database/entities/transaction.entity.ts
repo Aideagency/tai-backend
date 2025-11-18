@@ -9,68 +9,40 @@ export enum TransactionStatus {
   Abandoned = 'abandoned',
 }
 
-export enum WithdrawRequestStatus {
-  Pending = 'pending',
-  Success = 'success',
-  Failure = 'failure',
-  Abandoned = 'abandoned',
-  Rejected = 'rejected',
-}
-
-export enum TransactionProductType {
-  SecuritiesTrading = 'Securities Trading',
-  NGNWallet = 'NGN Wallet',
-  FixedIncomeNGN = 'Fixed Income NGN',
-  AlphaFund = 'Alpha Fund',
-  EquityFund = 'Equity Fund',
-  MMFFund = 'MMF Fund',
-  SMANGN = 'SMA NGN',
-}
-
-export enum MutaulFundType {
-  ALPHA_FUND = 'alpha_fund',
-  EQUITY_FUND = 'equity_fund',
-  MONEY_MARKET_FUND = 'money_market_fund',
-}
-
-export enum CbaPostingStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  RETRY = 'RETRY',
+export enum PaidFor {
+  EVENT = 'EVENT',
+  COUNSELLING = 'COUNSELLING',
+  COURSE = 'COURSE',
 }
 
 @Entity('Transactions')
 export class TransactionEntity extends CustomEntity {
-  @Column()
+  @Column({ nullable: true })
   transaction_ref: string;
 
-  @Column({ default: 'pending' })
-  status: string;
+  @Column({
+    type: 'enum',
+    enum: TransactionStatus,
+    default: TransactionStatus.Pending,
+    nullable: false,
+  })
+  status: TransactionStatus;
 
   @Column({ nullable: true })
   comment: string;
 
   @Column({ nullable: true })
-  pay_comment: string;
-
-  @Column({ nullable: true })
-  client_id: string;
-
-  @Column({ nullable: true })
-  fullName: string;
-
-  @Column({ nullable: true })
   email_address: string;
 
   @Column({ nullable: true })
-  phoneNumber: string;
+  phone_number: string;
 
-  @Column({ nullable: true })
-  channel: string;
-
-  @Column({ nullable: true })
-  product_type: string;
+  @Column({
+    type: 'enum',
+    enum: PaidFor,
+    nullable: false,
+  })
+  paid_for: PaidFor;
 
   @Column({
     type: 'decimal',
@@ -99,23 +71,11 @@ export class TransactionEntity extends CustomEntity {
   })
   actualAmount: number;
 
-  @Column({ type: 'timestamp', nullable: true })
-  transaction_date: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  Fincon_date: Date;
-
   @Column({ nullable: true, default: 'NGN' })
   currency_code: string;
 
   @Column({ nullable: true })
-  product_description: string;
-
-  @Column({ nullable: true })
   hash: string;
-
-  @Column({ nullable: true })
-  paystack_id: string;
 
   @Column({ nullable: true })
   paystack_ref: string;
