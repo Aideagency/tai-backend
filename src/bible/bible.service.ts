@@ -6,6 +6,7 @@ import { ContentType } from './dto/get-book-chapter.dto'; // enum: 'html' | 'jso
 export class BibleService {
   private readonly apiKey = process.env.BIBLE_KEY;
   private readonly bibleURL = 'https://api.scripture.api.bible/v1';
+  private readonly newBibleURL = 'https://bible.helloao.org/api';
   readonly bibleId = process.env.BIBLE_ID;
 
   constructor(private httpService: CommonHttpService) {}
@@ -26,6 +27,44 @@ export class BibleService {
         accept: 'application/json',
       });
       return res?.data ?? [];
+    } catch (error: any) {
+      console.error(error);
+      throw new HttpException(
+        error?.response?.data ?? error?.message ?? 'Failed to fetch books',
+        error?.response?.status ?? 500,
+      );
+    }
+  }
+
+  async getNewBooks() {
+    try {
+      const url = `${this.newBibleURL}/eng_kjv/books.json`;
+      const res = await this.httpService.get(url, {
+        accept: 'application/json',
+      });
+      return res ?? [];
+    } catch (error: any) {
+      console.error(error);
+      throw new HttpException(
+        error?.response?.data ?? error?.message ?? 'Failed to fetch books',
+        error?.response?.status ?? 500,
+      );
+    }
+  }
+
+  async getBookChapterInformation({
+    chapter,
+    bookId,
+  }: {
+    chapter: number;
+    bookId: string;
+  }) {
+    try {
+      const url = `${this.newBibleURL}/eng_kjv/${bookId}/${chapter}.json`;
+      const res = await this.httpService.get(url, {
+        accept: 'application/json',
+      });
+      return res ?? [];
     } catch (error: any) {
       console.error(error);
       throw new HttpException(
