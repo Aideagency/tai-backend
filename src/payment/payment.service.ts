@@ -19,7 +19,7 @@ export class PaymentService {
   ) {}
 
   // Initialize Payment
-  private async initializePayment(data: {
+  async initializePayment(data: {
     email: string;
     amount: string;
   }): Promise<any> {

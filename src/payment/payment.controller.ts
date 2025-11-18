@@ -16,10 +16,10 @@ export class PaymentController {
   @Post('initialize')
   @ApiOperation({ summary: 'Create a new prayer' })
   create(@Body() dto: InitializePaymentDto, @Req() req: any) {
-    // return this.paymentService.initializePayment({
-    //   email: 'bmubarak88@gmail.com',
-    //   amount: '10000',
-    // });
+    return this.paymentService.initializePayment({
+      email: 'bmubarak88@gmail.com',
+      amount: '10000',
+    });
   }
 
   @Post('process-payments')
