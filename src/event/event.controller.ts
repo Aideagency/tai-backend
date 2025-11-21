@@ -108,31 +108,31 @@ export class EventController {
     return this.eventService.registerForEvent(req.user.id, eventId);
   }
 
-  @UseGuards(JwtGuards)
-  @Put('update-registration/:registrationId')
-  @ApiBearerAuth()
-  async updateRegistration(
-    @Param('registrationId') registrationId: number,
-    @Body() updateData: any,
-  ) {
-    return await this.eventService.updateRegistration(
-      registrationId,
-      updateData,
-    );
-  }
+  // @UseGuards(JwtGuards)
+  // @Put('update-registration/:registrationId')
+  // @ApiBearerAuth()
+  // async updateRegistration(
+  //   @Param('registrationId') registrationId: number,
+  //   @Body() updateData: any,
+  // ) {
+  //   return await this.eventService.updateRegistration(
+  //     registrationId,
+  //     updateData,
+  //   );
+  // }
 
-  @UseGuards(JwtGuards)
-  @Post('confirm-payment/:registrationId/:transactionId')
-  @ApiBearerAuth()
-  async confirmPayment(
-    @Param('registrationId') registrationId: number,
-    @Param('transactionId') transactionId: number,
-  ) {
-    return await this.eventService.confirmPayment(
-      registrationId,
-      transactionId,
-    );
-  }
+  // @UseGuards(JwtGuards)
+  // @Post('confirm-payment/:registrationId/:transactionId')
+  // @ApiBearerAuth()
+  // async confirmPayment(
+  //   @Param('registrationId') registrationId: number,
+  //   @Param('transactionId') transactionId: number,
+  // ) {
+  //   return await this.eventService.confirmPayment(
+  //     registrationId,
+  //     transactionId,
+  //   );
+  // }
 
   @UseGuards(JwtGuards)
   @Post('cancel-registration/:registrationId')
