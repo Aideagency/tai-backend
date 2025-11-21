@@ -148,6 +148,13 @@ export class ChallengeRepository extends BaseRepository<
     return this.findOne({ id });
   }
 
+  async findOneWithTask(id: number) {
+    return this.repository.findOne({
+      where: { id },
+      relations: ['tasks'],
+    });
+  }
+
   /** Detail view for users: challenge + tasks count; optionally include tasks */
   async getDetailForUser(challengeId: number, withTasks = false) {
     const qb = this.query('c')

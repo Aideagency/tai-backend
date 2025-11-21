@@ -14,6 +14,7 @@ import {
   Req,
   BadRequestException,
   Delete,
+  Put,
 } from '@nestjs/common';
 import {
   ListAvailableChallengesQueryDto,
@@ -28,6 +29,9 @@ import { EnrollmentSearchParams } from 'src/repository/challenge/user-challenge.
 import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { UserRepository } from 'src/repository/user/user.repository';
 import { AuthService } from 'src/auth/auth.service';
+import { UpdateChallengeDto } from './dtos/update-challenge.dto';
+import { AddTasksDto, CreateChallengeTaskDto, RemoveTasksDto } from './dtos/create-challenge-task.dto';
+import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
 // import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
 // Import your services
@@ -52,6 +56,20 @@ export class ChallengesController {
     };
   }
 
+  @Put('update-challenge/:id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async updateChallenge(
+    @Body(new ValidationPipe()) dto: UpdateChallengeDto,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.challengeService.updateChallenge(dto, id);
+    return {
+      message: 'Challenge Update Successfully!',
+      status: 200,
+    };
+  }
+
   @Get(':id')
   @HttpCode(HttpStatus.CREATED)
   @ApiExcludeEndpoint()
@@ -68,16 +86,96 @@ export class ChallengesController {
   }
 
   @Delete(':id')
-  // @HttpCode(HttpStatus.CREATED)
-  // @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
   async deleteChallenge(@Param('id', ParseIntPipe) id: string) {
-    // const user = this.authService.toSubmissionResponse(
-    //   await this.userRepo.findByEmail(req.user.email),
-    // );
     await this.challengeService.deleteChallange(id);
     return {
       message: 'Challlenge details deleted Successfully!',
       status: 200,
+    };
+  }
+
+  @Post('/:challengeId/tasks')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async addTasksToChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: AddTasksDto,
+  ) {
+    const result = await this.challengeService.addNewTasksToChallenge(
+      challengeId,
+      dto.tasks,
+    );
+
+    return {
+      message: 'Tasks added to challenge successfully!',
+      status: 201,
+      data: result,
+    };
+  }
+
+  // Remove a single task from challenge (admin)
+  @Delete(':challengeId/tasks/:taskId')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async removeTaskFromChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Param('taskId', ParseIntPipe) taskId: number,
+  ) {
+    const result = await this.challengeService.removeTasksFromChallenge(
+      challengeId,
+      [taskId],
+    );
+
+    return {
+      message: 'Task removed from challenge successfully!',
+      status: 200,
+      data: result,
+    };
+  }
+
+  // Remove multiple tasks from challenge (admin)
+  @Delete('/:challengeId/tasks')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async removeTasksFromChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: RemoveTasksDto,
+  ) {
+    const result = await this.challengeService.removeTasksFromChallenge(
+      challengeId,
+      dto.taskIds,
+    );
+
+    return {
+      message: 'Tasks removed from challenge successfully!',
+      status: 200,
+      data: result,
+    };
+  }
+
+  @Patch('/:challengeId/tasks/:taskId')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async editTaskForChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Param('taskId', ParseIntPipe) taskId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: UpdateChallengeTaskDto,
+  ) {
+    const result = await this.challengeService.updateChallengeTask(
+      challengeId,
+      taskId,
+      dto,
+    );
+
+    return {
+      message: 'Task updated successfully!',
+      status: 200,
+      data: result,
     };
   }
 

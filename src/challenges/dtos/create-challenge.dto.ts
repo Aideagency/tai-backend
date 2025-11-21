@@ -19,7 +19,7 @@ import {
   ChallengeStatus,
   Visibility,
 } from 'src/database/entities/challenge.entity';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class CreateChallengeDto {
   @ApiProperty({

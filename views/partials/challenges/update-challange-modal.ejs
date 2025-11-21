@@ -211,111 +211,7 @@
           </div>
 
           <div id="updateTaskList" class="space-y-3">
-            <!-- Template item: cloned for each task -->
-            <div
-              class="task-item task-item-template hidden space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200"
-              data-index="0"
-            >
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-semibold text-gray-700">
-                  Task <span class="task-label">1</span>
-                </span>
-                <button
-                  type="button"
-                  class="text-[10px] px-2 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 remove-task-btn"
-                  onclick="removeUpdateTaskItem(this)"
-                >
-                  Remove
-                </button>
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-medium text-gray-700 mb-1">
-                  Task Title
-                </label>
-                <input
-                  type="text"
-                  name="tasks[0].title"
-                  minlength="3"
-                  maxlength="200"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                />
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-medium text-gray-700 mb-1">
-                  Instructions
-                </label>
-                <textarea
-                  name="tasks[0].instructions"
-                  rows="2"
-                  minlength="10"
-                  maxlength="1000"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                ></textarea>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2">
-                <div>
-                  <label
-                    class="block text-[11px] font-medium text-gray-700 mb-1"
-                  >
-                    Day #
-                  </label>
-                  <input
-                    type="number"
-                    name="tasks[0].dayNumber"
-                    min="1"
-                    max="365"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    class="block text-[11px] font-medium text-gray-700 mb-1"
-                  >
-                    Week #
-                  </label>
-                  <input
-                    type="number"
-                    name="tasks[0].weekNumber"
-                    min="1"
-                    max="52"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    class="block text-[11px] font-medium text-gray-700 mb-1"
-                  >
-                    Cadence
-                  </label>
-                  <select
-                    name="tasks[0].frequency"
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  >
-                    <option value="DAILY">Daily</option>
-                    <option value="WEEKLY">Weekly</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  class="inline-flex items-center gap-2 text-[11px] text-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    name="tasks[0].isMilestone"
-                    value="true"
-                    class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-                  />
-                  Milestone task
-                </label>
-              </div>
-            </div>
+            <!-- Empty, will be dynamically populated with new tasks -->
           </div>
         </div>
       </form>
@@ -363,18 +259,16 @@
     const form = document.getElementById('updateChallengeForm');
     const taskList = document.getElementById('updateTaskList');
 
-    // Reset form & tasks
+    // Reset form & tasks (clear any previous tasks)
     form.reset();
-    Array.from(
-      taskList.querySelectorAll('.task-item:not(.task-item-template)'),
-    ).forEach((el) => el.remove());
+    taskList.innerHTML = ''; // Ensure no prefilled tasks
 
-    // Show modal immediately (you can add a loading state if you want)
+    // Show modal
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
     try {
-      // 🔁 Adjust this to your real endpoint
+      // Adjust this endpoint if different
       const res = await fetch(`/challenges/${id}`);
       if (!res.ok) {
         throw new Error(`Failed to fetch challenge (status ${res.status})`);
@@ -425,138 +319,224 @@
     );
     dualCheckbox.checked = !!challenge.requireDualConfirmation;
 
-    // Tasks
-    const tasks = Array.isArray(challenge.tasks) ? challenge.tasks : [];
-    const taskList = document.getElementById('updateTaskList');
-    const template = taskList.querySelector('.task-item-template');
-
-    if (tasks.length === 0) {
-      // At least one blank task for editing
-      const emptyClone = cloneUpdateTaskItem(template);
-      taskList.appendChild(emptyClone);
-    } else {
-      tasks.forEach((task) => {
-        const clone = cloneUpdateTaskItem(template);
-
-        const titleInput = clone.querySelector(
-          'input[name^="tasks"][name$=".title"]',
-        );
-        const instructionsInput = clone.querySelector(
-          'textarea[name^="tasks"][name$=".instructions"]',
-        );
-        const dayInput = clone.querySelector(
-          'input[name^="tasks"][name$=".dayNumber"]',
-        );
-        const weekInput = clone.querySelector(
-          'input[name^="tasks"][name$=".weekNumber"]',
-        );
-        const freqSelect = clone.querySelector(
-          'select[name^="tasks"][name$=".frequency"]',
-        );
-        const milestoneCheckbox = clone.querySelector(
-          'input[name^="tasks"][name$=".isMilestone"]',
-        );
-
-        if (titleInput) titleInput.value = task.title || '';
-        if (instructionsInput)
-          instructionsInput.value = task.instructions || '';
-        if (dayInput) dayInput.value = task.dayNumber || '';
-        if (weekInput) weekInput.value = task.weekNumber || '';
-        if (freqSelect)
-          freqSelect.value = task.cadence || task.frequency || 'DAILY';
-        if (milestoneCheckbox) milestoneCheckbox.checked = !!task.isMilestone;
-
-        taskList.appendChild(clone);
-      });
-    }
-
-    renumberUpdateTaskItems();
-  }
-
-  function cloneUpdateTaskItem(template) {
-    const clone = template.cloneNode(true);
-    clone.classList.remove('task-item-template', 'hidden');
-    return clone;
-  }
-
-  function renumberUpdateTaskItems() {
-    const taskList = document.getElementById('updateTaskList');
-    const taskItems = taskList.querySelectorAll(
-      '.task-item:not(.task-item-template)',
-    );
-
-    taskItems.forEach((item, index) => {
-      item.dataset.index = index;
-      const labelSpan = item.querySelector('.task-label');
-      if (labelSpan) labelSpan.textContent = index + 1;
-
-      const fields = item.querySelectorAll(
-        'input[name^="tasks["], textarea[name^="tasks["], select[name^="tasks["]',
-      );
-      fields.forEach((field) => {
-        const oldName = field.getAttribute('name');
-        if (!oldName) return;
-        const newName = oldName.replace(/tasks\[\d+\]/, `tasks[${index}]`);
-        field.setAttribute('name', newName);
-      });
-    });
-  }
-
-  function addUpdateTaskItem() {
-    const taskList = document.getElementById('updateTaskList');
-    const template = taskList.querySelector('.task-item-template');
-    if (!template) return;
-
-    const clone = cloneUpdateTaskItem(template);
-
-    // Clear values
-    const inputs = clone.querySelectorAll('input, textarea, select');
-    inputs.forEach((el) => {
-      if (el.type === 'checkbox') {
-        el.checked = false;
-      } else if (el.tagName === 'SELECT') {
-        el.selectedIndex = 0;
-      } else {
-        el.value = '';
-      }
-    });
-
-    taskList.appendChild(clone);
-    renumberUpdateTaskItems();
-  }
-
-  function removeUpdateTaskItem(button) {
-    const taskList = document.getElementById('updateTaskList');
-    const items = taskList.querySelectorAll(
-      '.task-item:not(.task-item-template)',
-    );
-    if (items.length <= 1) {
-      // If only one task remains, just clear its fields instead of removing
-      const onlyItem = items[0];
-      if (!onlyItem) return;
-      const inputs = onlyItem.querySelectorAll('input, textarea, select');
-      inputs.forEach((el) => {
-        if (el.type === 'checkbox') {
-          el.checked = false;
-        } else if (el.tagName === 'SELECT') {
-          el.selectedIndex = 0;
-        } else {
-          el.value = '';
-        }
-      });
-      return;
-    }
-
-    const taskItem = button.closest('.task-item');
-    if (taskItem) {
-      taskItem.remove();
-      renumberUpdateTaskItems();
-    }
+    // Tasks: Start with empty list, user will add tasks
   }
 
   function closeUpdateChallengeModal() {
     const modal = document.getElementById('updateChallengeModal');
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+  }
+
+  function addUpdateTaskItem() {
+    const taskList = document.getElementById('updateTaskList');
+
+    // Create a new task item
+    const taskItem = document.createElement('div');
+    taskItem.className =
+      'task-item space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200';
+
+    taskItem.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[11px] font-semibold text-gray-700">Task</span>
+        <button
+          type="button"
+          class="text-[10px] px-2 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 remove-task-btn"
+          onclick="removeUpdateTaskItem(this)"
+        >
+          Remove
+        </button>
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-gray-700 mb-1">Task Title</label>
+        <input
+          type="text"
+          name="tasks[0].title"
+          minlength="3"
+          maxlength="200"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        />
+      </div>
+
+      <div>
+        <label class="block text-[11px] font-medium text-gray-700 mb-1">Instructions</label>
+        <textarea
+          name="tasks[0].instructions"
+          rows="2"
+          minlength="10"
+          maxlength="1000"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">Day #</label>
+          <input type="number" name="tasks[0].dayNumber" min="1" max="365" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">Week #</label>
+          <input type="number" name="tasks[0].weekNumber" min="1" max="52" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"/>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">Cadence</label>
+          <select name="tasks[0].frequency" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs">
+            <option value="DAILY">Daily</option>
+            <option value="WEEKLY">Weekly</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
+          <input type="checkbox" name="tasks[0].isMilestone" value="true" class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"/>
+          Milestone task
+        </label>
+      </div>
+    `;
+    taskList.appendChild(taskItem);
+  }
+
+  function removeUpdateTaskItem(button) {
+    const taskItem = button.closest('.task-item');
+    if (taskItem) {
+      taskItem.remove();
+    }
+  }
+
+  // Handle form submission
+  document
+    .getElementById('updateChallengeForm')
+    .addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const id = document.getElementById('updateChallengeId').value;
+      if (!id) {
+        alert('Challenge ID is missing.');
+        return;
+      }
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : null;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+
+      const payload = serializeUpdateChallengeForm();
+
+      try {
+        const res = await fetch(`/challenges/update-challenge/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          alert('Failed to update challenge.');
+          return;
+        }
+
+        closeUpdateChallengeModal();
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'An unexpected error occurred.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+
+  function serializeUpdateChallengeForm() {
+    const form = document.getElementById('updateChallengeForm');
+    const data = {};
+
+    const getVal = (name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? el.value.trim() : '';
+    };
+
+    // Collecting challenge data
+    data.title = getVal('title');
+    data.description = getVal('description') || undefined;
+    data.bookTitle = getVal('bookTitle') || undefined;
+    data.bookAuthor = getVal('bookAuthor') || undefined;
+    data.community = getVal('community');
+    data.status = getVal('status');
+    data.visibility = getVal('visibility');
+    data.frequency = getVal('frequency');
+
+    // Collecting optional numeric fields
+    const durationDays = parseInt(getVal('durationDays'), 10);
+    data.durationDays = isNaN(durationDays) ? undefined : durationDays;
+
+    const badge = getVal('completionBadgeCode');
+    data.completionBadgeCode = badge || undefined;
+
+    // Collecting checkbox data
+    const dualCheckbox = document.getElementById(
+      'updateChallengeRequireDualConfirmation',
+    );
+    data.requireDualConfirmation = dualCheckbox
+      ? dualCheckbox.checked
+      : undefined;
+
+    // Tasks section
+    const taskList = document.getElementById('updateTaskList');
+    const taskItems = taskList.querySelectorAll(
+      '.task-item:not(.task-item-template)',
+    );
+    const tasks = [];
+
+    taskItems.forEach((item) => {
+      const titleEl = item.querySelector('input[name$=".title"]');
+      const instructionsEl = item.querySelector(
+        'textarea[name$=".instructions"]',
+      );
+      const dayEl = item.querySelector('input[name$=".dayNumber"]');
+      const weekEl = item.querySelector('input[name$=".weekNumber"]');
+      const freqEl = item.querySelector('select[name$=".frequency"]');
+      const milestoneEl = item.querySelector('input[name$=".isMilestone"]');
+
+      const title = titleEl ? titleEl.value.trim() : '';
+      const instructions = instructionsEl ? instructionsEl.value.trim() : '';
+
+      // Skip empty tasks
+      if (!title && !instructions) return;
+
+      const task = {
+        title,
+        instructions,
+        frequency: freqEl ? freqEl.value : 'DAILY',
+      };
+
+      if (dayEl && dayEl.value) {
+        const dayNum = parseInt(dayEl.value, 10);
+        if (!isNaN(dayNum)) task.dayNumber = dayNum;
+      }
+
+      if (weekEl && weekEl.value) {
+        const weekNum = parseInt(weekEl.value, 10);
+        if (!isNaN(weekNum)) task.weekNumber = weekNum;
+      }
+
+      if (milestoneEl && milestoneEl.checked) {
+        task.isMilestone = true;
+      }
+
+      tasks.push(task);
+    });
+
+    data.tasks = tasks;
+
+    return data;
   }
 </script>
