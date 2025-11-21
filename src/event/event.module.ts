@@ -7,5 +7,6 @@ import { RepositoryModule } from 'src/repository/repository.module';
   providers: [EventService],
   controllers: [EventController],
   imports: [RepositoryModule],
+  exports: [EventService]
 })
 export class EventModule {}

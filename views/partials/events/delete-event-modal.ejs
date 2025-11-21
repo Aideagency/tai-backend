@@ -1,0 +1,131 @@
+<div
+  id="deleteEventModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6">
+    <h3 class="text-sm font-semibold text-gray-800 mb-2">
+      Confirm Delete
+    </h3>
+    <p class="text-xs text-gray-600 mb-4">
+      Are you sure you want to delete
+      <span id="deleteEventTitle" class="font-semibold text-red-600"></span>?
+      This action cannot be undone.
+    </p>
+
+    <div class="flex justify-end gap-2 mt-4">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+        onclick="closeDeleteEventModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        id="confirmDeleteEventBtn"
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <span id="confirmDeleteEventText">Delete</span>
+
+        <!-- Spinner -->
+        <svg
+          id="confirmDeleteEventSpinner"
+          class="hidden animate-spin h-4 w-4 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedEventId = null;
+
+  function openDeleteEventModal(btn) {
+    const modal = document.getElementById('deleteEventModal');
+    if (!modal) return;
+
+    selectedEventId = btn.dataset.eventId;
+    const title = btn.dataset.eventTitle || '';
+    const nameSpan = document.getElementById('deleteEventTitle');
+    if (nameSpan) nameSpan.textContent = title;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeDeleteEventModal() {
+    const modal = document.getElementById('deleteEventModal');
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    selectedEventId = null;
+
+    const btn = document.getElementById('confirmDeleteEventBtn');
+    const text = document.getElementById('confirmDeleteEventText');
+    const spinner = document.getElementById('confirmDeleteEventSpinner');
+
+    if (btn && text && spinner) {
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      text.textContent = 'Delete';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('confirmDeleteEventBtn');
+    const text = document.getElementById('confirmDeleteEventText');
+    const spinner = document.getElementById('confirmDeleteEventSpinner');
+
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+      if (!selectedEventId) return;
+
+      try {
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = 'Deleting...';
+
+        const res = await fetch(`/events/delete/${selectedEventId}`, {
+          method: 'DELETE',
+          credentials: 'include', // send admin_token cookie
+        });
+
+        if (!res.ok) {
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Delete';
+          alert('Error deleting event.');
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Delete';
+        alert('Something went wrong.');
+      }
+    });
+  });
+</script>

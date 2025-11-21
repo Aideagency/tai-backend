@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Challenges</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "challenges" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Challenges'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar: title + filters + Add Challenge -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)]
+                 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              Challenges
+            </h3>
+            <p class="text-xs text-gray-500">
+              Manage all challenges. Total: <%= meta?.totalItems || 0 %>
+            </p>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+            <!-- Filters: search + community + status + activeOnly -->
+            <form method="GET" action="/admin-views/challenges" class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+              <!-- Search -->
+              <input type="text" name="q" placeholder="Search by title, description, or book..." value="<%= (filters && filters.q) || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <!-- Community filter -->
+              <select name="community" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All communities</option>
+                <option value="FAMILY" <%= (filters && filters.community === 'FAMILY') ? 'selected' : '' %>>
+                  Family
+                </option>
+                <option value="YOUTH" <%= (filters && filters.community === 'YOUTH') ? 'selected' : '' %>>
+                  Youth
+                </option>
+                <option value="MEN" <%= (filters && filters.community === 'MEN') ? 'selected' : '' %>>
+                  Men
+                </option>
+                <option value="WOMEN" <%= (filters && filters.community === 'WOMEN') ? 'selected' : '' %>>
+                  Women
+                </option>
+              </select>
+
+              <!-- Status filter -->
+              <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All statuses</option>
+                <option value="DRAFT" <%= (filters && filters.status === 'DRAFT') ? 'selected' : '' %>>
+                  Draft
+                </option>
+                <option value="ACTIVE" <%= (filters && filters.status === 'ACTIVE') ? 'selected' : '' %>>
+                  Active
+                </option>
+                <option value="COMPLETED" <%= (filters && filters.status === 'COMPLETED') ? 'selected' : '' %>>
+                  Completed
+                </option>
+                <option value="ARCHIVED" <%= (filters && filters.status === 'ARCHIVED') ? 'selected' : '' %>>
+                  Archived
+                </option>
+              </select>
+
+              <!-- Visibility filter -->
+              <select name="visibility" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All visibilities</option>
+                <option value="PUBLIC" <%= (filters && filters.visibility === 'PUBLIC') ? 'selected' : '' %>>
+                  Public
+                </option>
+                <option value="PRIVATE" <%= (filters && filters.visibility === 'PRIVATE') ? 'selected' : '' %>>
+                  Private
+                </option>
+              </select>
+
+              <!-- Active only toggle -->
+              <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                <input type="checkbox" name="activeOnly" value="true" <%= (filters && filters.activeOnly) ? 'checked' : '' %> class="rounded border-gray-300 text-[var(--color-primary)]
+                         focus:ring-[var(--color-primary)]" />
+                Active only
+              </label>
+
+              <button type="submit" class="inline-flex items-center rounded-lg
+                       bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                Apply
+              </button>
+            </form>
+
+            <!-- Add Challenge button -->
+            <button type="button" onclick="openAddChallengeModal()" class="inline-flex items-center justify-center rounded-lg
+                     bg-[var(--color-secondary-dark)] text-white text-xs font-semibold px-4 py-2
+                     hover:bg-[var(--color-primary-dark)]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+              + Add Challenge
+            </button>
+          </div>
+        </section>
+
+        <!-- Challenges table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Title</th>
+                  <th class="px-3 py-2 text-left font-medium">Community</th>
+                  <th class="px-3 py-2 text-left font-medium">Book</th>
+                  <th class="px-3 py-2 text-left font-medium">Duration (days)</th>
+                  <th class="px-3 py-2 text-left font-medium">Frequency</th>
+                  <th class="px-3 py-2 text-left font-medium">Visibility</th>
+                  <th class="px-3 py-2 text-left font-medium">Tasks</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-left font-medium">Dual confirm?</th>
+                  <th class="px-3 py-2 text-left font-medium">Created</th>
+                  <th class="px-3 py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(challenge, index) { %>
+                <tr class="hover:bg-gray-50">
+                  <!-- Index -->
+                  <td class="px-3 py-2 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+
+                  <!-- Title + description snippet -->
+                  <td class="px-3 py-2">
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-gray-800">
+                        <%= challenge.title || '-' %>
+                      </span>
+                      <% if (challenge.description) { %>
+                      <span class="text-[10px] text-gray-500 line-clamp-2">
+                        <%= challenge.description %>
+                      </span>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <!-- Community -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                      bg-[var(--color-secondary-light)] text-[var(--color-secondary-dark)]">
+                      <%= challenge.community || '-' %>
+                    </span>
+                  </td>
+
+                  <!-- Book -->
+                  <td class="px-3 py-2 text-gray-700 max-w-xs">
+                    <span class="block text-[11px] text-gray-800 font-semibold">
+                      <%= challenge.bookTitle || '-' %>
+                    </span>
+                    <% if (challenge.bookAuthor) { %>
+                    <span class="block text-[10px] text-gray-500">
+                      by <%= challenge.bookAuthor %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Duration -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= challenge.durationDays || '-' %>
+                  </td>
+
+                  <!-- Frequency -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= challenge.frequency || '-' %>
+                  </td>
+
+                  <!-- Visibility -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                      <%= challenge.visibility || '-' %>
+                    </span>
+                  </td>
+
+                  <!-- Tasks count -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= challenge.tasksCount ?? '-' %>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-3 py-2">
+                    <% if (challenge.status === 'ACTIVE') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-green-50 text-green-700">
+                      Active
+                    </span>
+                    <% } else if (challenge.status === 'DRAFT') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                      Draft
+                    </span>
+                    <% } else if (challenge.status === 'COMPLETED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700">
+                      Completed
+                    </span>
+                    <% } else if (challenge.status === 'ARCHIVED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                      Archived
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-500 text-[10px]">
+                      <%= challenge.status || '-' %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Require dual confirmation -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (challenge.requireDualConfirmation) { %>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium">
+                      Yes
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[10px] font-medium">
+                      No
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Created -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (challenge.createdAt) { %>
+                    <%= new Date(challenge.createdAt).toLocaleString() %>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
+                    <button type="button" class="inline-flex items-center rounded-md border border-sky-500 text-sky-600 px-2 py-1 text-[11px] font-semibold hover:bg-sky-50 transition" data-challenge-id="<%= challenge.id %>" onclick="openPreviewChallengeModal(this)">
+                      Preview
+                    </button>
+
+                    <button type="button" class="inline-flex items-center rounded-md border 
+         border-[var(--color-primary)] text-[var(--color-primary-dark)] px-2 py-1 text-[11px] font-semibold hover:bg-[var(--color-secondary-light)] transition" data-challenge-id="<%= challenge.id %>" onclick="openUpdateChallengeModal(this)">
+                      Update
+                    </button>
+
+
+                    <button type="button" class="inline-flex items-center px-2 py-1 text-[11px] rounded-md border border-red-500 text-red-600 hover:bg-red-50" onclick="openDeleteChallengeModal(this)" data-challenge-id="<%= challenge.id %>" data-challenge-title="<%= challenge.title || '' %>">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="12" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No challenges found.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination (unchanged, just use meta + items) -->
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> challenges
+            </div>
+
+            <div class="flex items-center gap-1">
+              <% const currentQ = (filters && filters.q) || ''; %>
+              <% const currentCommunity = (filters && filters.community) || ''; %>
+              <% const currentStatus = (filters && filters.status) || ''; %>
+              <% const currentVisibility = (filters && filters.visibility) || ''; %>
+              <% const activeOnly = (filters && filters.activeOnly) ? 'true' : ''; %>
+
+              <% function buildQuery(pageNum) { 
+             let qs = '?page=' + pageNum;
+             if (currentQ) qs += '&q=' + encodeURIComponent(currentQ);
+             if (currentCommunity) qs += '&community=' + encodeURIComponent(currentCommunity);
+             if (currentStatus) qs += '&status=' + encodeURIComponent(currentStatus);
+             if (currentVisibility) qs += '&visibility=' + encodeURIComponent(currentVisibility);
+             if (activeOnly) qs += '&activeOnly=true';
+             return qs;
+           } %>
+
+              <!-- Prev -->
+              <% if (meta.currentPage > 1) { %>
+              <a href={"/admin-views/challenges" + buildQuery(meta.currentPage - 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Prev
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Prev
+              </span>
+              <% } %>
+
+              <!-- Page numbers -->
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href={"/admin-views/challenges" + buildQuery(p)} class="px-2 py-1 rounded border text-xs
+              <%= p === meta.currentPage
+                ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold'
+                : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <!-- Next -->
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href={"/admin-views/challenges" + buildQuery(meta.currentPage + 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Next
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Next
+              </span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals as partials -->
+  <%- include('partials/challenges/add-challenge-modal.ejs') %>
+  <%- include('partials/challenges/preview-challenge-modal.ejs') %>
+  <%- include('partials/challenges/update-challange-modal.ejs') %>
+  <%- include('partials/challenges/delete-challenge-modal.ejs') %>
+
+</body>
+
+</html>

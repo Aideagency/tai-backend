@@ -189,6 +189,7 @@ export class UserRepository extends BaseRepository<
       birth_date,
       phone_no,
       profilePicture,
+      id,
     } = user;
 
     // Rebuild community field from stored flags
@@ -214,6 +215,7 @@ export class UserRepository extends BaseRepository<
       phone_no,
       profilePicture,
       community,
+      id,
     };
   }
 }

@@ -1,0 +1,136 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Render,
+  Body,
+  Res,
+  Req,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { AdminAuthService } from 'src/admin/auth/admin-auth.service';
+import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
+import { AdminViewsService } from './admin-views-service';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { GetEventsFilterDto } from 'src/event/dtos/get-events-query.dto';
+import { Helper } from 'src/utils/helper';
+import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.dto';
+
+@Controller('admin-views')
+@ApiExcludeController()
+export class AdminViewsController {
+  constructor(
+    private readonly adminAuthService: AdminAuthService,
+    private readonly viewsService: AdminViewsService,
+  ) {}
+
+  @Get('login')
+  @Render('login')
+  getLoginPage() {
+    return { error: null, email: '' };
+  }
+
+  @Post('login')
+  async login(
+    @Body('email') email: string,
+    @Body('password') password: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const { token } = await this.adminAuthService.login({
+        email_address: email,
+        password,
+      });
+
+      res.cookie('admin_token', token, {
+        httpOnly: true,
+        secure: false, // change to true when using HTTPS
+        maxAge: 1000 * 60 * 60, // 1 hour
+      });
+
+      return res.redirect('/admin-views/dashboard');
+    } catch (err) {
+      return res.status(401).render('login', {
+        error: 'Invalid email or password',
+        email,
+      });
+    }
+  }
+
+  // 🔐 Protected admin dashboard
+  @Get('dashboard')
+  @UseGuards(AdminJwtGuard)
+  @Render('dashboard')
+  getDashboard(@Req() req: any) {
+    return { admin: req.user };
+  }
+
+  @Get('users')
+  @UseGuards(AdminJwtGuard)
+  @Render('users')
+  async getUsers(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('q') q?: string,
+  ) {
+    const pageNumber = Number(page) || 1;
+
+    const response = await this.viewsService.listUsers({
+      page: pageNumber,
+      q: q || '',
+      pageSize: 20,
+    });
+
+    return {
+      admin: req.user,
+      items: response.items,
+      meta: response.meta,
+      q: q || '',
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('events')
+  @UseGuards(AdminJwtGuard)
+  @Render('events')
+  async getEvents(@Req() req: any, @Query() query: GetEventsFilterDto) {
+    const response = await this.viewsService.listEvents(query);
+    return {
+      admin: req.user,
+      items: response.items,
+      meta: response.meta,
+      filters: {
+        q: query.q || '',
+        type: query.type || '',
+        upcomingOnly: !!query.upcomingOnly,
+      },
+      q: '',
+      currentPath: req.originalUrl,
+      formatDate: Helper.formatDateTime,
+    };
+  }
+
+  @Get('challenges')
+  @UseGuards(AdminJwtGuard)
+  @Render('challenges')
+  async getChallenges(@Req() req: any, @Query() query: GetChallengesQueryDto) {
+    const response = await this.viewsService.listChallengess(query);
+
+    return {
+      admin: req.user,
+      items: response.items,
+      meta: response.meta,
+      filters: query,
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('logout')
+  @UseGuards(AdminJwtGuard)
+  logout(@Res() res: Response) {
+    res.clearCookie('admin_token');
+    return res.redirect('/admin-views/login');
+  }
+}

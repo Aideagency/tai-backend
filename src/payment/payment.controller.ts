@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, Get, Param } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
@@ -14,12 +14,18 @@ export class PaymentController {
   }
 
   @Post('initialize')
-  @ApiOperation({ summary: 'Create a new prayer' })
+  @ApiOperation({ summary: 'Initialize a new transaction' })
   create(@Body() dto: InitializePaymentDto, @Req() req: any) {
     return this.paymentService.initializePayment({
-      email: 'bmubarak88@gmail.com',
-      amount: '10000',
+      email: dto.email,
+      amount: String(dto.amount * 100),
     });
+  }
+
+  @Get('verify-transaction/:id')
+  @ApiOperation({ summary: 'Verify a payment transaction' })
+  verifyPayment(@Param('id') reference: string) {
+    return this.paymentService.verifyPayment(reference);
   }
 
   @Post('process-payments')

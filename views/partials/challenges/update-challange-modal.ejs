@@ -1,0 +1,562 @@
+<div
+  id="updateChallengeModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 text-xs overflow-hidden flex flex-col max-h-[90vh]"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+      <h3 class="text-base font-semibold text-gray-800">Update Challenge</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+        onclick="closeUpdateChallengeModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="overflow-y-auto pr-2 flex-1 custom-scrollbar space-y-5">
+      <form id="updateChallengeForm" class="space-y-5">
+        <input type="hidden" name="id" id="updateChallengeId" />
+
+        <!-- BASIC INFO -->
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">
+            Title
+          </label>
+          <input
+            type="text"
+            name="title"
+            id="updateChallengeTitle"
+            required
+            minlength="3"
+            maxlength="100"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <textarea
+            name="description"
+            id="updateChallengeDescription"
+            rows="3"
+            minlength="10"
+            maxlength="5000"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          ></textarea>
+        </div>
+
+        <!-- BOOK INFO -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Book Title (optional)
+            </label>
+            <input
+              type="text"
+              name="bookTitle"
+              id="updateChallengeBookTitle"
+              maxlength="200"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Book Author (optional)
+            </label>
+            <input
+              type="text"
+              name="bookAuthor"
+              id="updateChallengeBookAuthor"
+              maxlength="100"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+          </div>
+        </div>
+
+        <!-- COMMUNITY & STATUS -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Community
+            </label>
+            <select
+              name="community"
+              id="updateChallengeCommunity"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
+              <option value="">Select</option>
+              <option value="SINGLE">Single</option>
+              <option value="MARRIED">Married</option>
+              <option value="PARENT">Parent</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              name="status"
+              id="updateChallengeStatus"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="ACTIVE">Active</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- VISIBILITY & FREQUENCY -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Visibility
+            </label>
+            <select
+              name="visibility"
+              id="updateChallengeVisibility"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
+              <option value="PUBLIC">Public</option>
+              <option value="COMMUNITY_ONLY">Community Only</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Frequency
+            </label>
+            <select
+              name="frequency"
+              id="updateChallengeFrequency"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MIXED">Mixed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DURATION & BADGE -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Duration (days)
+            </label>
+            <input
+              type="number"
+              name="durationDays"
+              id="updateChallengeDurationDays"
+              min="1"
+              max="365"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Completion badge code (optional)
+            </label>
+            <input
+              type="text"
+              name="completionBadgeCode"
+              id="updateChallengeCompletionBadgeCode"
+              maxlength="50"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+          </div>
+        </div>
+
+        <!-- DUAL CONFIRMATION -->
+        <div>
+          <label
+            class="inline-flex items-center gap-2 text-[11px] text-gray-700"
+          >
+            <input
+              type="checkbox"
+              name="requireDualConfirmation"
+              id="updateChallengeRequireDualConfirmation"
+              value="true"
+              class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+            />
+            Require dual confirmation
+          </label>
+        </div>
+
+        <!-- TASKS SECTION -->
+        <div class="border-t border-gray-200 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[11px] font-semibold text-gray-800">Tasks</h4>
+            <button
+              type="button"
+              class="text-[11px] px-2 py-1 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:bg-[var(--color-secondary-light)]"
+              onclick="addUpdateTaskItem()"
+            >
+              + Add Task
+            </button>
+          </div>
+
+          <div id="updateTaskList" class="space-y-3">
+            <!-- Template item: cloned for each task -->
+            <div
+              class="task-item task-item-template hidden space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200"
+              data-index="0"
+            >
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-semibold text-gray-700">
+                  Task <span class="task-label">1</span>
+                </span>
+                <button
+                  type="button"
+                  class="text-[10px] px-2 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 remove-task-btn"
+                  onclick="removeUpdateTaskItem(this)"
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                  Task Title
+                </label>
+                <input
+                  type="text"
+                  name="tasks[0].title"
+                  minlength="3"
+                  maxlength="200"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                  Instructions
+                </label>
+                <textarea
+                  name="tasks[0].instructions"
+                  rows="2"
+                  minlength="10"
+                  maxlength="1000"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                ></textarea>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
+                    Day #
+                  </label>
+                  <input
+                    type="number"
+                    name="tasks[0].dayNumber"
+                    min="1"
+                    max="365"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
+                    Week #
+                  </label>
+                  <input
+                    type="number"
+                    name="tasks[0].weekNumber"
+                    min="1"
+                    max="52"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
+                    Cadence
+                  </label>
+                  <select
+                    name="tasks[0].frequency"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  >
+                    <option value="DAILY">Daily</option>
+                    <option value="WEEKLY">Weekly</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  class="inline-flex items-center gap-2 text-[11px] text-gray-700"
+                >
+                  <input
+                    type="checkbox"
+                    name="tasks[0].isMilestone"
+                    value="true"
+                    class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                  />
+                  Milestone task
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end gap-2 flex-shrink-0">
+      <button
+        type="button"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
+        onclick="closeUpdateChallengeModal()"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="updateChallengeForm"
+        class="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-[11px] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+      >
+        Save changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c6c6c6;
+    border-radius: 10px;
+  }
+</style>
+
+<script>
+  async function openUpdateChallengeModal(button) {
+    const id = button.getAttribute('data-challenge-id');
+    if (!id) return;
+
+    const modal = document.getElementById('updateChallengeModal');
+    const form = document.getElementById('updateChallengeForm');
+    const taskList = document.getElementById('updateTaskList');
+
+    // Reset form & tasks
+    form.reset();
+    Array.from(
+      taskList.querySelectorAll('.task-item:not(.task-item-template)'),
+    ).forEach((el) => el.remove());
+
+    // Show modal immediately (you can add a loading state if you want)
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    try {
+      // 🔁 Adjust this to your real endpoint
+      const res = await fetch(`/challenges/${id}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch challenge (status ${res.status})`);
+      }
+      const json = await res.json();
+      const challenge = json.data || json;
+
+      populateUpdateChallengeModal(challenge);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Failed to load challenge details.');
+      closeUpdateChallengeModal();
+    }
+  }
+
+  function populateUpdateChallengeModal(challenge) {
+    document.getElementById('updateChallengeId').value = challenge.id;
+
+    // Basic fields
+    document.getElementById('updateChallengeTitle').value =
+      challenge.title || '';
+    document.getElementById('updateChallengeDescription').value =
+      challenge.description || '';
+    document.getElementById('updateChallengeBookTitle').value =
+      challenge.bookTitle || '';
+    document.getElementById('updateChallengeBookAuthor').value =
+      challenge.bookAuthor || '';
+
+    // Selects
+    document.getElementById('updateChallengeCommunity').value =
+      challenge.community || '';
+    document.getElementById('updateChallengeStatus').value =
+      challenge.status || '';
+    document.getElementById('updateChallengeVisibility').value =
+      challenge.visibility || '';
+    document.getElementById('updateChallengeFrequency').value =
+      challenge.frequency || '';
+
+    // Numbers & optional strings
+    document.getElementById('updateChallengeDurationDays').value =
+      typeof challenge.durationDays === 'number' ? challenge.durationDays : '';
+    document.getElementById('updateChallengeCompletionBadgeCode').value =
+      challenge.completionBadgeCode || '';
+
+    // Checkbox
+    const dualCheckbox = document.getElementById(
+      'updateChallengeRequireDualConfirmation',
+    );
+    dualCheckbox.checked = !!challenge.requireDualConfirmation;
+
+    // Tasks
+    const tasks = Array.isArray(challenge.tasks) ? challenge.tasks : [];
+    const taskList = document.getElementById('updateTaskList');
+    const template = taskList.querySelector('.task-item-template');
+
+    if (tasks.length === 0) {
+      // At least one blank task for editing
+      const emptyClone = cloneUpdateTaskItem(template);
+      taskList.appendChild(emptyClone);
+    } else {
+      tasks.forEach((task) => {
+        const clone = cloneUpdateTaskItem(template);
+
+        const titleInput = clone.querySelector(
+          'input[name^="tasks"][name$=".title"]',
+        );
+        const instructionsInput = clone.querySelector(
+          'textarea[name^="tasks"][name$=".instructions"]',
+        );
+        const dayInput = clone.querySelector(
+          'input[name^="tasks"][name$=".dayNumber"]',
+        );
+        const weekInput = clone.querySelector(
+          'input[name^="tasks"][name$=".weekNumber"]',
+        );
+        const freqSelect = clone.querySelector(
+          'select[name^="tasks"][name$=".frequency"]',
+        );
+        const milestoneCheckbox = clone.querySelector(
+          'input[name^="tasks"][name$=".isMilestone"]',
+        );
+
+        if (titleInput) titleInput.value = task.title || '';
+        if (instructionsInput)
+          instructionsInput.value = task.instructions || '';
+        if (dayInput) dayInput.value = task.dayNumber || '';
+        if (weekInput) weekInput.value = task.weekNumber || '';
+        if (freqSelect)
+          freqSelect.value = task.cadence || task.frequency || 'DAILY';
+        if (milestoneCheckbox) milestoneCheckbox.checked = !!task.isMilestone;
+
+        taskList.appendChild(clone);
+      });
+    }
+
+    renumberUpdateTaskItems();
+  }
+
+  function cloneUpdateTaskItem(template) {
+    const clone = template.cloneNode(true);
+    clone.classList.remove('task-item-template', 'hidden');
+    return clone;
+  }
+
+  function renumberUpdateTaskItems() {
+    const taskList = document.getElementById('updateTaskList');
+    const taskItems = taskList.querySelectorAll(
+      '.task-item:not(.task-item-template)',
+    );
+
+    taskItems.forEach((item, index) => {
+      item.dataset.index = index;
+      const labelSpan = item.querySelector('.task-label');
+      if (labelSpan) labelSpan.textContent = index + 1;
+
+      const fields = item.querySelectorAll(
+        'input[name^="tasks["], textarea[name^="tasks["], select[name^="tasks["]',
+      );
+      fields.forEach((field) => {
+        const oldName = field.getAttribute('name');
+        if (!oldName) return;
+        const newName = oldName.replace(/tasks\[\d+\]/, `tasks[${index}]`);
+        field.setAttribute('name', newName);
+      });
+    });
+  }
+
+  function addUpdateTaskItem() {
+    const taskList = document.getElementById('updateTaskList');
+    const template = taskList.querySelector('.task-item-template');
+    if (!template) return;
+
+    const clone = cloneUpdateTaskItem(template);
+
+    // Clear values
+    const inputs = clone.querySelectorAll('input, textarea, select');
+    inputs.forEach((el) => {
+      if (el.type === 'checkbox') {
+        el.checked = false;
+      } else if (el.tagName === 'SELECT') {
+        el.selectedIndex = 0;
+      } else {
+        el.value = '';
+      }
+    });
+
+    taskList.appendChild(clone);
+    renumberUpdateTaskItems();
+  }
+
+  function removeUpdateTaskItem(button) {
+    const taskList = document.getElementById('updateTaskList');
+    const items = taskList.querySelectorAll(
+      '.task-item:not(.task-item-template)',
+    );
+    if (items.length <= 1) {
+      // If only one task remains, just clear its fields instead of removing
+      const onlyItem = items[0];
+      if (!onlyItem) return;
+      const inputs = onlyItem.querySelectorAll('input, textarea, select');
+      inputs.forEach((el) => {
+        if (el.type === 'checkbox') {
+          el.checked = false;
+        } else if (el.tagName === 'SELECT') {
+          el.selectedIndex = 0;
+        } else {
+          el.value = '';
+        }
+      });
+      return;
+    }
+
+    const taskItem = button.closest('.task-item');
+    if (taskItem) {
+      taskItem.remove();
+      renumberUpdateTaskItems();
+    }
+  }
+
+  function closeUpdateChallengeModal() {
+    const modal = document.getElementById('updateChallengeModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+</script>

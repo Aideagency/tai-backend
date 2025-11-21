@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Events</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "events" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Events'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar: title + filters + Add Event -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)]
+                 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              Events
+            </h3>
+            <p class="text-xs text-gray-500">
+              Manage all events. Total: <%= meta?.totalItems || 0 %>
+            </p>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+            <!-- Filters: search + type -->
+            <form method="GET" action="/admin-views/events" class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+              <!-- Search -->
+              <input type="text" name="q" placeholder="Search by title, description, or location..." value="<%= (filters && filters.q) || q || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <!-- Type filter -->
+              <select name="type" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All types</option>
+                <option value="COMMUNITY" <%= (filters && filters.type === 'COMMUNITY') ? 'selected' : '' %>>
+                  Community
+                </option>
+                <option value="CONFERENCE" <%= (filters && filters.type === 'CONFERENCE') ? 'selected' : '' %>>
+                  Conference
+                </option>
+                <option value="RETREAT" <%= (filters && filters.type === 'RETREAT') ? 'selected' : '' %>>
+                  Retreat
+                </option>
+              </select>
+
+              <!-- Upcoming only toggle -->
+              <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                <input type="checkbox" name="upcomingOnly" value="true" <%= (filters && filters.upcomingOnly) ? 'checked' : '' %> class="rounded border-gray-300 text-[var(--color-primary)]
+                         focus:ring-[var(--color-primary)]" />
+                Upcoming only
+              </label>
+
+              <button type="submit" class="inline-flex items-center rounded-lg
+                       bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                Apply
+              </button>
+            </form>
+
+            <!-- Add Event button -->
+            <button type="button" onclick="openAddEventModal()" class="inline-flex items-center justify-center rounded-lg
+                     bg-[var(--color-secondary-dark)] text-white text-xs font-semibold px-4 py-2
+                     hover:bg-[var(--color-primary-dark)]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+              + Add Event
+            </button>
+          </div>
+        </section>
+
+        <!-- Events table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Title</th>
+                  <th class="px-3 py-2 text-left font-medium">Type</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-left font-medium">Mode</th>
+                  <th class="px-3 py-2 text-left font-medium">Location</th>
+                  <th class="px-3 py-2 text-left font-medium">Starts</th>
+                  <th class="px-3 py-2 text-left font-medium">Ends</th>
+                  <th class="px-3 py-2 text-left font-medium">Price</th>
+                  <th class="px-3 py-2 text-left font-medium text-right">Capacity</th>
+                  <th class="px-3 py-2 text-left font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(event, index) { %>
+                <tr class="hover:bg-gray-50">
+                  <!-- Index -->
+                  <td class="px-3 py-2 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+
+                  <!-- Title + description snippet -->
+                  <td class="px-3 py-2">
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-gray-800">
+                        <%= event.title || '-' %>
+                      </span>
+                      <% if (event.description) { %>
+                      <span class="text-[10px] text-gray-500 line-clamp-2">
+                        <%= event.description %>
+                      </span>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <!-- Type -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                          bg-[var(--color-secondary-light)] text-[var(--color-secondary-dark)]">
+                      <%= event.type || '-' %>
+                    </span>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-3 py-2">
+                    <% if (event.status === 'PUBLISHED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-green-50 text-green-700">
+                      Published
+                    </span>
+                    <% } else if (event.status === 'DRAFT') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                      Draft
+                    </span>
+                    <% } else if (event.status === 'CANCELLED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-red-50 text-red-700">
+                      Cancelled
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-500 text-[10px]">
+                      <%= event.status || '-' %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Mode -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= event.mode || '-' %>
+                  </td>
+
+                  <!-- Location -->
+                  <td class="px-3 py-2 text-gray-700 max-w-xs">
+                    <span class="block text-[11px] text-gray-800">
+                      <%= event.locationText || '-' %>
+                    </span>
+                    <% if (event.locationUrl) { %>
+                    <a href="<%= event.locationUrl %>" target="_blank" rel="noopener noreferrer" class="text-[10px] text-[var(--color-primary-dark)] underline">
+                      Open link
+                    </a>
+                    <% } %>
+                  </td>
+
+                  <!-- Starts -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (event.startsAt) { %>
+                    <%= new Date(event.startsAt).toLocaleString() %>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Ends -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (event.endsAt) { %>
+                    <%= new Date(event.endsAt).toLocaleString() %>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Price -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (event.price === null || event.price === 0) { %>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium">
+                      Free
+                    </span>
+                    <% } else { %>
+                    <span class="text-[11px] text-gray-800">
+                      ₦<%= event.price %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Capacity -->
+                  <td class="px-3 py-2 text-right text-gray-700">
+                    <%= event.capacity || '-' %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
+                    <button type="button" class="inline-flex items-center rounded-md border border-sky-500 text-sky-600 px-2 py-1 text-[11px] font-semibold hover:bg-sky-50 transition" data-event-id="<%= event.id %>" onclick="openPreviewEventModal(this)">
+                      Preview
+                    </button>
+
+                    <button type="button" class="inline-flex items-center rounded-md border 
+                    border-[var(--color-primary)] text-[var(--color-primary-dark)] px-2 py-1 text-[11px] font-semibold hover:bg-[var(--color-secondary-light)] transition" onclick="openUpdateEventModal(this)" data-event-id="<%= event.id %>" data-event-title="<%= event.title || '' %>" data-event-description="<%- event.description || '' %>" data-event-type="<%= event.type || '' %>" data-event-status="<%= event.status || '' %>" data-event-mode="<%= event.mode || '' %>" data-event-location-text="<%= event.locationText || '' %>" data-event-location-url="<%= event.locationUrl || '' %>" data-event-starts-at="<%= event.startsAt ? event.startsAt.toISOString().slice(0,16) : '' %>" data-event-ends-at="<%= event.endsAt ? event.endsAt.toISOString().slice(0,16) : '' %>" data-event-price="<%= event.price || '' %>" data-event-capacity="<%= event.capacity || '' %>" data-event-cover-image-url="<%= event.coverImageUrl || '' %>">
+                      Update
+                    </button>
+
+                    <button type="button" class="inline-flex items-center px-2 py-1 text-[11px] rounded-md border border-red-500 text-red-600 hover:bg-red-50" onclick="openDeleteEventModal(this)" data-event-id="<%= event.id %>" data-event-title="<%= event.title || '' %>">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="11" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No events found.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> events
+            </div>
+
+            <div class="flex items-center gap-1">
+              <% const currentQ = (filters && filters.q) || q || ''; %>
+              <% const currentType = (filters && filters.type) || ''; %>
+              <% const upcoming = (filters && filters.upcomingOnly) ? 'true' : ''; %>
+
+              <% function buildQuery(pageNum) { 
+                     let qs = '?page=' + pageNum;
+                     if (currentQ) qs += '&q=' + encodeURIComponent(currentQ);
+                     if (currentType) qs += '&type=' + encodeURIComponent(currentType);
+                     if (upcoming) qs += '&upcomingOnly=true';
+                     return qs;
+                   } %>
+
+              <!-- Prev -->
+              <% if (meta.currentPage > 1) { %>
+              <a href={"/admin-views/events" + buildQuery(meta.currentPage - 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Prev
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Prev
+              </span>
+              <% } %>
+
+              <!-- Page numbers -->
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href={"/admin-views/events" + buildQuery(p)} class="px-2 py-1 rounded border text-xs
+                      <%= p === meta.currentPage
+                        ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold'
+                        : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <!-- Next -->
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href={"/admin-views/events" + buildQuery(meta.currentPage + 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Next
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Next
+              </span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals as partials (each has its own script) -->
+  <%- include('partials/events/add-event-modal') %>
+  <%- include('partials/events/preview-event-modal') %>
+  <%- include('partials/events/update-event-modal') %>
+  <%- include('partials/events/delete-event-modal') %>
+
+</body>
+
+</html>

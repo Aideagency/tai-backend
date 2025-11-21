@@ -52,7 +52,7 @@ export class AuthController {
   ) {}
 
   @Throttle({ default: { limit: 5, ttl: 300000 } })
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(AuthGuard('user-local'))
   @Post('login')
   @HttpCode(200)
   @ApiBody({ type: LoginDto })

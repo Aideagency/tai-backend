@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ChallengeRepository,
   ChallengeSearchParams,
@@ -177,6 +181,28 @@ export class ChallengesService {
     return challenge;
   }
 
+  async deleteChallenge(id: string | number) {
+    const numericId = Number(id);
+
+    if (Number.isNaN(numericId)) {
+      throw new BadRequestException('Invalid challenge id');
+    }
+
+    // Ensure challenge exists before deleting
+    const challenge = await this.challengeRepo.findById(numericId);
+    if (!challenge) {
+      throw new NotFoundException('Challenge not found');
+    }
+
+    await this.challengeRepo.deleteById(numericId);
+
+    return {
+      success: true,
+      message: 'Challenge deleted successfully',
+      id: numericId,
+    };
+  }
+
   async joinChallenge({
     userId,
     challengeId,
@@ -199,17 +225,19 @@ export class ChallengesService {
     }
   }
 
-  async listAllChallenges({
-    community,
-    params,
-  }: {
-    community: CommunityTag[];
-    params: ChallengeSearchParams;
-  }) {
+  async listAllChallenges(
+    community: CommunityTag[],
+    params: ChallengeSearchParams,
+  ) {
     const challenges = await this.challengeRepo.listAvailableForCommunity(
       community,
       params,
     );
+    return challenges;
+  }
+
+  async listEveryChallenge(params: ChallengeSearchParams) {
+    const challenges = await this.challengeRepo.listAllChallenges(params);
     return challenges;
   }
 
@@ -220,6 +248,11 @@ export class ChallengesService {
         withTasks: true,
       },
     );
+    return challenge;
+  }
+
+  async deleteChallange(id: string) {
+    const challenge = await this.challengeRepo.softDelete(Number(id));
     return challenge;
   }
 

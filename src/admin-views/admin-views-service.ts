@@ -1,0 +1,51 @@
+// src/admin/admin.service.ts
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  //   UserRepository,
+  UserSearchParams,
+} from 'src/repository/user/user.repository';
+import { CommunityTag, MaritalStatus } from 'src/database/entities/user.entity';
+import { Helper } from 'src/utils/helper';
+import { AdminEntity } from 'src/database/entities/admin.entity';
+import { TracerLogger } from 'src/logger/logger.service';
+import * as bcrypt from 'bcrypt';
+import { AdminRepository } from 'src/repository/admin/admin.repository';
+import { JwtService } from '@nestjs/jwt';
+import { AdminService } from 'src/admin/admin.service';
+import { GetEventsFilterDto } from 'src/event/dtos/get-events-query.dto';
+import { EventService } from 'src/event/event.service';
+import { ChallengesService } from 'src/challenges/challenges.service';
+import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.dto';
+
+@Injectable()
+export class AdminViewsService {
+  private readonly JWT_SECRET = process.env.JWT_SECRET;
+  private readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+  private readonly JWT_REFRESH_EXPIRES_IN =
+    process.env.JWT_REFRESH_EXPIRES_IN || '1d';
+
+  constructor(
+    // private readonly userRepo: UserRepository,
+    private readonly logger: TracerLogger,
+    private adminService: AdminService,
+    private readonly eventService: EventService,
+    private readonly challengeService: ChallengesService,
+  ) {}
+
+  async listUsers(params: UserSearchParams) {
+    return this.adminService.listUsers(params);
+  }
+
+  async listEvents(params: GetEventsFilterDto) {
+    return this.eventService.getAllEvents(params);
+  }
+
+  async listChallengess(params: GetChallengesQueryDto) {
+    return this.challengeService.listEveryChallenge(params);
+  }
+}

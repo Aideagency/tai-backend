@@ -1,0 +1,402 @@
+<div
+  id="previewChallengeModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 text-xs overflow-hidden flex flex-col max-h-[90vh]"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+      <h3 class="text-base font-semibold text-gray-800">Challenge Preview</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+        onclick="closePreviewChallengeModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div id="previewChallengeBody" class="overflow-y-auto pr-2 flex-1 custom-scrollbar space-y-4">
+      <!-- Loading state -->
+      <div id="previewChallengeLoading" class="text-center py-6 text-gray-500 text-xs">
+        Loading challenge details...
+      </div>
+
+      <!-- Error state -->
+      <div
+        id="previewChallengeError"
+        class="hidden text-center py-4 text-[11px] text-red-600 bg-red-50 border border-red-100 rounded-lg"
+      ></div>
+
+      <!-- Main content -->
+      <div id="previewChallengeContent" class="hidden space-y-4">
+        <!-- Title & basic meta -->
+        <section class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2 justify-between">
+            <h2 id="previewChallengeTitle" class="text-sm font-semibold text-gray-900"></h2>
+
+            <div class="flex flex-wrap items-center gap-2 text-[10px]">
+              <span
+                id="previewChallengeStatus"
+                class="inline-flex items-center rounded-full px-2 py-0.5 font-medium"
+              ></span>
+
+              <span
+                id="previewChallengeCommunity"
+                class="inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-indigo-50 text-indigo-700"
+              ></span>
+
+              <span
+                id="previewChallengeVisibility"
+                class="inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-gray-100 text-gray-700"
+              ></span>
+            </div>
+          </div>
+
+          <p id="previewChallengeDescription" class="text-[11px] text-gray-700 mt-1"></p>
+
+          <div class="flex flex-wrap gap-3 text-[10px] text-gray-600 mt-2">
+            <span>
+              <span class="font-semibold text-gray-700">Duration:</span>
+              <span id="previewChallengeDuration"></span>
+            </span>
+            <span>
+              <span class="font-semibold text-gray-700">Frequency:</span>
+              <span id="previewChallengeFrequency"></span>
+            </span>
+            <span id="previewChallengeParticipantsWrapper" class="hidden">
+              <span class="font-semibold text-gray-700">Participants:</span>
+              <span id="previewChallengeParticipants"></span>
+            </span>
+          </div>
+
+          <div class="flex flex-wrap gap-3 text-[10px] text-gray-600 mt-1">
+            <span id="previewChallengeDualWrapper" class="hidden">
+              <span class="font-semibold text-gray-700">Dual confirmation:</span>
+              <span id="previewChallengeDual"></span>
+            </span>
+            <span id="previewChallengeBadgeWrapper" class="hidden">
+              <span class="font-semibold text-gray-700">Badge code:</span>
+              <span id="previewChallengeBadge"></span>
+            </span>
+          </div>
+        </section>
+
+        <!-- Book info -->
+        <section
+          id="previewChallengeBookSection"
+          class="hidden border border-gray-100 rounded-xl p-3 bg-gray-50 space-y-1"
+        >
+          <h4 class="text-[11px] font-semibold text-gray-800">Book information</h4>
+          <p class="text-[11px] text-gray-700">
+            <span id="previewChallengeBookTitle" class="font-semibold"></span>
+            <span id="previewChallengeBookAuthor"></span>
+          </p>
+        </section>
+
+        <!-- Tasks -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-[11px] font-semibold text-gray-800">
+              Tasks
+            </h4>
+            <span id="previewChallengeTasksCount" class="text-[10px] text-gray-500"></span>
+          </div>
+
+          <div
+            id="previewChallengeTasksContainer"
+            class="space-y-2"
+          >
+            <!-- Tasks will be injected here -->
+          </div>
+
+          <div
+            id="previewChallengeNoTasks"
+            class="hidden text-[11px] text-gray-500 italic"
+          >
+            No tasks defined for this challenge.
+          </div>
+        </section>
+
+        <!-- Meta dates -->
+        <section class="border-t border-gray-100 pt-3 text-[10px] text-gray-500 flex flex-wrap gap-4">
+          <span>
+            Created:
+            <span id="previewChallengeCreatedAt"></span>
+          </span>
+          <span>
+            Last updated:
+            <span id="previewChallengeUpdatedAt"></span>
+          </span>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end flex-shrink-0">
+      <button
+        type="button"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
+        onclick="closePreviewChallengeModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c6c6c6;
+    border-radius: 10px;
+  }
+</style>
+
+<script>
+  async function openPreviewChallengeModal(button) {
+    const id = button.getAttribute('data-challenge-id');
+    if (!id) return;
+
+    const modal = document.getElementById('previewChallengeModal');
+    const loadingEl = document.getElementById('previewChallengeLoading');
+    const contentEl = document.getElementById('previewChallengeContent');
+    const errorEl = document.getElementById('previewChallengeError');
+    const tasksContainer = document.getElementById('previewChallengeTasksContainer');
+
+    // Reset state
+    loadingEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    errorEl.textContent = '';
+    tasksContainer.innerHTML = '';
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    try {
+      // 🔁 Adjust this URL to your actual API endpoint
+      const res = await fetch(`/challenges/${id}`);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch challenge (status ${res.status})`);
+      }
+
+      const json = await res.json();
+      const challenge = json.data || json; // handle both { data: {...} } and raw object
+
+      populatePreviewChallengeModal(challenge);
+
+      loadingEl.classList.add('hidden');
+      contentEl.classList.remove('hidden');
+    } catch (err) {
+      loadingEl.classList.add('hidden');
+      errorEl.textContent = err.message || 'Failed to load challenge details.';
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  function populatePreviewChallengeModal(challenge) {
+    // Basic fields
+    document.getElementById('previewChallengeTitle').textContent =
+      challenge.title || 'Untitled Challenge';
+
+    // Description
+    document.getElementById('previewChallengeDescription').textContent =
+      challenge.description || 'No description provided.';
+
+    // Community
+    const communityEl = document.getElementById('previewChallengeCommunity');
+    communityEl.textContent = challenge.community || 'N/A';
+
+    // Visibility
+    const visibilityEl = document.getElementById('previewChallengeVisibility');
+    visibilityEl.textContent = challenge.visibility || 'N/A';
+
+    // Status pill
+    const statusEl = document.getElementById('previewChallengeStatus');
+    const status = challenge.status || 'UNKNOWN';
+    statusEl.textContent = status;
+
+    // Status styling
+    statusEl.className =
+      'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium';
+    if (status === 'ACTIVE') {
+      statusEl.classList.add('bg-green-50', 'text-green-700');
+    } else if (status === 'DRAFT') {
+      statusEl.classList.add('bg-yellow-50', 'text-yellow-700');
+    } else if (status === 'ARCHIVED') {
+      statusEl.classList.add('bg-gray-100', 'text-gray-700');
+    } else {
+      statusEl.classList.add('bg-slate-100', 'text-slate-700');
+    }
+
+    // Duration & frequency
+    document.getElementById('previewChallengeDuration').textContent =
+      (challenge.durationDays ? `${challenge.durationDays} day(s)` : 'N/A');
+
+    document.getElementById('previewChallengeFrequency').textContent =
+      challenge.frequency || 'N/A';
+
+    // Participants
+    const participantsWrapper = document.getElementById('previewChallengeParticipantsWrapper');
+    if (typeof challenge.participantsCount === 'number') {
+      document.getElementById('previewChallengeParticipants').textContent =
+        String(challenge.participantsCount);
+      participantsWrapper.classList.remove('hidden');
+    } else {
+      participantsWrapper.classList.add('hidden');
+    }
+
+    // Dual confirmation
+    const dualWrapper = document.getElementById('previewChallengeDualWrapper');
+    if (typeof challenge.requireDualConfirmation === 'boolean') {
+      document.getElementById('previewChallengeDual').textContent =
+        challenge.requireDualConfirmation ? 'Yes' : 'No';
+      dualWrapper.classList.remove('hidden');
+    } else {
+      dualWrapper.classList.add('hidden');
+    }
+
+    // Badge code
+    const badgeWrapper = document.getElementById('previewChallengeBadgeWrapper');
+    if (challenge.completionBadgeCode) {
+      document.getElementById('previewChallengeBadge').textContent =
+        challenge.completionBadgeCode;
+      badgeWrapper.classList.remove('hidden');
+    } else {
+      badgeWrapper.classList.add('hidden');
+    }
+
+    // Book info
+    const bookSection = document.getElementById('previewChallengeBookSection');
+    const bookTitleEl = document.getElementById('previewChallengeBookTitle');
+    const bookAuthorEl = document.getElementById('previewChallengeBookAuthor');
+
+    if (challenge.bookTitle || challenge.bookAuthor) {
+      bookSection.classList.remove('hidden');
+      bookTitleEl.textContent = challenge.bookTitle || '';
+      bookAuthorEl.textContent = challenge.bookAuthor
+        ? ` — by ${challenge.bookAuthor}`
+        : '';
+    } else {
+      bookSection.classList.add('hidden');
+    }
+
+    // Tasks
+    const tasks = Array.isArray(challenge.tasks) ? challenge.tasks : [];
+    const tasksContainer = document.getElementById('previewChallengeTasksContainer');
+    const noTasksEl = document.getElementById('previewChallengeNoTasks');
+    const tasksCountEl = document.getElementById('previewChallengeTasksCount');
+
+    if (tasks.length === 0) {
+      tasksContainer.innerHTML = '';
+      noTasksEl.classList.remove('hidden');
+      tasksCountEl.textContent = '0 tasks';
+    } else {
+      noTasksEl.classList.add('hidden');
+      tasksCountEl.textContent = `${tasks.length} task${tasks.length > 1 ? 's' : ''}`;
+      tasksContainer.innerHTML = '';
+
+      tasks
+        .sort((a, b) => {
+          // Try order by dayNumber, then weekNumber, then id
+          const aDay = a.dayNumber || 0;
+          const bDay = b.dayNumber || 0;
+          if (aDay !== bDay) return aDay - bDay;
+          const aWeek = a.weekNumber || 0;
+          const bWeek = b.weekNumber || 0;
+          if (aWeek !== bWeek) return aWeek - bWeek;
+          return (a.id || 0) - (b.id || 0);
+        })
+        .forEach((task, index) => {
+          const wrapper = document.createElement('div');
+          wrapper.className =
+            'border border-gray-100 rounded-lg p-3 bg-white flex gap-3';
+
+          const indexBadge = document.createElement('div');
+          indexBadge.className =
+            'flex-shrink-0 w-6 h-6 rounded-full bg-[var(--color-secondary-light)] text-[10px] font-semibold text-[var(--color-primary-dark)] flex items-center justify-center';
+          indexBadge.textContent = index + 1;
+
+          const body = document.createElement('div');
+          body.className = 'flex-1 space-y-1';
+
+          const titleRow = document.createElement('div');
+          titleRow.className = 'flex items-center justify-between gap-2';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'text-[11px] font-semibold text-gray-800';
+          titleEl.textContent = task.title || 'Untitled task';
+
+          const chips = document.createElement('div');
+          chips.className = 'flex items-center gap-1 flex-wrap';
+
+          // cadence chip
+          const cadenceChip = document.createElement('span');
+          cadenceChip.className =
+            'inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[9px] font-medium';
+          cadenceChip.textContent = task.cadence || 'N/A';
+          chips.appendChild(cadenceChip);
+
+          // milestone chip
+          if (task.isMilestone) {
+            const milestoneChip = document.createElement('span');
+            milestoneChip.className =
+              'inline-flex items-center rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[9px] font-medium';
+            milestoneChip.textContent = 'Milestone';
+            chips.appendChild(milestoneChip);
+          }
+
+          titleRow.appendChild(titleEl);
+          titleRow.appendChild(chips);
+
+          const instructionsEl = document.createElement('p');
+          instructionsEl.className = 'text-[11px] text-gray-700';
+          instructionsEl.textContent =
+            task.instructions || 'No instructions provided.';
+
+          const metaRow = document.createElement('p');
+          metaRow.className = 'text-[10px] text-gray-500';
+          const metaParts = [];
+          if (task.dayNumber) metaParts.push(`Day ${task.dayNumber}`);
+          if (task.weekNumber) metaParts.push(`Week ${task.weekNumber}`);
+          metaRow.textContent = metaParts.join(' • ');
+
+          body.appendChild(titleRow);
+          body.appendChild(instructionsEl);
+          if (metaParts.length > 0) {
+            body.appendChild(metaRow);
+          }
+
+          wrapper.appendChild(indexBadge);
+          wrapper.appendChild(body);
+          tasksContainer.appendChild(wrapper);
+        });
+    }
+
+    // Dates
+    const createdAtEl = document.getElementById('previewChallengeCreatedAt');
+    const updatedAtEl = document.getElementById('previewChallengeUpdatedAt');
+
+    createdAtEl.textContent = challenge.createdAt
+      ? new Date(challenge.createdAt).toLocaleString()
+      : 'N/A';
+
+    updatedAtEl.textContent = challenge.updatedAt
+      ? new Date(challenge.updatedAt).toLocaleString()
+      : 'N/A';
+  }
+
+  function closePreviewChallengeModal() {
+    const modal = document.getElementById('previewChallengeModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+</script>

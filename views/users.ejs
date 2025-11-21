@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Users</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "users" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Users'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar: title + search -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)] p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              Users
+            </h3>
+            <p class="text-xs text-gray-500">
+              Manage all registered users. Total: <%= meta?.totalItems || 0 %>
+            </p>
+          </div>
+
+          <!-- Search form -->
+          <form method="GET" action="/admin-views/users" class="flex items-center gap-2 w-full md:w-auto">
+            <input type="text" name="q" placeholder="Search by name or email..." value="<%= q || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                     focus:border-[var(--color-primary)]" />
+            <button type="submit" class="inline-flex items-center rounded-lg
+                     bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2
+                     hover:bg-[var(--color-primary-dark)]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+              Search
+            </button>
+          </form>
+        </section>
+
+        <!-- Users table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Name</th>
+                  <th class="px-3 py-2 text-left font-medium">Email</th>
+                  <th class="px-3 py-2 text-left font-medium">Gender</th>
+                  <th class="px-3 py-2 text-left font-medium">Birth Date</th>
+                  <th class="px-3 py-2 text-left font-medium">Phone</th>
+                  <th class="px-3 py-2 text-left font-medium">Community</th>
+                  <th class="px-3 py-2 text-left font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(user, index) { %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-3 py-2 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+                  <td class="px-3 py-2">
+                    <div class="flex items-center gap-2">
+                      <div class="h-8 w-8 rounded-full
+                                   bg-[var(--color-secondary-light)]
+                                   text-[var(--color-primary-dark)]
+                                   flex items-center justify-center text-[10px] font-semibold">
+                        <%= (user.first_name?.[0] || '').toUpperCase() %><%= (user.last_name?.[0] || '').toUpperCase() %>
+                      </div>
+                      <div>
+                        <div class="font-semibold text-gray-800">
+                          <%= (user.first_name || '') + ' ' + (user.last_name || '') %>
+                        </div>
+                        <% if (user.middle_name) { %>
+                        <div class="text-[10px] text-gray-500">
+                          Middle: <%= user.middle_name %>
+                        </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= user.email_address || '-' %>
+                  </td>
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= user.gender || '-' %>
+                  </td>
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= user.birth_date || '-' %>
+                  </td>
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= user.phone_no || '-' %>
+                  </td>
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (user.community && user.community.length > 0) { %>
+                    <span class="inline-flex items-center rounded-full
+                                   bg-[var(--color-secondary-light)]
+                                   text-[var(--color-secondary-dark)]
+                                   px-2 py-0.5 text-[10px] font-medium">
+                      <%= user.community.join(', ') %>
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-400 text-[10px]">None</span>
+                    <% } %>
+                  </td>
+                  <td class="px-3 py-2 text-right">
+                    <button type="button" class="inline-flex items-center rounded-md border border-red-500 text-red-600 px-2 py-1 text-[11px] font-semibold hover:bg-red-50 transition" data-user-id="<%= user.id %>" data-user-name="<%= (user.first_name || '') + ' ' + (user.last_name || '') %>" onclick="openDeleteModal(this)">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <% }) %>
+                <% } else { %>
+                <tr>
+                  <td colspan="8" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No users found.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> users
+            </div>
+
+            <div class="flex items-center gap-1">
+              <!-- Prev -->
+              <% if (meta.currentPage > 1) { %>
+              <a href="/admin-views/users?page=<%= meta.currentPage - 1 %><%= q ? '&q=' + encodeURIComponent(q) : '' %>" class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Prev
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Prev
+              </span>
+              <% } %>
+
+              <!-- Page numbers (simple) -->
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href="/admin-views/users?page=<%= p %><%= q ? '&q=' + encodeURIComponent(q) : '' %>" class="px-2 py-1 rounded border text-xs
+                    <%= p === meta.currentPage
+                      ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold'
+                      : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <!-- Next -->
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href="/admin-views/users?page=<%= meta.currentPage + 1 %><%= q ? '&q=' + encodeURIComponent(q) : '' %>" class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Next
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Next
+              </span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+
+    <!-- Delete Confirmation Modal -->
+  <%- include('partials//users/delete-user-modal.ejs') %>
+
+
+</body>
+
+</html>

@@ -4,7 +4,7 @@ import { Strategy } from 'passport-local';
 import { AdminService } from './admin.service';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) {
+export class LocalStrategy extends PassportStrategy(Strategy, 'admin-local') {
   constructor(private adminService: AdminService) {
     super({
       usernameField: 'email_address', // 👈 must match your incoming JSON

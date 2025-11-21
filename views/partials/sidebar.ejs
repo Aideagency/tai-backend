@@ -1,0 +1,88 @@
+<!-- views/admin/partials/sidebar.ejs -->
+<aside class="w-64 bg-white shadow-md h-screen sticky top-0 flex flex-col">
+
+  <!-- Branding -->
+  <div class="px-6 py-4 border-b border-[var(--color-primary-light)]">
+    <h1 class="text-xl font-bold text-[var(--color-primary-dark)]">
+      Admin Panel
+    </h1>
+    <p class="text-xs text-gray-500 mt-1">
+      <%= admin?.email_address || '' %>
+    </p>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 px-2 py-4 space-y-1">
+
+    <!-- Dashboard -->
+    <a
+      href="/admin-views/dashboard"
+      class="
+        flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all
+        <%= currentPath.includes('dashboard')
+            ? 'bg-[var(--color-primary)] text-white'
+            : 'text-gray-700 hover:bg-[var(--color-secondary-light)] hover:text-gray-900' %>
+      "
+    >
+      <span>Dashboard</span>
+    </a>
+
+    <!-- Users -->
+    <a
+      href="/admin-views/users"
+      class="
+        flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all
+        <%= currentPath.includes('users')
+            ? 'bg-[var(--color-primary)] text-white'
+            : 'text-gray-700 hover:bg-[var(--color-secondary-light)] hover:text-gray-900' %>
+      "
+    >
+      <span>Users</span>
+    </a>
+
+    <!-- Events -->
+    <a
+      href="/admin-views/events"
+      class="
+        flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all
+        <%= currentPath.includes('events')
+            ? 'bg-[var(--color-primary)] text-white'
+            : 'text-gray-700 hover:bg-[var(--color-secondary-light)] hover:text-gray-900' %>
+      "
+    >
+      <span>Events</span>
+    </a>
+
+    <!-- Challenges -->
+    <a
+      href="/admin-views/challenges"
+      class="
+        flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all
+        <%= currentPath.includes('challenges')
+            ? 'bg-[var(--color-primary)] text-white'
+            : 'text-gray-700 hover:bg-[var(--color-secondary-light)] hover:text-gray-900' %>
+      "
+    >
+      <span>Challenges</span>
+    </a>
+
+  </nav>
+
+  <!-- Logout -->
+  <div class="px-4 py-3 border-t border-[var(--color-primary-light)]">
+    <a
+      href="/admin-views/logout"
+      class="
+        w-full inline-flex items-center justify-center rounded-lg
+        border border-[var(--color-primary)]
+        text-[var(--color-primary-dark)]
+        text-sm font-semibold py-2
+        hover:bg-[var(--color-primary)] hover:text-white
+        transition-all duration-150
+      "
+    >
+      Logout
+    </a>
+  </div>
+
+</aside>

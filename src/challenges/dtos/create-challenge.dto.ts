@@ -106,6 +106,7 @@ export class CreateChallengeDto {
   @Length(1, 200, {
     message: 'Book title should be between 1 and 200 characters.',
   })
+  @IsOptional()
   bookTitle?: string;
 
   @ApiPropertyOptional({

@@ -24,4 +24,28 @@ export class Helper {
   static getCurrentTimeDescription(): string {
     return new Date().toUTCString();
   }
+
+  static formatDateTime(
+    date: Date | string | number,
+    format: string = 'YYYY-MM-DD HH:mm:ss',
+  ): string {
+    const d = new Date(date);
+
+    if (isNaN(d.getTime())) {
+      return 'Invalid Date';
+    }
+
+    const pad = (val: number) => String(val).padStart(2, '0');
+
+    const map: Record<string, string> = {
+      YYYY: String(d.getFullYear()),
+      MM: pad(d.getMonth() + 1),
+      DD: pad(d.getDate()),
+      HH: pad(d.getHours()),
+      mm: pad(d.getMinutes()),
+      ss: pad(d.getSeconds()),
+    };
+
+    return format.replace(/YYYY|MM|DD|HH|mm|ss/g, (matched) => map[matched]);
+  }
 }

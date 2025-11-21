@@ -17,7 +17,7 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
   }
   async validate(payload: any) {
     // shape decided in service.getJwtTokens()
-    const userId = payload.sub || payload.id;
+    const userId = payload.sub || payload.id || payload.adminId;
     if (!userId) {
       throw new UnauthorizedException('Invalid token payload');
     }
@@ -34,7 +34,6 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
     return {
       ...payload,
       ...{
-        email_address: user.email_address,
         adminId: user.id,
         first_name: user.first_name,
         last_name: user.last_name,

@@ -1,0 +1,316 @@
+<div
+  id="addEventModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">
+        Add Event
+      </h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeAddEventModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="addEventForm"
+      action="/events/create"
+      method="POST"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- Title -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          type="text"
+          name="title"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+          required
+        />
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          name="description"
+          rows="3"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- Cover Image (Optional) -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Cover Image (optional)
+        </label>
+        <input
+          type="file"
+          name="coverImageUrl"
+          accept="image/*"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Type + Status -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Type</label>
+          <select
+            name="type"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="COMMUNITY">Community</option>
+            <option value="CONFERENCE">Conference</option>
+            <option value="RETREAT">Retreat</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Status</label>
+          <select
+            name="status"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mode + Capacity -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Mode</label>
+          <select
+            name="mode"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="ONLINE">Online</option>
+            <option value="PHYSICAL">Physical</option>
+            <option value="HYBRID">Hybrid</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Capacity</label>
+          <input
+            type="number"
+            name="capacity"
+            min="1"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Location text</label>
+        <input
+          type="text"
+          name="locationText"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Location URL</label>
+        <input
+          type="url"
+          name="locationUrl"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Starts / Ends -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Starts at</label>
+          <input
+            type="datetime-local"
+            name="startsAt"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Ends at</label>
+          <input
+            type="datetime-local"
+            name="endsAt"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Price (optional)</label>
+        <input
+          type="number"
+          name="price"
+          step="0.01"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+          onclick="closeAddEventModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="addEventSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <span id="addEventSubmitText">Save event</span>
+
+          <svg
+            id="addEventSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddEventModal() {
+    const modal = document.getElementById('addEventModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeAddEventModal() {
+    const modal = document.getElementById('addEventModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    // Reset form & button after closing
+    const form = document.getElementById('addEventForm');
+    form.reset();
+
+    const btn = document.getElementById('addEventSubmitBtn');
+    const text = document.getElementById('addEventSubmitText');
+    const spinner = document.getElementById('addEventSubmitSpinner');
+
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = 'Save event';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('addEventForm');
+    const submitBtn = document.getElementById('addEventSubmitBtn');
+    const submitText = document.getElementById('addEventSubmitText');
+    const submitSpinner = document.getElementById('addEventSubmitSpinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Loading state
+      submitBtn.disabled = true;
+      submitSpinner.classList.remove('hidden');
+      submitText.textContent = 'Saving...';
+
+      try {
+        const formData = new FormData(form);
+
+        // Remove empty optional numeric fields
+        ['price', 'capacity'].forEach((field) => {
+          if (formData.get(field) === '') {
+            formData.delete(field);
+          }
+        });
+
+        // If no file selected, remove so multer doesn't fail
+        if (!formData.get('coverImageUrl')?.name) {
+          formData.delete('coverImageUrl');
+        }
+
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          let msg = 'Error creating event.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+          } catch (_) {}
+          alert(msg);
+
+          submitBtn.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitText.textContent = 'Save event';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        submitBtn.disabled = false;
+        submitSpinner.classList.add('hidden');
+        submitText.textContent = 'Save event';
+      }
+    });
+  });
+</script>

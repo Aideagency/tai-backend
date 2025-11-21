@@ -1,6 +1,7 @@
 import { IsInt, IsString, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger'; // Import ApiProperty from @nestjs/swagger
-import { RegistrationStatus } from 'src/database/entities/event.entity';
+import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
+// import { RegistrationStatus } from 'src/database/entities/event.entity';
 
 export class RegisterUserForEventDto {
   @ApiProperty({

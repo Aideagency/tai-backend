@@ -16,6 +16,8 @@ import { TracerLogger } from 'src/logger/logger.service';
 import * as bcrypt from 'bcrypt';
 import { AdminRepository } from 'src/repository/admin/admin.repository';
 import { JwtService } from '@nestjs/jwt';
+import { EventService } from 'src/event/event.service';
+import { CreateEventDto } from 'src/event/dtos/create-event.dto';
 
 @Injectable()
 export class AdminService {
@@ -30,6 +32,7 @@ export class AdminService {
     private readonly logger: TracerLogger,
     private readonly adminRepo: AdminRepository,
     private jwtService: JwtService,
+    private evtService: EventService,
   ) {}
 
   async listUsers(params: UserSearchParams) {
@@ -37,13 +40,13 @@ export class AdminService {
   }
 
   async getUserById(id: string | number) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
     return this.userRepo.toSubmissionResponse(user);
   }
 
   async updateUserByAdmin(id: string | number, dto: UpdateUserByAdminDto) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
     if (
@@ -89,7 +92,7 @@ export class AdminService {
   }
 
   async suspendUser(id: string | number, reason: string) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
     (user as any).suspended = true;
@@ -99,7 +102,7 @@ export class AdminService {
   }
 
   async unsuspendUser(id: string | number) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
     (user as any).suspended = false;
@@ -109,15 +112,15 @@ export class AdminService {
   }
 
   async deleteUser(id: string | number) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
-    if ('deletedAt' in user) {
-      await this.userRepo.softDelete(user.id);
-      return { success: true, message: 'User soft-deleted' };
-    }
-    await this.userRepo.hardDelete(user.id);
-    return { success: true, message: 'User deleted' };
+    await this.userRepo.softDelete(user.id);
+    return { success: true, message: 'User soft-deleted' };
+    // if ('deletedAt' in user) {
+    // }
+    // await this.userRepo.hardDelete(user.id);
+    // return { success: true, message: 'User deleted' };
   }
 
   async restoreUser(id: string | number) {
@@ -129,7 +132,7 @@ export class AdminService {
   }
 
   async resetUserPassword(id: string | number, newPassword: string) {
-    const user = await this.userRepo.findByUserId(Number(id));
+    const user = await this.userRepo.findOne({ id });
     if (!user) throw new NotFoundException('User not found');
 
     user.password = await Helper.hashPassword(newPassword);
@@ -189,5 +192,9 @@ export class AdminService {
       token: at,
       refresh_token: rt,
     };
+  }
+
+  async addEvents(dto: CreateEventDto) {
+    await this.evtService.createEvent(dto);
   }
 }
