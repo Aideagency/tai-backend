@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseRepository } from '../base.repository';
@@ -109,6 +109,53 @@ export class ChallengeTaskRepository extends BaseRepository<
       community,
       activeOnly: true, // only ACTIVE for availability
       visibility: opts.visibility, // optional override
+    });
+  }
+
+  async deleteTaskById(taskId: number): Promise<void> {
+    const result = await this.repository.delete({ id: taskId });
+
+    if (!result.affected || result.affected === 0) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    this.logger.log(`Task ${taskId} deleted successfully`);
+  }
+
+  /**
+   * Delete multiple tasks at once
+   */
+  async deleteManyTasks(taskIds: number[]): Promise<void> {
+    if (!taskIds || taskIds.length === 0) return;
+
+    const result = await this.repository.delete(taskIds);
+
+    this.logger.log(
+      `Deleted ${result.affected ?? 0} out of ${taskIds.length} task(s)`,
+    );
+  }
+
+  async updateTaskById(
+    taskId: number,
+    updates: Partial<ChallengeTaskEntity>,
+  ): Promise<ChallengeTaskEntity> {
+    // Fetch task first to ensure it exists
+    const task = await this.repository.findOne({ where: { id: taskId } });
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    // Merge only provided fields
+    Object.assign(task, updates);
+
+    // Save and return updated entity
+    return await this.repository.save(task);
+  }
+
+  async findOneWithChallenge(taskId: number) {
+    return this.repository.findOne({
+      where: { id: taskId },
+      relations: ['challenge'],
     });
   }
 }

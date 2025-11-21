@@ -12,11 +12,11 @@ import {
   HttpCode,
   BadRequestException,
   Request,
-
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiExcludeController,
   ApiOkResponse,
   ApiQuery,
   ApiTags,
@@ -38,6 +38,7 @@ import { Throttle } from '@nestjs/throttler';
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard, RolesGuard)
 @Controller('admin/users')
+@ApiExcludeController()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
@@ -85,6 +86,13 @@ export class AdminController {
   @Patch(':id/suspend')
   @Roles(AdminRole.ADMIN, AdminRole.SUPER_ADMIN)
   @HttpCode(200)
+  async deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(id);
+  }
+
+  @Patch(':id/suspend')
+  @Roles(AdminRole.ADMIN, AdminRole.SUPER_ADMIN)
+  @HttpCode(200)
   async suspend(@Param('id') id: string, @Body() dto: SuspendUserDto) {
     return this.adminService.suspendUser(id, dto.reason);
   }
@@ -120,4 +128,3 @@ export class AdminController {
     return this.adminService.resetUserPassword(id, dto.new_password);
   }
 }
-

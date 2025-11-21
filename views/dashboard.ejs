@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+
+  <div class="flex">
+
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "dashboard" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Dashboard'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+
+        <!-- Overview Section -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)] p-6">
+          <h3 class="text-base font-semibold text-gray-800 mb-2">
+            Overview
+          </h3>
+          <p class="text-sm text-gray-600">
+            This is your admin dashboard. You can show key stats, recent activity,
+            and shortcuts to important management screens here.
+          </p>
+        </section>
+
+        <!-- Stats Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <!-- Total Users -->
+          <div
+            class="bg-white rounded-2xl shadow-sm p-4 border border-[var(--color-primary-light)]
+                   hover:shadow-md transition duration-200">
+            <p class="text-xs text-gray-600">Total Users</p>
+            <p class="text-2xl font-bold text-[var(--color-primary-dark)] mt-1">
+              1,240
+            </p>
+          </div>
+
+          <!-- Active Sessions -->
+          <div
+            class="bg-white rounded-2xl shadow-sm p-4 border border-[var(--color-secondary)]
+                   hover:shadow-md transition duration-200">
+            <p class="text-xs text-gray-600">Active Sessions</p>
+            <p class="text-2xl font-bold text-[var(--color-secondary-dark)] mt-1">
+              87
+            </p>
+          </div>
+
+          <!-- Suspended Users -->
+          <div
+            class="bg-white rounded-2xl shadow-sm p-4 border border-[var(--color-primary-dark)]
+                   hover:shadow-md transition duration-200">
+            <p class="text-xs text-gray-600">Suspended Users</p>
+            <p class="text-2xl font-bold text-[var(--color-primary)] mt-1">
+              12
+            </p>
+          </div>
+
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+</body>
+</html>

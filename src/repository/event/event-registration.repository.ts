@@ -1,4 +1,3 @@
-// src/repository/event/event-registration.repository.ts
 import {
   BadRequestException,
   Injectable,
@@ -8,8 +7,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseRepository } from '../base.repository';
-import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
-import { RegistrationStatus } from 'src/database/entities/event.entity';
+import {
+  EventRegistrationEntity,
+  RegistrationStatus,
+} from 'src/database/entities/event-registration.entity';
+import {
+  EventEntity,
+  // RegistrationStatus,
+} from 'src/database/entities/event.entity';
+// import { TransactionEntity } from 'src/database/entities/transaction.entity';
 
 export interface RegistrationSearchParams {
   page?: number;
@@ -46,9 +52,7 @@ export class EventRegistrationRepository extends BaseRepository<
   private baseQB(
     params: RegistrationSearchParams = {},
   ): SelectQueryBuilder<EventRegistrationEntity> {
-    const qb = this.query('r')
-      .leftJoinAndSelect('r.event', 'e')
-      .leftJoinAndSelect('r.ticketType', 'tt');
+    const qb = this.query('r').leftJoinAndSelect('r.event', 'e');
 
     if (params.userId) {
       qb.andWhere('r.user.id = :uid', { uid: params.userId });
@@ -96,7 +100,7 @@ export class EventRegistrationRepository extends BaseRepository<
   async findUserRegistration(userId: number, eventId: number) {
     return this.repository.findOne({
       where: { user: { id: userId } as any, event: { id: eventId } as any },
-      relations: ['event', 'ticketType', 'transaction'],
+      relations: ['event', 'transaction'],
     });
   }
 
@@ -104,26 +108,42 @@ export class EventRegistrationRepository extends BaseRepository<
   async createRegistration(params: {
     userId: number;
     eventId: number;
-    ticketTypeId: number | null;
-    quantity: number;
     status: RegistrationStatus; // PENDING_PAYMENT | CONFIRMED
-    unitPrice: string;
-    totalAmount: string;
+    unitPrice: string | null; // Can be null for free events
     paidAt?: Date | null;
   }) {
+    const event = await this.findEventById(params.eventId);
+
+    // Prevent registration if the event has already ended
+    if (event.endsAt < new Date()) {
+      throw new BadRequestException(
+        'Event has already ended, registration is closed',
+      );
+    }
+
+    // If event is paid, ensure only one registration per user
+    if (event.price && params.status === RegistrationStatus.CONFIRMED) {
+      const existingRegistration = await this.findUserRegistration(
+        params.userId,
+        params.eventId,
+      );
+      if (existingRegistration) {
+        throw new BadRequestException(
+          'You can only register once for this paid event',
+        );
+      }
+    }
+
     const reg = this.repository.create({
       user: { id: params.userId } as any,
-      event: { id: params.eventId } as any,
-      ticketType: params.ticketTypeId
-        ? ({ id: params.ticketTypeId } as any)
-        : null,
-      quantity: params.quantity,
+      event: { id: event.id } as any,
       status: params.status,
+      quantity: 1, // Always 1 since users can only register once
       unitPrice: params.unitPrice,
-      totalAmount: params.totalAmount,
       paidAt:
         params.paidAt ?? (params.status === 'CONFIRMED' ? new Date() : null),
     });
+
     return this.repository.save(reg);
   }
 
@@ -144,14 +164,14 @@ export class EventRegistrationRepository extends BaseRepository<
     );
     return this.repository.findOne({
       where: { id: registrationId },
-      relations: ['transaction', 'event', 'ticketType'],
+      relations: ['transaction', 'event'],
     });
   }
 
   /** Cancel a registration (service should enforce policy) */
-  async cancel(registrationId: number) {
+  async cancel(registrationId: number, userId: number) {
     const reg = await this.repository.findOne({
-      where: { id: registrationId },
+      where: { id: registrationId, user: { id: userId } },
     });
     if (!reg) throw new NotFoundException('Registration not found');
     await this.repository.update(
@@ -177,5 +197,18 @@ export class EventRegistrationRepository extends BaseRepository<
       .getRawOne<{ qty: string }>();
 
     return Number(qty || 0);
+  }
+
+  // Helper method to check if an event exists
+  private async findEventById(eventId: number): Promise<EventEntity> {
+    const event = await this.repository.manager
+      .getRepository(EventEntity)
+      .findOne({
+        where: { id: eventId },
+      });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
   }
 }

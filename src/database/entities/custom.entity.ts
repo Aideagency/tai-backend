@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Column,
+  DeleteDateColumn,
 } from 'typeorm';
 
 export abstract class CustomEntity {
@@ -23,6 +24,9 @@ export abstract class CustomEntity {
     default: () => 'CURRENT_TIMESTAMP(6)',
   })
   createdAt: Date;
+
+  @DeleteDateColumn({ name: 'deletedAt', type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 
   @Column({ default: false })
   deleted: boolean;

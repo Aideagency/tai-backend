@@ -21,6 +21,9 @@ import { PostController } from './post/post.controller';
 import { PostModule } from './post/post.module';
 import { ZohoModule } from './zoho/zoho.module';
 import { EventModule } from './event/event.module';
+import { AdminViewsController } from './admin-views/admin-views.controller';
+import { AdminViewsModule } from './admin-views/admin-views.module';
+import { AdminAuthModule } from './admin/auth/admin-auth.module';
 
 @Module({
   imports: [
@@ -41,12 +44,14 @@ import { EventModule } from './event/event.module';
     ConnectionsModule,
     PostModule,
     PaymentModule,
-    // EventModule,
+    EventModule,
+    AdminViewsModule,
     // ZohoModule,
-    // AdminModule,
+    AdminModule,
+    AdminAuthModule,
     // PaymentModule,
   ],
-  controllers: [AppController, PostController],
+  controllers: [AppController, PostController, AdminViewsController],
   providers: [AppService, PostService],
 })
 export class AppModule {}

@@ -1,0 +1,260 @@
+<div
+  id="previewEventModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 text-xs">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Event Preview</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closePreviewEventModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div id="previewEventContent" class="space-y-3">
+      <!-- Basic info -->
+      <div>
+        <p
+          class="font-semibold text-gray-800 text-sm"
+          id="previewEventTitle"
+        ></p>
+        <p class="text-[11px] text-gray-600" id="previewEventDescription"></p>
+      </div>
+
+      <!-- Tags / meta -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Type</span>
+          <p class="text-[11px] font-medium" id="previewEventType"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Status</span>
+          <p class="text-[11px] font-medium" id="previewEventStatus"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Mode</span>
+          <p class="text-[11px] font-medium" id="previewEventMode"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Capacity</span>
+          <p class="text-[11px] font-medium" id="previewEventCapacity"></p>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div>
+        <span class="text-[10px] text-gray-500">Location</span>
+        <p class="text-[11px] font-medium" id="previewEventLocationText"></p>
+        <a
+          id="previewEventLocationUrl"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-[10px] text-[var(--color-primary-dark)] underline"
+        >
+          Open link
+        </a>
+      </div>
+
+      <!-- Dates -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Starts at</span>
+          <p class="text-[11px]" id="previewEventStartsAt"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Ends at</span>
+          <p class="text-[11px]" id="previewEventEndsAt"></p>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div>
+        <span class="text-[10px] text-gray-500">Price</span>
+        <p class="text-[11px]" id="previewEventPrice"></p>
+      </div>
+
+      <!-- Registrations summary -->
+      <div class="border-t pt-3 mt-2">
+        <span class="text-[10px] text-gray-500 block mb-1">Registrations</span>
+        <div class="grid grid-cols-2 gap-2">
+          <p class="text-[11px]">
+            Total: <span id="previewEventTotalRegs" class="font-medium"></span>
+          </p>
+          <p class="text-[11px]">
+            Confirmed:
+            <span id="previewEventConfirmedRegs" class="font-medium"></span>
+          </p>
+          <p class="text-[11px]">
+            Pending:
+            <span id="previewEventPendingRegs" class="font-medium"></span>
+          </p>
+          <p class="text-[11px]">
+            Cancelled:
+            <span id="previewEventCancelledRegs" class="font-medium"></span>
+          </p>
+          <p class="text-[11px]">
+            Refunded:
+            <span id="previewEventRefundedRegs" class="font-medium"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple loading state -->
+    <div
+      id="previewEventLoading"
+      class="hidden text-[11px] text-gray-500 text-center py-4"
+    >
+      Loading event details...
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button
+        type="button"
+        class="px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+        onclick="closePreviewEventModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setPreviewLoading(isLoading) {
+    const content = document.getElementById('previewEventContent');
+    const loading = document.getElementById('previewEventLoading');
+
+    if (!content || !loading) return;
+
+    if (isLoading) {
+      content.classList.add('hidden');
+      loading.classList.remove('hidden');
+    } else {
+      content.classList.remove('hidden');
+      loading.classList.add('hidden');
+    }
+  }
+
+  function formatDateTime(value) {
+  if (!value) return '-';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  const options = {
+    day: 'numeric',
+    month: 'long',   // spelled out month
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,    // converts to 10:00 AM / PM
+  };
+
+  return date.toLocaleString('en-US', options);
+}
+
+  async function openPreviewEventModal(btn) {
+    const modal = document.getElementById('previewEventModal');
+    if (!modal) return;
+
+    const eventId = btn.dataset.eventId;
+    if (!eventId) {
+      console.error('Missing data-event-id on preview button');
+      return;
+    }
+
+    // Show modal + loading state
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setPreviewLoading(true);
+
+    try {
+      const res = await fetch(`/events/detailed-event/${eventId}`, {
+        method: 'GET',
+        credentials: 'include', // will send cookies like auth tokens if same-origin
+      });
+
+      if (!res.ok) {
+        console.error('Failed to fetch event details', res.status);
+        setPreviewLoading(false);
+        document.getElementById('previewEventTitle').textContent =
+          'Error loading event';
+        return;
+      }
+
+      const data = await res.json();
+
+      // Expecting shape: { event, stats, registrations }
+      const event = data.event || data; // fallback if you return plain event
+      const stats = data.stats || {};
+
+      setPreviewLoading(false);
+
+      // Basic info
+      document.getElementById('previewEventTitle').textContent =
+        event.title || '-';
+      document.getElementById('previewEventDescription').textContent =
+        event.description || '-';
+      document.getElementById('previewEventType').textContent =
+        event.type || '-';
+      document.getElementById('previewEventStatus').textContent =
+        event.status || '-';
+      document.getElementById('previewEventMode').textContent =
+        event.mode || '-';
+      document.getElementById('previewEventCapacity').textContent =
+        event.capacity ?? '-';
+
+      // Location
+      document.getElementById('previewEventLocationText').textContent =
+        event.locationText || '-';
+
+      const urlEl = document.getElementById('previewEventLocationUrl');
+      const locationUrl = event.locationUrl || '';
+      urlEl.href = locationUrl || '#';
+      urlEl.textContent = locationUrl ? 'Open link' : 'N/A';
+
+      // Dates
+      document.getElementById('previewEventStartsAt').textContent =
+        formatDateTime(event.startsAt);
+      document.getElementById('previewEventEndsAt').textContent =
+        formatDateTime(event.endsAt);
+
+      // Price
+      const priceEl = document.getElementById('previewEventPrice');
+      if (event.price === null || event.price === undefined || Number(event.price) === 0) {
+        priceEl.textContent = 'Free';
+      } else {
+        priceEl.textContent = `₦${event.price}`;
+      }
+
+      // Registration stats
+      document.getElementById('previewEventTotalRegs').textContent =
+        stats.total ?? 0;
+      document.getElementById('previewEventConfirmedRegs').textContent =
+        stats.confirmed ?? 0;
+      document.getElementById('previewEventPendingRegs').textContent =
+        stats.pending ?? 0;
+      document.getElementById('previewEventCancelledRegs').textContent =
+        stats.cancelled ?? 0;
+      document.getElementById('previewEventRefundedRegs').textContent =
+        stats.refunded ?? 0;
+    } catch (err) {
+      console.error(err);
+      setPreviewLoading(false);
+      document.getElementById('previewEventTitle').textContent =
+        'Error loading event';
+    }
+  }
+
+  function closePreviewEventModal() {
+    const modal = document.getElementById('previewEventModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+</script>

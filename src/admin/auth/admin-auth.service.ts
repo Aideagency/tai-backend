@@ -78,8 +78,8 @@ export class AdminAuthService {
     const token = await this.jwt.signAsync(payload, {
       secret: process.env.ADMIN_JWT_SECRET,
       expiresIn: this.JWT_EXPIRES_IN,
-      audience: 'admin-api',
-      issuer: 'your-app',
+      // audience: 'admin-api',
+      // issuer: 'your-app',
     });
 
     admin.last_login_at = new Date();

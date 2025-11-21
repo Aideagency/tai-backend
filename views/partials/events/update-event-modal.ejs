@@ -1,0 +1,388 @@
+<div
+  id="updateEventModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Update Event</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeUpdateEventModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="updateEventForm"
+      action=""
+      method="POST"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- If you use method override on the server, you can keep this: -->
+      <!-- <input type="hidden" name="_method" value="PATCH" /> -->
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          id="updateEventTitle"
+          type="text"
+          name="title"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          required
+        />
+      </div>
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          id="updateEventDescription"
+          name="description"
+          rows="3"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Type</label>
+          <select
+            id="updateEventType"
+            name="type"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="COMMUNITY">Community</option>
+            <option value="CONFERENCE">Conference</option>
+            <option value="RETREAT">Retreat</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Status</label>
+          <select
+            id="updateEventStatus"
+            name="status"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Mode</label>
+          <select
+            id="updateEventMode"
+            name="mode"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          >
+            <option value="ONLINE">Online</option>
+            <option value="PHYSICAL">Physical</option>
+            <option value="HYBRID">Hybrid</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Capacity</label>
+          <input
+            id="updateEventCapacity"
+            type="number"
+            name="capacity"
+            min="1"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1"
+          >Location text</label
+        >
+        <input
+          id="updateEventLocationText"
+          type="text"
+          name="locationText"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Location URL</label>
+        <input
+          id="updateEventLocationUrl"
+          type="url"
+          name="locationUrl"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Starts at</label>
+          <input
+            id="updateEventStartsAt"
+            type="datetime-local"
+            name="startsAt"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Ends at</label>
+          <input
+            id="updateEventEndsAt"
+            type="datetime-local"
+            name="endsAt"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-gray-700 mb-1"
+          >Price (optional)</label
+        >
+        <input
+          id="updateEventPrice"
+          type="number"
+          name="price"
+          step="0.01"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Cover image -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Cover image (optional)
+        </label>
+
+        <input
+          id="updateEventCoverImage"
+          type="file"
+          name="coverImageUrl"
+          accept="image/*"
+          class="w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-primary)] file:text-white hover:file:bg-[var(--color-primary-dark)]"
+        />
+
+        <p
+          id="updateEventCoverImageInfo"
+          class="mt-1 text-[10px] text-gray-500"
+        >
+          No current cover image.
+        </p>
+
+        <img
+          id="updateEventCoverImagePreview"
+          src=""
+          alt="Current cover image"
+          class="mt-2 h-20 w-full object-cover rounded-md hidden"
+        />
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+          onclick="closeUpdateEventModal()"
+        >
+          Cancel
+        </button>
+        <button
+          id="updateEventSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <span id="updateEventSubmitText">Save changes</span>
+          <svg
+            id="updateEventSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openUpdateEventModal(btn) {
+    const modal = document.getElementById('updateEventModal');
+    if (!modal) return;
+
+    const eventId = btn.dataset.eventId;
+    const form = document.getElementById('updateEventForm');
+
+    if (form && eventId) {
+      form.dataset.eventId = eventId;
+      // Adjust to your real UPDATE route
+      form.action = '/events/' + eventId;
+    }
+
+    // Prefill text fields
+    document.getElementById('updateEventTitle').value =
+      btn.dataset.eventTitle || '';
+    document.getElementById('updateEventDescription').value =
+      btn.dataset.eventDescription || '';
+    document.getElementById('updateEventType').value =
+      btn.dataset.eventType || '';
+    document.getElementById('updateEventStatus').value =
+      btn.dataset.eventStatus || '';
+    document.getElementById('updateEventMode').value =
+      btn.dataset.eventMode || '';
+    document.getElementById('updateEventLocationText').value =
+      btn.dataset.eventLocationText || '';
+    document.getElementById('updateEventLocationUrl').value =
+      btn.dataset.eventLocationUrl || '';
+    document.getElementById('updateEventStartsAt').value =
+      btn.dataset.eventStartsAt || '';
+    document.getElementById('updateEventEndsAt').value =
+      btn.dataset.eventEndsAt || '';
+    document.getElementById('updateEventPrice').value =
+      btn.dataset.eventPrice || '';
+    document.getElementById('updateEventCapacity').value =
+      btn.dataset.eventCapacity || '';
+
+    // Cover image preview
+    const coverUrl = btn.dataset.eventCoverImageUrl || '';
+    const preview = document.getElementById('updateEventCoverImagePreview');
+    const info = document.getElementById('updateEventCoverImageInfo');
+
+    if (coverUrl) {
+      preview.src = coverUrl;
+      preview.classList.remove('hidden');
+      info.textContent = 'Current cover image:';
+    } else {
+      preview.src = '';
+      preview.classList.add('hidden');
+      info.textContent = 'No current cover image.';
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeUpdateEventModal() {
+    const modal = document.getElementById('updateEventModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    const form = document.getElementById('updateEventForm');
+    if (form) {
+      form.reset();
+      delete form.dataset.eventId;
+    }
+
+    const btn = document.getElementById('updateEventSubmitBtn');
+    const text = document.getElementById('updateEventSubmitText');
+    const spinner = document.getElementById('updateEventSubmitSpinner');
+
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = 'Save changes';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('updateEventForm');
+    const submitBtn = document.getElementById('updateEventSubmitBtn');
+    const submitText = document.getElementById('updateEventSubmitText');
+    const submitSpinner = document.getElementById('updateEventSubmitSpinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const eventId = form.dataset.eventId;
+      if (!eventId) {
+        alert('Missing event id.');
+        return;
+      }
+
+      // Loader state
+      submitBtn.disabled = true;
+      submitSpinner.classList.remove('hidden');
+      submitText.textContent = 'Saving...';
+
+      const fd = new FormData();
+      fd.append('title', form.title.value);
+      fd.append('description', form.description.value || '');
+      fd.append('type', form.type.value || '');
+      fd.append('status', form.status.value || '');
+      fd.append('mode', form.mode.value || '');
+      fd.append('locationText', form.locationText.value || '');
+      fd.append('locationUrl', form.locationUrl.value || '');
+      if (form.startsAt.value) {
+        fd.append('startsAt', new Date(form.startsAt.value).toISOString());
+      }
+      if (form.endsAt.value) {
+        fd.append('endsAt', new Date(form.endsAt.value).toISOString());
+      }
+      if (form.price.value !== '') {
+        fd.append('price', form.price.value);
+      }
+      if (form.capacity.value !== '') {
+        fd.append('capacity', form.capacity.value);
+      }
+
+      // Cover image file (optional)
+      const coverInput = document.getElementById('updateEventCoverImage');
+      if (coverInput && coverInput.files && coverInput.files[0]) {
+        fd.append('coverImageUrl', coverInput.files[0]);
+      }
+
+      try {
+        const res = await fetch('/events/update/' + eventId, {
+          method: 'PUT', // align with your NestJS @Patch(':id')
+          credentials: 'include',
+          body: fd, // multipart/form-data
+        });
+
+        if (!res.ok) {
+          let msg = 'Error updating event.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+          alert(msg);
+
+          submitBtn.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitText.textContent = 'Save changes';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        submitBtn.disabled = false;
+        submitSpinner.classList.add('hidden');
+        submitText.textContent = 'Save changes';
+      }
+    });
+  });
+</script>

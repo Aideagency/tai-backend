@@ -19,7 +19,7 @@ import {
   ChallengeStatus,
   Visibility,
 } from 'src/database/entities/challenge.entity';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class CreateChallengeDto {
   @ApiProperty({
@@ -106,6 +106,7 @@ export class CreateChallengeDto {
   @Length(1, 200, {
     message: 'Book title should be between 1 and 200 characters.',
   })
+  @IsOptional()
   bookTitle?: string;
 
   @ApiPropertyOptional({

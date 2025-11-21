@@ -1,6 +1,6 @@
 // src/admin/auth/admin-auth.controller.ts
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminJwtGuard } from './admin-jwt.guard';
 import { Roles, RolesGuard } from './roles.guard';
@@ -12,6 +12,7 @@ import { AdminLoginDto } from './dtos/admin-login.dto';
 
 @ApiTags('Admin auth')
 @Controller('admin/auth')
+@ApiExcludeController()
 export class AdminAuthController {
   constructor(private readonly svc: AdminAuthService) {}
 

@@ -1,148 +1,150 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { EventRepository } from 'src/repository/event/event.repository';
 import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
-import { EventTicketRepository } from 'src/repository/event/event-ticket.repository';
-import { EventEntity, RefundStatus } from 'src/database/entities/event.entity';
-import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
-import { EventTicketEntity } from 'src/database/entities/event-ticket.entity';
-import { RefundRequestEntity } from 'src/database/entities/refund-request.entity';
+import { EventEntity, EventStatus } from 'src/database/entities/event.entity';
 import {
+  EventRegistrationEntity,
   RegistrationStatus,
-  TicketStatus,
-} from 'src/database/entities/event.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CreateEventDto } from './dtos/create-event.dto';
-import { RefundRequestRepository } from 'src/repository/event/refund-request.repository';
+} from 'src/database/entities/event-registration.entity';
+import { GetEventsFilterDto } from './dtos/get-events-query.dto';
+// import { RegistrationStatus } from 'src/database/entities/event.entity';
 
 @Injectable()
 export class EventService {
   constructor(
-    private readonly eventRepo: EventRepository,
-    private readonly registrationRepo: EventRegistrationRepository,
-    private readonly ticketRepo: EventTicketRepository,
-    private readonly refundRepo: RefundRequestRepository,
+    private readonly eventRepository: EventRepository,
+    private readonly eventRegistrationRepository: EventRegistrationRepository,
   ) {}
 
-  // Create new event
-  async createEvent(eventData: CreateEventDto): Promise<EventEntity> {
-    const event = new EventEntity();
-
-    // Setting the required fields from the CreateEventDto
-    event.title = eventData.title;
-    event.description = eventData.description;
-    event.locationText = eventData.locationText;
-    event.capacity = eventData.capacity || null; // Optional field, use null if not provided
-    event.startsAt = eventData.startsAt;
-    event.endsAt = eventData.endsAt;
-
-    // Setting optional fields with defaults if not provided in the DTO
-    // event.locationUrl = eventData.locationUrl || 'default-location-url'; // Default location URL
-    // event.icsToken = eventData.icsToken || 'default-ics-token'; // Default ICS token
-    // event.organizer = eventData.organizer || 'Default Organizer'; // Default organizer name
-    // event.ticketTypes = eventData.ticketTypes || []; // Default empty array for ticket types
-
-    // If you have any other required or optional fields, map them here similarly.
-
-    return this.eventRepo.save(event); // Save and return the newly created event
+  // Create an Event
+  async createEvent(eventData: Partial<EventEntity>): Promise<EventEntity> {
+    const event = await this.eventRepository.createEvent(eventData);
+    return event;
   }
 
-  // Update event details
+  // Update an Event
   async updateEvent(
     id: number,
-    updateData: Partial<EventEntity>,
+    eventData: Partial<EventEntity>,
   ): Promise<EventEntity> {
-    const event = await this.eventRepo.findOne({ id });
-    if (!event) {
-      throw new NotFoundException('Event not found');
-    }
-    return this.eventRepo.save({ ...event, ...updateData });
+    const event = await this.eventRepository.updateEvent(id, eventData);
+    return event;
   }
 
-  // Delete event
-  async deleteEvent(id: number): Promise<void> {
-    const event = await this.eventRepo.findOne({ id });
-    if (!event) {
-      throw new NotFoundException('Event not found');
-    }
-    await this.eventRepo.remove(event);
-  }
-
-  // Register user for event
-  async registerUserForEvent(
+  // Register for an Event
+  async registerForEvent(
     userId: number,
     eventId: number,
-    ticketTypeId: number | null,
-    quantity: number,
-    status: RegistrationStatus,
   ): Promise<EventRegistrationEntity> {
-    const event = this.eventRepo.findOne({
-      where: {
-        id: eventId,
-      },
-    });
-    const registration = await this.registrationRepo.createRegistration({
-      userId,
-      eventId,
-      ticketTypeId,
-      quantity,
-      status,
-      unitPrice: '100.00', // Example price, replace with actual calculation
-      totalAmount: quantity.toString(), // Example amount
-    });
+    const event = await this.eventRepository.findEventById(eventId);
+
+    // Prevent registration if the event has already ended
+    if (event.endsAt < new Date()) {
+      throw new BadRequestException(
+        'Event has already ended, registration is closed',
+      );
+    }
+
+    // Register the user for the event
+    const registration =
+      await this.eventRegistrationRepository.createRegistration({
+        userId,
+        eventId,
+        status: RegistrationStatus.PENDING_PAYMENT, // Initially set to pending payment
+        unitPrice: event.price ? String(event.price) : null,
+      });
+
     return registration;
   }
 
-  // Issue tickets for a registration
-  async issueTicketsForRegistration(
+  // Update Registration Information
+  async updateRegistration(
     registrationId: number,
-    codes: string[],
-  ): Promise<EventTicketEntity[]> {
-    return await this.ticketRepo.issueForRegistration({
-      registrationId,
-      codes,
+    updateData: Partial<EventRegistrationEntity>,
+  ): Promise<EventRegistrationEntity> {
+    const registration = await this.eventRegistrationRepository.findOne({
+      id: registrationId,
     });
+
+    if (!registration) {
+      throw new NotFoundException('Registration not found');
+    }
+
+    // Update registration information
+    Object.assign(registration, updateData);
+    await this.eventRegistrationRepository.save(registration);
+    return registration;
   }
 
-  // Request refund for registration
-  //   async requestRefundForRegistration(
-  //     registrationId: number,
-  //     amount: string,
-  //     reason: string | null,
-  //   ): Promise<RefundRequestEntity> {
-  //     return this.refundRepo.createRefundRequest({
-  //       registrationId,
-  //       amount,
-  //       reason,
-  //     });
-  //   }
-
-  async requestRefundForRegistration(
+  // Confirm Payment for a Registration
+  async confirmPayment(
     registrationId: number,
-    amount: string,
-    reason: string | null,
-  ): Promise<RefundRequestEntity> {
-    return this.refundRepo.createRefundRequest({
+    transactionId: number,
+  ): Promise<EventRegistrationEntity> {
+    // Confirm the payment for the given registration
+    const registration = await this.eventRegistrationRepository.confirmPayment(
       registrationId,
-      reason,
-      amount,
+      transactionId,
+    );
+    return registration;
+  }
+
+  // Cancel a Registration
+  async cancelRegistration(
+    registrationId: number,
+    userId: number,
+  ): Promise<boolean> {
+    // Cancel the registration
+    const cancelled = await this.eventRegistrationRepository.cancel(
+      registrationId,
+      userId,
+    );
+    return cancelled;
+  }
+
+  // Additional Helper Methods
+
+  // Get all registrations for an event
+  async getEventRegistrations(eventId: number) {
+    const registrations = await this.eventRegistrationRepository.findAll({
+      event: { id: eventId },
     });
+    return registrations;
   }
 
-  async approveRefund(refundId: number): Promise<RefundRequestEntity> {
-    return this.refundRepo.approveRefund(refundId);
+  // Get all events
+  async getAllEvents(params: GetEventsFilterDto) {
+    const events = await this.eventRepository.searchEventsPaginated(params);
+
+    return events;
   }
 
-  // Mark ticket as used
-  async markTicketUsed(ticketId: number): Promise<EventTicketEntity> {
-    return this.ticketRepo.markUsed(ticketId);
+  // Get a single event by ID
+  async getEventById(id: number) {
+    const event = await this.eventRepository.findEventById(id);
+    return event;
   }
 
-  async getEventInformation(eventId: number) {
-    return this.eventRepo.findByIdWithDetails(eventId);
+  async getDetailedEventById(id: number) {
+    const event = await this.eventRepository.findDetailedEventById(id);
+    return event;
   }
 
-  async getEvents(params) {
-    return this.eventRepo.getPaginatedEvents(params);
+  async deleteEvent(id: number) {
+    return this.eventRepository.deleteEvent(id);
+  }
+
+  // Check if a user is already registered for an event
+  async isUserRegisteredForEvent(userId: number, eventId: number) {
+    const registration =
+      await this.eventRegistrationRepository.findUserRegistration(
+        userId,
+        eventId,
+      );
+    return registration !== null;
   }
 }

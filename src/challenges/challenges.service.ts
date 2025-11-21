@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ChallengeRepository,
   ChallengeSearchParams,
@@ -22,6 +26,8 @@ import {
   EnrollmentSearchParams,
 } from 'src/repository/challenge/user-challenge.repository';
 import { CommunityTag } from 'src/database/entities/user.entity';
+import { CreateChallengeTaskDto } from './dtos/create-challenge-task.dto';
+import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
 
 @Injectable()
 export class ChallengesService {
@@ -90,10 +96,8 @@ export class ChallengesService {
     }
   }
 
-  async removeTasksFromChallenge(
-    challenge: ChallengeEntity,
-    taskIds: number[],
-  ) {
+  async removeTasksFromChallenge(id: number, taskIds: number[]) {
+    const challenge = await this.challengeRepo.findOneWithTask(id);
     // Find tasks that are marked for deletion
     const tasksToRemove = challenge.tasks.filter((task) =>
       taskIds.includes(task.id),
@@ -106,9 +110,10 @@ export class ChallengesService {
   }
 
   async addNewTasksToChallenge(
-    challenge: ChallengeEntity,
-    taskDtos: Array<any>,
+    id: number,
+    taskDtos: Array<CreateChallengeTaskDto>,
   ) {
+    const challenge = await this.challengeRepo.findById(id);
     const newTasks = taskDtos.map((taskDto) => {
       const taskEntity = new ChallengeTaskEntity();
 
@@ -128,13 +133,17 @@ export class ChallengesService {
     });
 
     // Save the new tasks to the database
-    return await this.challengeTaskRepo.saveAll(newTasks);
+
+    return this.challengeTaskRepo.saveAll(newTasks);
   }
 
   async updateChallenge(dto: UpdateChallengeDto, challengeId: number) {
     try {
       // Fetch the existing challenge from the database
       const challenge = await this.getChallenge(challengeId);
+      // const example = await this.challengeRepo.findOneWithTask(challengeId);
+
+      
 
       // Update the main Challenge entity (only fields provided in DTO)
       if (dto.community) challenge.community = dto.community;
@@ -152,7 +161,8 @@ export class ChallengesService {
 
       // Step 1: Add new tasks to the challenge
       if (dto.tasks && dto.tasks.length > 0) {
-        await this.addNewTasksToChallenge(challenge, dto.tasks);
+        const tasks = await this.addNewTasksToChallenge(challengeId, dto.tasks);
+        challenge.tasks = [...tasks, ...challenge.tasks]
       }
 
       // Save the challenge with updated tasks
@@ -177,6 +187,50 @@ export class ChallengesService {
     return challenge;
   }
 
+  async updateChallengeTask(
+    challengeId: number,
+    taskId: number,
+    dto: UpdateChallengeTaskDto,
+  ) {
+    // ensure task exists & belongs to this challenge
+    const task = await this.challengeTaskRepo.findOneWithChallenge(taskId);
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    if (task.challenge.id !== challengeId) {
+      throw new BadRequestException(
+        'Task does not belong to the specified challenge',
+      );
+    }
+
+    Object.assign(task, dto);
+    return this.challengeTaskRepo.save(task);
+  }
+
+  async deleteChallenge(id: string | number) {
+    const numericId = Number(id);
+
+    if (Number.isNaN(numericId)) {
+      throw new BadRequestException('Invalid challenge id');
+    }
+
+    // Ensure challenge exists before deleting
+    const challenge = await this.challengeRepo.findById(numericId);
+    if (!challenge) {
+      throw new NotFoundException('Challenge not found');
+    }
+
+    await this.challengeRepo.deleteById(numericId);
+
+    return {
+      success: true,
+      message: 'Challenge deleted successfully',
+      id: numericId,
+    };
+  }
+
   async joinChallenge({
     userId,
     challengeId,
@@ -199,17 +253,19 @@ export class ChallengesService {
     }
   }
 
-  async listAllChallenges({
-    community,
-    params,
-  }: {
-    community: CommunityTag[];
-    params: ChallengeSearchParams;
-  }) {
+  async listAllChallenges(
+    community: CommunityTag[],
+    params: ChallengeSearchParams,
+  ) {
     const challenges = await this.challengeRepo.listAvailableForCommunity(
       community,
       params,
     );
+    return challenges;
+  }
+
+  async listEveryChallenge(params: ChallengeSearchParams) {
+    const challenges = await this.challengeRepo.listAllChallenges(params);
     return challenges;
   }
 
@@ -220,6 +276,11 @@ export class ChallengesService {
         withTasks: true,
       },
     );
+    return challenge;
+  }
+
+  async deleteChallange(id: string) {
+    const challenge = await this.challengeRepo.softDelete(Number(id));
     return challenge;
   }
 

@@ -1,7 +1,6 @@
 import { Column, Entity, ManyToOne, OneToMany, Index } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { UserEntity } from './user.entity';
-import { EventTicketTypeEntity } from './event-ticket-type.entity';
 import { EventRegistrationEntity } from './event-registration.entity';
 
 export enum EventType {
@@ -17,18 +16,11 @@ export enum EventStatus {
   ENDED = 'ENDED',
 }
 
-export enum RegistrationStatus {
-  PENDING_PAYMENT = 'PENDING_PAYMENT',
-  CONFIRMED = 'CONFIRMED', // RSVP successful or payment confirmed
-  CANCELLED = 'CANCELLED',
-  REFUNDED = 'REFUNDED',
+export enum EventMode {
+  ONLINE = 'ONLINE',
+  OFFLINE = 'OFFLINE',
 }
 
-export enum TicketStatus {
-  ACTIVE = 'ACTIVE',
-  USED = 'USED',
-  CANCELLED = 'CANCELLED',
-}
 
 export enum RefundStatus {
   REQUESTED = 'REQUESTED',
@@ -50,14 +42,20 @@ export class EventEntity extends CustomEntity {
   @Column({ type: 'enum', enum: EventType })
   type: EventType;
 
-  @Column({ type: 'enum', enum: EventStatus, default: EventStatus.DRAFT })
+  @Column({ type: 'enum', enum: EventStatus, default: EventStatus.PUBLISHED })
   status: EventStatus;
 
-  @Column({ nullable: true })
-  locationText: string | null; // e.g., "Eko Hotel, Lagos"
+  @Column({ type: 'enum', enum: EventMode, nullable: false })
+  mode: EventMode; // ONLINE or OFFLINE
 
   @Column({ nullable: true })
-  locationUrl: string | null; // online link if virtual/hybrid
+  locationText: string | null; // Only for OFFLINE events, e.g., "Eko Hotel, Lagos"
+
+  @Column({ nullable: true })
+  locationUrl: string | null; // Only for ONLINE events, e.g., Zoom link
+
+  @Column({ nullable: true })
+  coverImageUrl: string | null; // URL for the event cover image
 
   @Column({ type: 'timestamp' })
   startsAt: Date;
@@ -68,16 +66,18 @@ export class EventEntity extends CustomEntity {
   @Column({ type: 'int', nullable: true })
   capacity: number | null; // overall cap (can be <= sum of ticket caps)
 
-  // For easy calendar export or magic link
   @Column({ nullable: true, unique: true })
-  icsToken: string | null;
+  icsToken: string | null; // For easy calendar export or magic link
 
   @ManyToOne(() => UserEntity, { nullable: true })
   organizer: UserEntity | null;
 
-  @OneToMany(() => EventTicketTypeEntity, (tt) => tt.event, { cascade: true })
-  ticketTypes: EventTicketTypeEntity[];
+  @Column({ type: 'decimal', nullable: true })
+  price: number | null; // Price for paid events (null for free events)
 
+  // Restrict to one ticket per user for paid events
   @OneToMany(() => EventRegistrationEntity, (r) => r.event)
   registrations: EventRegistrationEntity[];
+
+  // Business logic to ensure only one ticket per user for paid events can be enforced in your services or event registration logic.
 }

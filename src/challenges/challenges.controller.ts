@@ -1,4 +1,3 @@
-// challenges.controller.ts
 import {
   Controller,
   Get,
@@ -11,27 +10,28 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
-  // ValidationPipe,
+  ValidationPipe,
   Req,
   BadRequestException,
+  Delete,
+  Put,
 } from '@nestjs/common';
 import {
-  // EnrollChallengeDto,
   ListAvailableChallengesQueryDto,
-  // PaginationQueryDto,
   PartnerConfirmDto,
-  // ReflectionCreateDto,
   ToggleTaskCompletionDto,
   CombinedChallengesQueryDto,
 } from './dtos/user-challenges.dtos';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { ChallengesService } from './challenges.service';
-// import { CreateChallengeDto } from './dtos/create-challenge.dto';
+import { CreateChallengeDto } from './dtos/create-challenge.dto';
 import { EnrollmentSearchParams } from 'src/repository/challenge/user-challenge.repository';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { UserRepository } from 'src/repository/user/user.repository';
-import { UserService } from 'src/user/user.service';
 import { AuthService } from 'src/auth/auth.service';
+import { UpdateChallengeDto } from './dtos/update-challenge.dto';
+import { AddTasksDto, CreateChallengeTaskDto, RemoveTasksDto } from './dtos/create-challenge-task.dto';
+import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
 // import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
 // Import your services
@@ -39,25 +39,149 @@ import { AuthService } from 'src/auth/auth.service';
 // import { ReflectionsService } from './reflections.service';
 // import { BadgesService } from './badges.service';
 @Controller('challenges')
-@UseGuards(JwtGuards)
-@ApiBearerAuth()
 export class ChallengesController {
   constructor(
     private challengeService: ChallengesService,
     private userRepo: UserRepository,
     private authService: AuthService,
   ) {} // private readonly badgesService: BadgesService, // private readonly reflectionsService: ReflectionsService, // private readonly userChallengesService: UserChallengesService, // private readonly challengesService: ChallengesService,
-  // @Post('create-challenge')
-  // @HttpCode(HttpStatus.CREATED)
-  // async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
-  //   await this.challengeService.createChallenge(dto);
-  //   return {
-  //     message: 'Challenge Created Successfully!',
-  //     status: 201,
-  //   };
-  // }
+  @Post('create-challenge')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
+    await this.challengeService.createChallenge(dto);
+    return {
+      message: 'Challenge Created Successfully!',
+      status: 201,
+    };
+  }
+
+  @Put('update-challenge/:id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async updateChallenge(
+    @Body(new ValidationPipe()) dto: UpdateChallengeDto,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.challengeService.updateChallenge(dto, id);
+    return {
+      message: 'Challenge Update Successfully!',
+      status: 200,
+    };
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async getChallenge(@Param('id', ParseIntPipe) id: string) {
+    // const user = this.authService.toSubmissionResponse(
+    //   await this.userRepo.findByEmail(req.user.email),
+    // );
+    const challenges = await this.challengeService.getSingleChallenge(id);
+    return {
+      message: 'Challlenge details fetched Successfully!',
+      data: challenges,
+      status: 200,
+    };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async deleteChallenge(@Param('id', ParseIntPipe) id: string) {
+    await this.challengeService.deleteChallange(id);
+    return {
+      message: 'Challlenge details deleted Successfully!',
+      status: 200,
+    };
+  }
+
+  @Post('/:challengeId/tasks')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiExcludeEndpoint()
+  async addTasksToChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: AddTasksDto,
+  ) {
+    const result = await this.challengeService.addNewTasksToChallenge(
+      challengeId,
+      dto.tasks,
+    );
+
+    return {
+      message: 'Tasks added to challenge successfully!',
+      status: 201,
+      data: result,
+    };
+  }
+
+  // Remove a single task from challenge (admin)
+  @Delete(':challengeId/tasks/:taskId')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async removeTaskFromChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Param('taskId', ParseIntPipe) taskId: number,
+  ) {
+    const result = await this.challengeService.removeTasksFromChallenge(
+      challengeId,
+      [taskId],
+    );
+
+    return {
+      message: 'Task removed from challenge successfully!',
+      status: 200,
+      data: result,
+    };
+  }
+
+  // Remove multiple tasks from challenge (admin)
+  @Delete('/:challengeId/tasks')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async removeTasksFromChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: RemoveTasksDto,
+  ) {
+    const result = await this.challengeService.removeTasksFromChallenge(
+      challengeId,
+      dto.taskIds,
+    );
+
+    return {
+      message: 'Tasks removed from challenge successfully!',
+      status: 200,
+      data: result,
+    };
+  }
+
+  @Patch('/:challengeId/tasks/:taskId')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  async editTaskForChallenge(
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @Param('taskId', ParseIntPipe) taskId: number,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: UpdateChallengeTaskDto,
+  ) {
+    const result = await this.challengeService.updateChallengeTask(
+      challengeId,
+      taskId,
+      dto,
+    );
+
+    return {
+      message: 'Task updated successfully!',
+      status: 200,
+      data: result,
+    };
+  }
 
   @Get('available')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async listAvailable(
     @Req() req,
     @Query() query: ListAvailableChallengesQueryDto,
@@ -65,10 +189,10 @@ export class ChallengesController {
     const user = this.authService.toSubmissionResponse(
       await this.userRepo.findByEmail(req.user.email),
     );
-    const challenges = await this.challengeService.listAllChallenges({
-      community: user.community,
-      params: query,
-    });
+    const challenges = await this.challengeService.listAllChallenges(
+      user.community,
+      query,
+    );
     return {
       message: 'Available Challenge fetched Successfully!',
       data: challenges,
@@ -77,6 +201,8 @@ export class ChallengesController {
   }
 
   @Get('available/:id')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async getSingleChallenge(@Req() req, @Param('id', ParseIntPipe) id: string) {
     // const user = this.authService.toSubmissionResponse(
     //   await this.userRepo.findByEmail(req.user.email),
@@ -90,6 +216,8 @@ export class ChallengesController {
   }
 
   @Get('combined-challenges')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async combinedChallenges(
     @Req() req,
     @Query() query: CombinedChallengesQueryDto,
@@ -114,6 +242,8 @@ export class ChallengesController {
   }
 
   @Post(':challengeId/enroll/:startDate')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.CREATED)
   async enroll(
     @Req() req,
@@ -139,6 +269,8 @@ export class ChallengesController {
   }
 
   @Get('my-challenges')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async myChallenges(@Req() req, @Query() query: EnrollmentSearchParams) {
     const params: any = {
       page: query.page ?? 1,
@@ -176,6 +308,8 @@ export class ChallengesController {
   // }
 
   @Get('me/:userChallengeId')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async getMyEnrollment(
     @Req() req,
     @Param('userChallengeId', ParseIntPipe) userChallengeId: number,
@@ -193,6 +327,8 @@ export class ChallengesController {
   }
 
   @Get('me/:userChallengeId/today')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async todayTasks(
     @Req() req,
     @Param('userChallengeId', ParseIntPipe) userChallengeId: number,
@@ -209,6 +345,8 @@ export class ChallengesController {
   }
 
   @Post('me/toggle-task-completion')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async toggleTask(@Req() req, @Body() dto: ToggleTaskCompletionDto) {
     await this.challengeService.toggleChallengeTaskCompletion({
       userId: req.user.id,
@@ -220,6 +358,8 @@ export class ChallengesController {
   }
 
   @Patch('me/tasks/partner-confirmation')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   async partnerConfirm(@Req() req, @Body() dto: PartnerConfirmDto) {
     await this.challengeService.partnerTaskConfirmation({
       userId: req.user.id,
@@ -231,6 +371,8 @@ export class ChallengesController {
   }
 
   @Post('me/:userChallengeId/complete')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async completeEnrollment(
     @Req() req,

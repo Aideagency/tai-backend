@@ -1,0 +1,251 @@
+<div
+  id="editTaskModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 text-xs flex flex-col max-h-[90vh] overflow-hidden"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-3 flex-shrink-0">
+      <h3 class="text-sm font-semibold text-gray-800">Edit Task</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeEditTaskModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="overflow-y-auto flex-1 custom-scrollbar pr-1">
+      <form id="editTaskForm" class="space-y-3">
+        <input type="hidden" id="editTaskId" name="taskId" />
+        <input type="hidden" id="editTaskChallengeId" name="challengeId" />
+
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">
+            Task Title
+          </label>
+          <input
+            type="text"
+            name="title"
+            id="editTaskTitle"
+            required
+            minlength="3"
+            maxlength="200"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">
+            Instructions
+          </label>
+          <textarea
+            name="instructions"
+            id="editTaskInstructions"
+            rows="3"
+            required
+            minlength="10"
+            maxlength="1000"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Day #
+            </label>
+            <input
+              type="number"
+              name="dayNumber"
+              id="editTaskDayNumber"
+              min="1"
+              max="365"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Week #
+            </label>
+            <input
+              type="number"
+              name="weekNumber"
+              id="editTaskWeekNumber"
+              min="1"
+              max="52"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Cadence
+            </label>
+            <select
+              name="frequency"
+              id="editTaskFrequency"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            >
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label
+            class="inline-flex items-center gap-2 text-[11px] text-gray-700"
+          >
+            <input
+              type="checkbox"
+              name="isMilestone"
+              id="editTaskIsMilestone"
+              value="true"
+              class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+            />
+            Milestone task
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end gap-2 flex-shrink-0">
+      <button
+        type="button"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
+        onclick="closeEditTaskModal()"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="editTaskForm"
+        class="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-[11px] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+      >
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openEditTaskModal(button) {
+    const taskId = button.dataset.taskId;
+    const challengeId = button.dataset.challengeId;
+    if (!taskId || !challengeId) return;
+
+    document.getElementById('editTaskId').value = taskId;
+    document.getElementById('editTaskChallengeId').value = challengeId;
+
+    document.getElementById('editTaskTitle').value =
+      button.dataset.taskTitle || '';
+    document.getElementById('editTaskInstructions').value =
+      button.dataset.taskInstructions || '';
+    document.getElementById('editTaskDayNumber').value =
+      button.dataset.taskDayNumber || '';
+    document.getElementById('editTaskWeekNumber').value =
+      button.dataset.taskWeekNumber || '';
+    document.getElementById('editTaskFrequency').value =
+      button.dataset.taskFrequency || 'DAILY';
+
+    document.getElementById('editTaskIsMilestone').checked =
+      button.dataset.taskIsMilestone === 'true';
+
+    const modal = document.getElementById('editTaskModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeEditTaskModal() {
+    const modal = document.getElementById('editTaskModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function serializeEditTaskForm() {
+    const form = document.getElementById('editTaskForm');
+    const payload = {};
+
+    const get = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
+
+    payload.title = get('title');
+    payload.instructions = get('instructions');
+
+    const day = parseInt(get('dayNumber'));
+    const week = parseInt(get('weekNumber'));
+
+    if (!isNaN(day)) payload.dayNumber = day;
+    if (!isNaN(week)) payload.weekNumber = week;
+
+    payload.frequency = get('frequency');
+    payload.isMilestone = document.getElementById(
+      'editTaskIsMilestone',
+    ).checked;
+
+    return payload;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const editForm = document.getElementById('editTaskForm');
+    if (!editForm) return;
+
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const taskId = document.getElementById('editTaskId').value;
+      const challengeId = document.getElementById('editTaskChallengeId').value;
+
+      if (!taskId || !challengeId) {
+        alert('Missing required IDs.');
+        return;
+      }
+
+      // 🔧 Button is OUTSIDE the form, so query from document:
+      const submitBtn = document.querySelector(
+        'button[form="editTaskForm"][type="submit"]',
+      );
+
+      const originalText = submitBtn ? submitBtn.textContent : 'Save';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const payload = serializeEditTaskForm();
+
+        const res = await fetch(`/challenges/${challengeId}/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.message || 'Failed to update task.');
+          return;
+        }
+
+        closeEditTaskModal();
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Unexpected error.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+  });
+</script>

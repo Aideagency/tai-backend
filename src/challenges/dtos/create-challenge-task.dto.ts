@@ -8,10 +8,14 @@ import {
   IsString,
   Length,
   IsEnum,
+  IsArray,
+  ValidateNested,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChallengeFrequency } from 'src/database/entities/challenge.entity';
 import { TaskCadence } from 'src/database/entities/challenge-task.entity';
+import { Type } from 'class-transformer';
 
 export class CreateChallengeTaskDto {
   @ApiProperty({
@@ -91,4 +95,19 @@ export class CreateChallengeTaskDto {
 
     // Additional validation could be added as needed (e.g., enforcing milestones).
   }
+}
+
+export class AddTasksDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => CreateChallengeTaskDto)
+  tasks: CreateChallengeTaskDto[];
+}
+
+export class RemoveTasksDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  taskIds: number[];
 }
