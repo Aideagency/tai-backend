@@ -6,7 +6,7 @@ import {
 } from 'src/database/entities/transaction.entity';
 import { TracerLogger } from 'src/logger/logger.service';
 import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class PaymentService {
