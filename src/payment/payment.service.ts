@@ -128,7 +128,7 @@ export class PaymentService {
         .update(JSON.stringify(req.body))
         .digest('hex');
 
-      // console.log({ hash });
+      console.log({ hash });
 
       if (hash === req.headers['x-paystack-signature']) {
         const txRef = req.body?.data?.reference;
