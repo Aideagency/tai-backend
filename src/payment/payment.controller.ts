@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Get, Param } from '@nestjs/common';
+import { Body, Controller, Post, Req, Get, Param, HttpCode } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
@@ -31,6 +31,7 @@ export class PaymentController {
 
   @Post('process-payments')
   @ApiOperation({ summary: 'Processing paystack transactions' })
+  @HttpCode(200)
   // @ApiExcludeEndpoint()
   async processPayment(@Req() req: any) {
     console.log('I was triggered');
