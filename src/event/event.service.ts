@@ -202,6 +202,7 @@ export class EventService {
   }
 
   async findRegByRef(ref: string) {
+    await this.eventRegistrationRepository.hardDelete(7)
     return this.eventRegistrationRepository.findRegistrationByTransactionRef(
       ref,
     );
@@ -219,8 +220,8 @@ export class EventService {
       this.emailService
         .sendMail({
           to: email,
-          subject: 'Account Verification',
-          template: 'account-verification',
+          subject: 'Event Registration',
+          template: 'event-registration',
           data: {
             username: registration.user.first_name,
             event_title: registration.event.title,

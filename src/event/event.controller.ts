@@ -112,11 +112,11 @@ export class EventController {
     );
   }
 
-  // @Get('find/:reference')
-  // // @ApiBearerAuth()
-  // async findByReference(@Param('reference') reference: string) {
-  //   return this.eventService.findRegByRef(reference);
-  // }
+  @Get('find/:reference')
+  // @ApiBearerAuth()
+  async findByReference(@Param('reference') reference: string) {
+    return this.eventService.findRegByRef(reference);
+  }
 
   // @UseGuards(JwtGuards)
   // @Put('update-registration/:registrationId')
