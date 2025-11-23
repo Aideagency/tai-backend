@@ -208,26 +208,25 @@ export class EventService {
         ref,
       );
 
-    this.emailService
-      .sendMail({
-        to: registration.user.email_address,
-        subject: 'Event Registration',
-        template: 'event-registration',
-        data: {
-          username: registration.user.first_name,
-          event_title: registration.event.title,
-          event_mode: registration.event.mode,
-          event_location:
-            registration.event.locationText || registration.event.locationUrl,
-          price: registration.event.price,
-          start_date: registration.event.startsAt,
-          end_date: registration.event.endsAt,
-        },
-      })
-      .then((res) => {
-        this.logger.log(res);
-      })
-      .catch((err) => this.logger.error(err));
+    await this.emailService.sendMail({
+      to: registration.user.email_address,
+      subject: 'Event Registration',
+      template: 'event-registration',
+      data: {
+        username: registration.user.first_name,
+        event_title: registration.event.title,
+        event_mode: registration.event.mode,
+        event_location:
+          registration.event.locationText || registration.event.locationUrl,
+        price: registration.event.price,
+        start_date: registration.event.startsAt,
+        end_date: registration.event.endsAt,
+      },
+    });
+    // .then((res) => {
+    //   this.logger.log(res);
+    // })
+    // .catch((err) => this.logger.error(err));
 
     return registration;
   }
