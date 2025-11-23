@@ -105,8 +105,18 @@ export class EventController {
   @Post('register/:eventId')
   @ApiBearerAuth()
   async registerForEvent(@Param('eventId') eventId: number, @Req() req: any) {
-    return this.eventService.registerForEvent(req.user.id, req.user.email, eventId);
+    return this.eventService.registerForEvent(
+      req.user.id,
+      req.user.email,
+      eventId,
+    );
   }
+
+  // @Get('find/:reference')
+  // // @ApiBearerAuth()
+  // async findByReference(@Param('reference') reference: string) {
+  //   return this.eventService.findRegByRef(reference);
+  // }
 
   // @UseGuards(JwtGuards)
   // @Put('update-registration/:registrationId')
