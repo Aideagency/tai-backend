@@ -52,10 +52,10 @@ export class EventService {
   }
 
   // Register for an Event
-  async registerForEvent(userId: number, email: string, eventId: number) {
+  async registerForEvent(req: any, eventId: number) {
     const isRegistered =
       await this.eventRegistrationRepository.findUserRegistration(
-        userId,
+        req.user.id,
         eventId,
       );
 
@@ -76,18 +76,17 @@ export class EventService {
     if (Number(event.price) > 0) {
       const transaction = new TransactionEntity();
       const paymentResponse = await this.paymentService.initializePayment({
-        email,
+        email: req.user.email,
         amount: String(event.price * 100),
       });
-      console.log(paymentResponse);
 
       transaction.transaction_ref = paymentResponse.reference;
-      transaction.email_address = email;
+      transaction.email_address = req.user.email;
       transaction.paid_for = PaidFor.EVENT;
       transaction.actualAmount = event.price;
       await this.transactionRepo.save(transaction);
       await this.eventRegistrationRepository.createRegistration({
-        userId,
+        userId: req.user.id,
         eventId,
         status: RegistrationStatus.PENDING_PAYMENT,
         unitPrice: String(event.price),
@@ -96,21 +95,42 @@ export class EventService {
 
       // Return the checkout url
       return {
-        authorization_url: paymentResponse.authorization_url,
-        reference: paymentResponse.reference,
+        message: 'Payment initiated',
+        data: {
+          authorization_url: paymentResponse.authorization_url,
+          reference: paymentResponse.reference,
+        },
       };
     } else {
       // Register the user for the event directly
       const registration =
         await this.eventRegistrationRepository.createRegistration({
-          userId,
+          userId: req.user.id,
           eventId,
           status: event.price
             ? RegistrationStatus.PENDING_PAYMENT
             : RegistrationStatus.CONFIRMED, // Initially set to pending payment
           unitPrice: null,
         });
-      return registration;
+
+      await this.emailService.sendMail({
+        to: req.user.email,
+        subject: 'Event Registration',
+        template: 'event-registration',
+        data: {
+          username: req.user.first_name,
+          event_title: event.title,
+          event_mode: event.mode,
+          event_location: event.locationText || event.locationUrl,
+          price: event.price,
+          start_date: event.startsAt,
+          end_date: event.endsAt,
+        },
+      });
+      return {
+        message: 'Registration successful',
+        data: registration,
+      };
     }
   }
 
