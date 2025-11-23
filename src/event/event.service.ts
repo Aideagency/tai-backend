@@ -91,6 +91,7 @@ export class EventService {
         eventId,
         status: RegistrationStatus.PENDING_PAYMENT,
         unitPrice: String(event.price),
+        reference: paymentResponse.reference
       });
 
       // Return the checkout url
