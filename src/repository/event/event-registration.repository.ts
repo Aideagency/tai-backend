@@ -148,8 +148,7 @@ export class EventRegistrationRepository extends BaseRepository<
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.event', 'e')
       .leftJoinAndSelect('r.user', 'u')
-      .leftJoinAndSelect('r.transaction', 't') // Join EventRegistration with TransactionEntity
-      .where('t.transaction_ref = :transactionRef', { transactionRef })
+      .where('r.transaction_ref = :transactionRef', { transactionRef })
       .getOne(); // Returns the first matching result
 
     if (!registration) {

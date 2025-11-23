@@ -91,7 +91,7 @@ export class EventService {
         eventId,
         status: RegistrationStatus.PENDING_PAYMENT,
         unitPrice: String(event.price),
-        reference: paymentResponse.reference
+        reference: paymentResponse.reference,
       });
 
       // Return the checkout url
@@ -201,6 +201,12 @@ export class EventService {
     return registration !== null;
   }
 
+  async findRegByRef(ref: string) {
+    return this.eventRegistrationRepository.findRegistrationByTransactionRef(
+      ref,
+    );
+  }
+
   async handlePaymentConfirmation(ref: string, email: string) {
     const registration =
       await this.eventRegistrationRepository.findRegistrationByTransactionRef(
@@ -209,8 +215,6 @@ export class EventService {
     if (registration) {
       registration.status = RegistrationStatus.CONFIRMED;
       await this.eventRegistrationRepository.save(registration);
-
-      console.log(registration);
 
       this.emailService
         .sendMail({
@@ -233,6 +237,5 @@ export class EventService {
         })
         .catch((err) => this.logger.error(err));
     }
-    return registration !== null;
   }
 }
