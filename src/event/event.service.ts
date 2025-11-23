@@ -209,6 +209,8 @@ export class EventService {
       registration.status = RegistrationStatus.CONFIRMED;
       await this.eventRegistrationRepository.save(registration);
 
+      console.log(registration);
+
       this.emailService
         .sendMail({
           to: email,
