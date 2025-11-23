@@ -47,6 +47,14 @@ export class EventService {
     id: number,
     eventData: Partial<EventEntity>,
   ): Promise<EventEntity> {
+    const registrations = await this.eventRegistrationRepository.findAll({
+      event: {
+        id,
+      },
+    });
+    if(registrations.length > 0){
+      throw new BadRequestException('Event cannot be updated');
+    }
     const event = await this.eventRepository.updateEvent(id, eventData);
     return event;
   }
