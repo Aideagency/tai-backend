@@ -1,12 +1,22 @@
-import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Injectable,
+  HttpStatus,
+  HttpException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { CommonHttpService } from 'src/common/common.service';
 import {
+  PaidFor,
   TransactionEntity,
   TransactionStatus,
 } from 'src/database/entities/transaction.entity';
 import { TracerLogger } from 'src/logger/logger.service';
 import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
 import * as crypto from 'crypto';
+import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
+import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
+import { EventService } from 'src/event/event.service';
 
 @Injectable()
 export class PaymentService {
@@ -16,6 +26,8 @@ export class PaymentService {
     private readonly logger: TracerLogger,
     private readonly commonhttpService: CommonHttpService,
     private readonly transactionRepository: TransactionRepository,
+    @Inject(forwardRef(() => EventService))
+    private readonly eventService: EventService,
   ) {}
 
   // Initialize Payment
@@ -155,6 +167,12 @@ export class PaymentService {
           transaction &&
           req.body.data?.requested_amount === transaction.actualAmount * 100
         ) {
+          if (transaction.paid_for === PaidFor.EVENT) {
+            await this.eventService.handlePaymentConfirmation(
+              txRef,
+              transaction.email_address,
+            );
+          }
           await this.updatePaymentStatus(txRef, TransactionStatus.Success);
           return { isVerified: true, txRef };
         }

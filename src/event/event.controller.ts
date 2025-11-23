@@ -105,7 +105,7 @@ export class EventController {
   @Post('register/:eventId')
   @ApiBearerAuth()
   async registerForEvent(@Param('eventId') eventId: number, @Req() req: any) {
-    return this.eventService.registerForEvent(req.user.id, eventId);
+    return this.eventService.registerForEvent(req.user.id, req.user.email, eventId);
   }
 
   // @UseGuards(JwtGuards)

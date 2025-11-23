@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { EventRepository } from 'src/repository/event/event.repository';
 import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
@@ -11,6 +13,15 @@ import {
   RegistrationStatus,
 } from 'src/database/entities/event-registration.entity';
 import { GetEventsFilterDto } from './dtos/get-events-query.dto';
+import { PaymentService } from 'src/payment/payment.service';
+import {
+  PaidFor,
+  TransactionEntity,
+} from 'src/database/entities/transaction.entity';
+import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
+import { EmailService } from 'src/infrastructure/communication/email/email.service';
+import { TracerLogger } from 'src/logger/logger.service';
+
 // import { RegistrationStatus } from 'src/database/entities/event.entity';
 
 @Injectable()
@@ -18,6 +29,11 @@ export class EventService {
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly eventRegistrationRepository: EventRegistrationRepository,
+    @Inject(forwardRef(() => PaymentService))
+    private readonly paymentService: PaymentService,
+    private readonly transactionRepo: TransactionRepository,
+    private readonly emailService: EmailService,
+    private readonly logger: TracerLogger,
   ) {}
 
   // Create an Event
@@ -36,10 +52,18 @@ export class EventService {
   }
 
   // Register for an Event
-  async registerForEvent(
-    userId: number,
-    eventId: number,
-  ): Promise<EventRegistrationEntity> {
+  async registerForEvent(userId: number, email: string, eventId: number) {
+    const isRegistered =
+      await this.eventRegistrationRepository.findUserRegistration(
+        userId,
+        eventId,
+      );
+
+    if (isRegistered && isRegistered.status === RegistrationStatus.CONFIRMED) {
+      throw new BadRequestException(
+        'You can only register once for this event',
+      );
+    }
     const event = await this.eventRepository.findEventById(eventId);
 
     // Prevent registration if the event has already ended
@@ -49,16 +73,44 @@ export class EventService {
       );
     }
 
-    // Register the user for the event
-    const registration =
+    if (Number(event.price) > 0) {
+      const transaction = new TransactionEntity();
+      const paymentResponse = await this.paymentService.initializePayment({
+        email,
+        amount: String(event.price * 100),
+      });
+      console.log(paymentResponse);
+
+      transaction.transaction_ref = paymentResponse.reference;
+      transaction.email_address = email;
+      transaction.paid_for = PaidFor.EVENT;
+      transaction.actualAmount = event.price;
+      await this.transactionRepo.save(transaction);
       await this.eventRegistrationRepository.createRegistration({
         userId,
         eventId,
-        status: RegistrationStatus.PENDING_PAYMENT, // Initially set to pending payment
-        unitPrice: event.price ? String(event.price) : null,
+        status: RegistrationStatus.PENDING_PAYMENT,
+        unitPrice: String(event.price),
       });
 
-    return registration;
+      // Return the checkout url
+      return {
+        authorization_url: paymentResponse.authorization_url,
+        reference: paymentResponse.reference,
+      };
+    } else {
+      // Register the user for the event directly
+      const registration =
+        await this.eventRegistrationRepository.createRegistration({
+          userId,
+          eventId,
+          status: event.price
+            ? RegistrationStatus.PENDING_PAYMENT
+            : RegistrationStatus.CONFIRMED, // Initially set to pending payment
+          unitPrice: null,
+        });
+      return registration;
+    }
   }
 
   // Update Registration Information
@@ -145,6 +197,41 @@ export class EventService {
         userId,
         eventId,
       );
+    return registration !== null;
+  }
+
+  async handlePaymentConfirmation(ref: string, email: string) {
+    const registration =
+      await this.eventRegistrationRepository.findRegistrationByTransactionRef(
+        ref,
+      );
+    if (registration) {
+      registration.status = RegistrationStatus.CONFIRMED;
+      await this.eventRegistrationRepository.save(registration);
+
+      console.log(registration);
+
+      this.emailService
+        .sendMail({
+          to: email,
+          subject: 'Account Verification',
+          template: 'account-verification',
+          data: {
+            username: registration.user.first_name,
+            event_title: registration.event.title,
+            event_mode: registration.event.mode,
+            event_location:
+              registration.event.locationText || registration.event.locationUrl,
+            price: registration.event.price,
+            start_date: registration.event.startsAt,
+            end_date: registration.event.endsAt,
+          },
+        })
+        .then((res) => {
+          this.logger.log(res);
+        })
+        .catch((err) => this.logger.error(err));
+    }
     return registration !== null;
   }
 }
