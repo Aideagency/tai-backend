@@ -202,10 +202,34 @@ export class EventService {
   }
 
   async findRegByRef(ref: string) {
-    await this.eventRegistrationRepository.hardDelete(7)
-    return this.eventRegistrationRepository.findRegistrationByTransactionRef(
-      ref,
-    );
+    // await this.eventRegistrationRepository.hardDelete(7)
+    const registration =
+      await this.eventRegistrationRepository.findRegistrationByTransactionRef(
+        ref,
+      );
+
+    this.emailService
+      .sendMail({
+        to: registration.user.email_address,
+        subject: 'Event Registration',
+        template: 'event-registration',
+        data: {
+          username: registration.user.first_name,
+          event_title: registration.event.title,
+          event_mode: registration.event.mode,
+          event_location:
+            registration.event.locationText || registration.event.locationUrl,
+          price: registration.event.price,
+          start_date: registration.event.startsAt,
+          end_date: registration.event.endsAt,
+        },
+      })
+      .then((res) => {
+        this.logger.log(res);
+      })
+      .catch((err) => this.logger.error(err));
+
+    return registration;
   }
 
   async handlePaymentConfirmation(ref: string, email: string) {
