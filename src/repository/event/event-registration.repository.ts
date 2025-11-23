@@ -111,15 +111,9 @@ export class EventRegistrationRepository extends BaseRepository<
     status: RegistrationStatus; // PENDING_PAYMENT | CONFIRMED
     unitPrice: string | null; // Can be null for free events
     paidAt?: Date | null;
+    reference?: string | null;
   }) {
     const event = await this.findEventById(params.eventId);
-
-    // Prevent registration if the event has already ended
-    if (event.endsAt < new Date()) {
-      throw new BadRequestException(
-        'Event has already ended, registration is closed',
-      );
-    }
 
     // If event is paid, ensure only one registration per user
     if (event.price && params.status === RegistrationStatus.CONFIRMED) {
@@ -140,11 +134,31 @@ export class EventRegistrationRepository extends BaseRepository<
       status: params.status,
       quantity: 1, // Always 1 since users can only register once
       unitPrice: params.unitPrice,
+      transaction_ref: params.reference ?? null,
       paidAt:
         params.paidAt ?? (params.status === 'CONFIRMED' ? new Date() : null),
     });
 
     return this.repository.save(reg);
+  }
+
+  async findRegistrationByTransactionRef(transactionRef: string) {
+    // Query the registration by joining with TransactionEntity on the transaction_ref field
+    const registration = await this.repository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.event', 'e')
+      .leftJoinAndSelect('r.user', 'u')
+      .leftJoinAndSelect('r.transaction', 't') // Join EventRegistration with TransactionEntity
+      .where('t.transaction_ref = :transactionRef', { transactionRef })
+      .getOne(); // Returns the first matching result
+
+    if (!registration) {
+      throw new NotFoundException(
+        'Event registration not found for the given transaction reference',
+      );
+    }
+
+    return registration;
   }
 
   /** Confirm a pending registration (after successful payment) */

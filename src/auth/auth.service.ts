@@ -35,6 +35,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
+    
   ) {}
 
   toSubmissionResponse(user: UserEntity) {

@@ -34,7 +34,6 @@ export class PaymentController {
   @HttpCode(200)
   // @ApiExcludeEndpoint()
   async processPayment(@Req() req: any) {
-    console.log('I was triggered');
     await this.paymentService.verifyWebhookSignature(req);
     return {
       status: 200,

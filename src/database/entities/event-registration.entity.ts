@@ -40,6 +40,9 @@ export class EventRegistrationEntity extends CustomEntity {
   @Column({ type: 'timestamp', nullable: true })
   paidAt: Date | null;
 
+  @Column({ nullable: true })
+  transaction_ref: string;
+
   @Column({ type: 'timestamp', nullable: true })
   cancelledAt: Date | null;
 }
