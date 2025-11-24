@@ -36,6 +36,10 @@ import { EventRegistrationEntity } from 'src/database/entities/event-registratio
 import { EventRepository } from './event/event.repository';
 import { EventRegistrationRepository } from './event/event-registration.repository';
 import { EventEntity } from 'src/database/entities/event.entity';
+import { CounsellingEntity } from 'src/database/entities/counselling.entity';
+import { CounsellingBookingEntity } from 'src/database/entities/counselling-booking.entity';
+import { CounsellingBookingRepository } from './counselling/counselling-booking.repostiory';
+import { CounsellingRepository } from './counselling/counselling.repostiory';
 
 @Module({
   imports: [
@@ -63,6 +67,8 @@ import { EventEntity } from 'src/database/entities/event.entity';
       PostShareEntity,
       EventEntity,
       EventRegistrationEntity,
+      CounsellingEntity,
+      CounsellingBookingEntity,
     ]),
   ],
   providers: [
@@ -79,6 +85,8 @@ import { EventEntity } from 'src/database/entities/event.entity';
     PostRepository,
     EventRegistrationRepository,
     EventRepository,
+    CounsellingRepository,
+    CounsellingBookingRepository,
   ],
   exports: [
     UserRepository,
@@ -94,6 +102,8 @@ import { EventEntity } from 'src/database/entities/event.entity';
     PostRepository,
     EventRegistrationRepository,
     EventRepository,
+    CounsellingRepository,
+    CounsellingBookingRepository,
   ],
 })
 export class RepositoryModule {}

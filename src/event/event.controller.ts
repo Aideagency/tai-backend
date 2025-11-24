@@ -13,7 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { EventService } from './event.service';
-import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
+// import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
 import {
   ApiBearerAuth,
   ApiBody,
