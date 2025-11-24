@@ -165,10 +165,10 @@ export class CounsellingBookingRepository extends BaseRepository<
   /** Find booking by transaction reference */
   async findBookingByTransactionRef(transactionRef: string) {
     const booking = await this.repository
-      .createQueryBuilder('r')
-      .leftJoinAndSelect('r.counselling', 'c')
-      .leftJoinAndSelect('r.user', 'u')
-      .where('r.transaction_ref = :transactionRef', { transactionRef })
+      .createQueryBuilder('b')
+      .leftJoinAndSelect('b.counselling', 'c')
+      .leftJoinAndSelect('b.user', 'u')
+      .where('b.reference = :transactionRef', { transactionRef })
       .getOne();
 
     if (!booking) {

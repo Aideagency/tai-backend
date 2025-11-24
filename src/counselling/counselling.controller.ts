@@ -47,7 +47,7 @@ export class CounsellingController {
     type: CreateCounsellingDto,
   })
   @ApiResponse({ status: 201, description: 'Counselling offer created.' })
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async createCounselling(
     @Body() dto: CreateCounsellingDto,
     @UploadedFile() coverUrl: Express.Multer.File,
@@ -70,7 +70,7 @@ export class CounsellingController {
     type: UpdateCounsellingDto,
   })
   @ApiResponse({ status: 200, description: 'Counselling offer updated.' })
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async updateCounselling(
     @Param('id') id: number,
     @Body() dto: UpdateCounsellingDto,
@@ -83,13 +83,13 @@ export class CounsellingController {
   }
 
   @Delete('delete/:id')
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async deleteCounselling(@Param('id') id: number) {
     return this.counsellingService.deleteCounselling(id);
   }
 
   @Get('detailed/:counsellingId')
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async fetchDetailedCounselling(
     @Param('counsellingId') counsellingId: number,
   ) {
@@ -127,7 +127,7 @@ export class CounsellingController {
   @UseGuards(JwtGuards)
   @Put('booking/:bookingId')
   @ApiBearerAuth()
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async updateBooking(
     @Param('bookingId') bookingId: number,
     @Body() updateData: Partial<CounsellingEntity>, // or a dedicated UpdateBookingDto
@@ -139,7 +139,7 @@ export class CounsellingController {
   @UseGuards(JwtGuards)
   @Post('booking/confirm/:bookingId')
   @ApiBearerAuth()
-//   @ApiExcludeEndpoint()
+  @ApiExcludeEndpoint()
   async confirmBookingPayment(
     @Param('bookingId') bookingId: number,
     @Body() body: ConfirmBookingPaymentDto, // { transactionRef: string }
@@ -168,8 +168,15 @@ export class CounsellingController {
 
   // Find booking by transaction reference
   @Get('booking/find/:reference')
+  @ApiExcludeEndpoint()
   async findBookingByReference(@Param('reference') reference: string) {
     return this.counsellingService.findBookingByRef(reference);
+  }
+
+  @Get('booking/:id/find')
+  @ApiExcludeEndpoint()
+  async findBookingById(@Param('id') id: number) {
+    return this.counsellingService.getBooking(id);
   }
 
   /** ───── Payment webhook / async confirmation ───── */

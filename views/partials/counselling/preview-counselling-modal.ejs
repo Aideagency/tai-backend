@@ -1,0 +1,262 @@
+<div
+  id="previewCounsellingModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 text-xs">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Counselling Preview</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closePreviewCounsellingModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="previewCounsellingContent" class="space-y-3">
+      <!-- Basic info -->
+      <div>
+        <p
+          class="font-semibold text-gray-800 text-sm"
+          id="previewCounsellingTitle"
+        ></p>
+        <p
+          class="text-[11px] text-gray-600"
+          id="previewCounsellingDescription"
+        ></p>
+      </div>
+
+      <!-- Cover image (optional) -->
+      <div>
+        <span class="text-[10px] text-gray-500 block mb-1">Cover image</span>
+        <img
+          id="previewCounsellingCoverImage"
+          src=""
+          alt="Cover image"
+          class="h-24 w-full object-cover rounded-md hidden"
+        />
+        <p
+          id="previewCounsellingCoverImageInfo"
+          class="text-[10px] text-gray-500"
+        >
+          No cover image.
+        </p>
+      </div>
+
+      <!-- Tags / meta -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Type</span>
+          <p class="text-[11px] font-medium" id="previewCounsellingType"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Status</span>
+          <p class="text-[11px] font-medium" id="previewCounsellingStatus"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Mode</span>
+          <p class="text-[11px] font-medium" id="previewCounsellingMode"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Duration</span>
+          <p
+            class="text-[11px] font-medium"
+            id="previewCounsellingDuration"
+          ></p>
+        </div>
+      </div>
+
+      <!-- Price + max clients -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Price</span>
+          <p class="text-[11px]" id="previewCounsellingPrice"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Max clients per session</span>
+          <p class="text-[11px]" id="previewCounsellingMaxClients"></p>
+        </div>
+      </div>
+
+      <!-- Active / Featured -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Active</span>
+          <p
+            class="text-[11px] font-medium"
+            id="previewCounsellingIsActive"
+          ></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Featured</span>
+          <p
+            class="text-[11px] font-medium"
+            id="previewCounsellingIsFeatured"
+          ></p>
+        </div>
+      </div>
+
+      <!-- What you get -->
+      <div>
+        <span class="text-[10px] text-gray-500">What clients get</span>
+        <p class="text-[11px]" id="previewCounsellingWhatYouGet"></p>
+      </div>
+
+      <!-- Who it's for -->
+      <div>
+        <span class="text-[10px] text-gray-500">Who this is for</span>
+        <p class="text-[11px]" id="previewCounsellingWhoItsFor"></p>
+      </div>
+
+      <!-- How it works -->
+      <div>
+        <span class="text-[10px] text-gray-500">How it works</span>
+        <p class="text-[11px]" id="previewCounsellingHowItWorks"></p>
+      </div>
+    </div>
+
+    <!-- Simple loading state -->
+    <div
+      id="previewCounsellingLoading"
+      class="hidden text-[11px] text-gray-500 text-center py-4"
+    >
+      Loading counselling details...
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button
+        type="button"
+        class="px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+        onclick="closePreviewCounsellingModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setPreviewCounsellingLoading(isLoading) {
+    const content = document.getElementById('previewCounsellingContent');
+    const loading = document.getElementById('previewCounsellingLoading');
+
+    if (!content || !loading) return;
+
+    if (isLoading) {
+      content.classList.add('hidden');
+      loading.classList.remove('hidden');
+    } else {
+      content.classList.remove('hidden');
+      loading.classList.add('hidden');
+    }
+  }
+
+  async function openPreviewCounsellingModal(btn) {
+    const modal = document.getElementById('previewCounsellingModal');
+    if (!modal) return;
+
+    const counsellingId = btn.dataset.counsellingId;
+    if (!counsellingId) {
+      console.error('Missing data-counselling-id on preview button');
+      return;
+    }
+
+    // Show modal + loading state
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setPreviewCounsellingLoading(true);
+
+    try {
+      // Adjust this route to match your CounsellingController
+      const res = await fetch(`/counselling/${counsellingId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        console.error('Failed to fetch counselling details', res.status);
+        setPreviewCounsellingLoading(false);
+        document.getElementById('previewCounsellingTitle').textContent =
+          'Error loading counselling session';
+        return;
+      }
+
+      const c = await res.json();
+      setPreviewCounsellingLoading(false);
+
+      // Basic info
+      document.getElementById('previewCounsellingTitle').textContent =
+        c.title || '-';
+      document.getElementById('previewCounsellingDescription').textContent =
+        c.description || '-';
+
+      // Cover image
+      const coverImg = document.getElementById('previewCounsellingCoverImage');
+      const coverInfo = document.getElementById(
+        'previewCounsellingCoverImageInfo',
+      );
+
+      if (c.coverUrl) {
+        coverImg.src = c.coverUrl;
+        coverImg.classList.remove('hidden');
+        coverInfo.textContent = 'Current cover image:';
+      } else {
+        coverImg.src = '';
+        coverImg.classList.add('hidden');
+        coverInfo.textContent = 'No cover image.';
+      }
+
+      // Meta
+      document.getElementById('previewCounsellingType').textContent =
+        c.type || '-';
+      document.getElementById('previewCounsellingStatus').textContent =
+        c.status || '-';
+      document.getElementById('previewCounsellingMode').textContent =
+        c.mode || '-';
+
+      // Duration
+      document.getElementById('previewCounsellingDuration').textContent =
+        c.durationMinutes ? `${c.durationMinutes} min` : '-';
+
+      // Price
+      const priceEl = document.getElementById('previewCounsellingPrice');
+      if (c.price === null || c.price === undefined || Number(c.price) === 0) {
+        priceEl.textContent = 'Free';
+      } else {
+        priceEl.textContent = `₦${c.price}`;
+      }
+
+      // Max clients
+      document.getElementById('previewCounsellingMaxClients').textContent =
+        c.maxClientsPerSession ?? '-';
+
+      // Booleans
+      document.getElementById('previewCounsellingIsActive').textContent =
+        c.isActive ? 'Yes' : 'No';
+      document.getElementById('previewCounsellingIsFeatured').textContent =
+        c.isFeatured ? 'Yes' : 'No';
+
+      // Text sections
+      document.getElementById('previewCounsellingWhatYouGet').textContent =
+        c.whatYouGet || '-';
+      document.getElementById('previewCounsellingWhoItsFor').textContent =
+        c.whoItsFor || '-';
+      document.getElementById('previewCounsellingHowItWorks').textContent =
+        c.howItWorks || '-';
+    } catch (err) {
+      console.error(err);
+      setPreviewCounsellingLoading(false);
+      document.getElementById('previewCounsellingTitle').textContent =
+        'Error loading counselling session';
+    }
+  }
+
+  function closePreviewCounsellingModal() {
+    const modal = document.getElementById('previewCounsellingModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+</script>

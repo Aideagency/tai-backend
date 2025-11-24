@@ -109,7 +109,7 @@ export class EventController {
   }
 
   @Get('find/:reference')
-  // @ApiBearerAuth()
+  @ApiBearerAuth()
   async findByReference(@Param('reference') reference: string) {
     return this.eventService.findRegByRef(reference);
   }

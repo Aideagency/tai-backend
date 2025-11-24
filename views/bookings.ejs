@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Counselling Bookings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "counselling-bookings" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Counselling Bookings'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar: title + info + filters -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)]
+                 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              Bookings for: <span class="text-gray-900"><%= counselling?.title || 'Counselling Session' %></span>
+            </h3>
+            <p class="text-[11px] text-gray-500">
+              Total bookings: <%= meta?.totalItems || 0 %>
+            </p>
+            <p class="text-[11px] text-gray-500 mt-1">
+              Mode:
+              <span class="font-medium"><%= counselling?.mode || '-' %></span> ·
+              Duration:
+              <span class="font-medium"><%= counselling?.durationMinutes ? counselling.durationMinutes + ' mins' : '-' %></span>
+            </p>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+            <!-- Filters: search + status + date range + attended -->
+            <form method="GET" action="/admin-views/counselling/<%= counselling.id %>/bookings" class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+              <!-- Search -->
+              <input type="text" name="q" placeholder="Search by user, email, reference..." value="<%= (filters && filters.q) || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <!-- Status filter -->
+              <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All statuses</option>
+                <option value="PENDING_PAYMENT" <%= (filters && filters.status === 'PENDING_PAYMENT') ? 'selected' : '' %>>
+                  Pending payment
+                </option>
+                <option value="CONFIRMED" <%= (filters && filters.status === 'CONFIRMED') ? 'selected' : '' %>>
+                  Confirmed
+                </option>
+                <option value="CANCELLED" <%= (filters && filters.status === 'CANCELLED') ? 'selected' : '' %>>
+                  Cancelled
+                </option>
+                <option value="COMPLETED" <%= (filters && filters.status === 'COMPLETED') ? 'selected' : '' %>>
+                  Completed
+                </option>
+                <option value="NO_SHOW" <%= (filters && filters.status === 'NO_SHOW') ? 'selected' : '' %>>
+                  No show
+                </option>
+                <option value="REFUNDED" <%= (filters && filters.status === 'REFUNDED') ? 'selected' : '' %>>
+                  Refunded
+                </option>
+              </select>
+
+              <!-- Attended filter -->
+              <select name="attended" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All attendance</option>
+                <option value="true" <%= (filters && filters.attended === 'true') ? 'selected' : '' %>>
+                  Attended
+                </option>
+                <option value="false" <%= (filters && filters.attended === 'false') ? 'selected' : '' %>>
+                  Not attended
+                </option>
+              </select>
+
+              <!-- Date from -->
+              <input type="date" name="from" value="<%= (filters && filters.from) || '' %>" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <!-- Date to -->
+              <input type="date" name="to" value="<%= (filters && filters.to) || '' %>" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <button type="submit" class="inline-flex items-center rounded-lg
+                       bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                Apply
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- Bookings table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">User</th>
+                  <th class="px-3 py-2 text-left font-medium">Created At</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-left font-medium">Starts</th>
+                  <th class="px-3 py-2 text-left font-medium">Ends</th>
+                  <th class="px-3 py-2 text-left font-medium">Price</th>
+                  <th class="px-3 py-2 text-left font-medium text-center">Attended</th>
+                  <th class="px-3 py-2 text-left font-medium">Reference</th>
+                  <th class="px-3 py-2 text-left font-medium">Channel</th>
+                  <th class="px-3 py-2 text-left font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(booking, index) { %>
+                <tr class="hover:bg-gray-50">
+                  <!-- Index -->
+                  <td class="px-3 py-2 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+
+                  <!-- User -->
+                  <td class="px-3 py-2">
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-gray-800">
+                        <%= booking.user
+                              ? (booking.user.first_name || '') + ' ' + (booking.user.last_name || '')
+                              : '-' %>
+                      </span>
+                      <% if (booking.user && booking.user.email_address) { %>
+                      <span class="text-[10px] text-gray-500">
+                        <%= booking.user.email_address %>
+                      </span>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <!-- Counsellor -->
+                  <td class="px-3 py-2">
+                    <%- new Date(booking.createdAt).toLocaleString()%>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-3 py-2">
+                    <% if (booking.status === 'CONFIRMED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-green-50 text-green-700">
+                      Confirmed
+                    </span>
+                    <% } else if (booking.status === 'PENDING_PAYMENT') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                      Pending payment
+                    </span>
+                    <% } else if (booking.status === 'CANCELLED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-red-50 text-red-700">
+                      Cancelled
+                    </span>
+                    <% } else if (booking.status === 'COMPLETED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-700">
+                      Completed
+                    </span>
+                    <% } else if (booking.status === 'NO_SHOW') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-orange-50 text-orange-700">
+                      No show
+                    </span>
+                    <% } else if (booking.status === 'REFUNDED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-700">
+                      Refunded
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-500 text-[10px]">
+                      <%= booking.status || '-' %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Starts -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (booking.startsAt) { %>
+                    <%= new Date(booking.startsAt).toLocaleString() %>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Ends -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (booking.endsAt) { %>
+                    <%= new Date(booking.endsAt).toLocaleString() %>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Price -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (booking.priceAtBooking === null || booking.priceAtBooking === 0) { %>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium">
+                      Free
+                    </span>
+                    <% } else { %>
+                    <span class="text-[11px] text-gray-800">
+                      ₦<%= booking.priceAtBooking %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Attended -->
+                  <td class="px-3 py-2 text-center">
+                    <% if (booking.attended) { %>
+                    <span class="inline-flex items-center rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[10px] font-medium">
+                      Yes
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[10px] font-medium">
+                      No
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Reference -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <span class="text-[11px]">
+                      <%= booking.reference || '-' %>
+                    </span>
+                  </td>
+
+                  <!-- Channel (online/offline details) -->
+                  <td class="px-3 py-2 text-gray-700 max-w-xs">
+                    <% if (booking.meetingLink) { %>
+                    <a href="<%= booking.meetingLink %>" target="_blank" rel="noopener noreferrer" class="text-[10px] text-[var(--color-primary-dark)] underline block">
+                      Join link
+                    </a>
+                    <% } %>
+                    <% if (booking.locationText) { %>
+                    <span class="block text-[10px] text-gray-600">
+                      <%= booking.locationText %>
+                    </span>
+                    <% } %>
+                    <% if (!booking.meetingLink && !booking.locationText) { %>
+                    <span class="text-[10px] text-gray-400">-</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
+                    <!-- Preview -->
+                    <button type="button" class="inline-flex items-center rounded-md border border-sky-500 text-sky-600 px-2 py-1 text-[11px] font-semibold hover:bg-sky-50 transition" data-booking-id="<%= booking.id %>" onclick="openPreviewBookingModal(this)">
+                      Preview
+                    </button>
+
+
+                    <!-- Change status / mark completed / no-show (optional) -->
+                    <button type="button" class="inline-flex items-center rounded-md border border-amber-500 text-amber-600 px-2 py-1 text-[11px] font-semibold hover:bg-amber-50 transition" data-booking-id="<%= booking.id %>" data-booking-status="<%= booking.status || '' %>" onclick="openUpdateBookingStatusModal(this)">
+                      Update status
+                    </button>
+
+                    <!-- Cancel -->
+                    <button type="button" class="inline-flex items-center rounded-md border border-red-500 text-red-600 px-2 py-1 text-[11px] font-semibold hover:bg-red-50 transition" data-booking-id="<%= booking.id %>" data-booking-ref="<%= booking.reference || '' %>" onclick="openCancelBookingModal(this)">
+                      Cancel
+                    </button>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="11" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No bookings found for this counselling offer.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> bookings
+            </div>
+
+            <div class="flex items-center gap-1">
+              <% const currentQ = (filters && filters.q) || ''; %>
+              <% const currentStatus = (filters && filters.status) || ''; %>
+              <% const currentFrom = (filters && filters.from) || ''; %>
+              <% const currentTo = (filters && filters.to) || ''; %>
+              <% const currentAttended = (filters && filters.attended) || ''; %>
+
+              <% function buildQuery(pageNum) {
+                   let qs = '?page=' + pageNum;
+                   if (currentQ) qs += '&q=' + encodeURIComponent(currentQ);
+                   if (currentStatus) qs += '&status=' + encodeURIComponent(currentStatus);
+                   if (currentFrom) qs += '&from=' + encodeURIComponent(currentFrom);
+                   if (currentTo) qs += '&to=' + encodeURIComponent(currentTo);
+                   if (currentAttended) qs += '&attended=' + encodeURIComponent(currentAttended);
+                   return qs;
+                 } %>
+
+              <!-- Prev -->
+              <% if (meta.currentPage > 1) { %>
+              <a href={"/admin-views/counselling/" + counselling.id + "/bookings" + buildQuery(meta.currentPage - 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Prev
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Prev
+              </span>
+              <% } %>
+
+              <!-- Page numbers -->
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href={"/admin-views/counselling/" + counselling.id + "/bookings" + buildQuery(p)} class="px-2 py-1 rounded border text-xs
+                      <%= p === meta.currentPage
+                        ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold'
+                        : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <!-- Next -->
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href={"/admin-views/counselling/" + counselling.id + "/bookings" + buildQuery(meta.currentPage + 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Next
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Next
+              </span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals as partials (you can implement these like you did for counselling) -->
+  <%- include('partials/bookings/preview-booking-modal') %>
+  <%- include('partials/bookings/update-booking-modal') %>
+  <%- include('partials/bookings/cancel-booking-modal') %>
+
+</body>
+
+</html>
