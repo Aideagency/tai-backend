@@ -24,6 +24,7 @@ import { EmailService } from 'src/infrastructure/communication/email/email.servi
 import { TracerLogger } from 'src/logger/logger.service';
 import { CounsellingBookingRepository } from 'src/repository/counselling/counselling-booking.repostiory';
 import { CounsellingRepository } from 'src/repository/counselling/counselling.repostiory';
+import { GetCounsellingBookingsFilterDto } from './dtos/get-counselling-booking-filter.dto';
 // import { GetCounsellingsFilterDto } from './dtos/get-counselling-query.dto';
 
 @Injectable()
@@ -240,6 +241,74 @@ export class CounsellingService {
     });
   }
 
+  async getCounsellingBookingsPaginated(
+    counsellingId: number,
+    filters: GetCounsellingBookingsFilterDto,
+  ) {
+    const {
+      q,
+      status,
+      from,
+      to,
+      userId,
+      counsellorId,
+      page = 1,
+      pageSize = 20,
+      orderBy = 'createdAt',
+      orderDir = 'DESC',
+    } = filters;
+
+    const qb = this.counsellingBookingRepository
+      .query('booking')
+      .leftJoinAndSelect('booking.user', 'user')
+      .leftJoinAndSelect('booking.counselling', 'counselling')
+      .leftJoinAndSelect('booking.counsellor', 'counsellor')
+      .where('counselling.id = :counsellingId', { counsellingId });
+
+    // 🔍 Apply search filtering
+    if (q && q.trim() !== '') {
+      qb.andWhere(
+        `(user.fullName ILIKE :q OR user.email ILIKE :q OR booking.notes ILIKE :q)`,
+        { q: `%${q}%` },
+      );
+    }
+
+    // 🔵 Status filter
+    if (status) {
+      qb.andWhere('booking.status = :status', { status });
+    }
+
+    // 📅 Date range
+    if (from) {
+      qb.andWhere('booking.createdAt >= :from', { from });
+    }
+    if (to) {
+      qb.andWhere('booking.createdAt <= :to', { to });
+    }
+
+    // 👤 User filter
+    if (userId) {
+      qb.andWhere('user.id = :userId', { userId });
+    }
+
+    // 🧑‍⚕️ Counsellor admin filter
+    if (counsellorId) {
+      qb.andWhere('counsellor.id = :counsellorId', { counsellorId });
+    }
+
+    // 🔽 Sorting
+    qb.orderBy(`booking.${orderBy}`, orderDir);
+
+    // 📄 Pagination (reuse BaseRepository.paginate)
+    return this.counsellingBookingRepository.paginate(
+      { page, limit: pageSize },
+      {}, // Not used with query builder
+      {},
+      {},
+      qb,
+    );
+  }
+
   // Check if a user has already booked this counselling (any status)
   async isUserBookedForCounselling(userId: number, counsellingId: number) {
     const booking = await this.counsellingBookingRepository.findUserBooking(
@@ -254,24 +323,60 @@ export class CounsellingService {
     const booking =
       await this.counsellingBookingRepository.findBookingByTransactionRef(ref);
 
-    const counselling = booking.counselling;
-    const user = booking.user;
+    await this.emailService
+      .sendMail({
+        to: booking.user?.email_address,
+        subject: 'Counselling Booking Confirmed',
+        template: 'counselling-booking',
+        data: {
+          // USER DETAILS
+          username: booking.user?.first_name,
+          user_email: booking.user?.email_address,
 
-    await this.emailService.sendMail({
-      to: user.email_address,
-      subject: 'Counselling Booking Confirmed',
-      template: 'counselling-booking',
-      data: {
-        username: user.first_name,
-        counselling_title: counselling.title,
-        counselling_mode: counselling.mode,
-        starts_at: booking.startsAt,
-        ends_at: booking.endsAt,
-        price: booking.priceAtBooking,
-      },
-    });
+          // COUNSELLING DETAILS
+          counselling_title: booking.counselling?.title,
+          counselling_mode: booking.counselling?.mode,
+          counselling_type: booking.counselling?.type,
+
+          // BOOKING-SPECIFIC SNAPSHOTS
+          booking_reference: booking.reference,
+          booking_status: booking.status,
+          duration_minutes: booking.durationMinutes,
+          price: booking.priceAtBooking,
+
+          // DATETIME FIELDS
+          start_date: booking.startsAt,
+          end_date: booking.endsAt,
+          paid_at: booking.paidAt,
+
+          // LOCATION / MEETING DETAILS
+          location_text: booking.locationText || null,
+
+          meeting_link: booking.meetingLink || null,
+
+          // COUNSELLOR
+          counsellor_name:
+            `${booking.counsellor?.first_name || ''} ${
+              booking.counsellor?.last_name || ''
+            }`.trim() || null,
+
+          // ATTENDANCE & PAYMENT
+          attended: booking.attended,
+          transaction_ref: booking.transaction_ref,
+
+          // NOTES
+          client_notes: booking.clientNotes || null,
+          counsellor_notes: booking.counsellorNotes || null,
+        },
+      })
+      .then((res) => this.logger.log(res))
+      .catch((err) => this.logger.error(err));
 
     return booking;
+  }
+
+  async getBooking(bookingId: number) {
+    return this.counsellingBookingRepository.findOne({ id: bookingId });
   }
 
   /**
@@ -294,12 +399,44 @@ export class CounsellingService {
         subject: 'Counselling Booking Confirmed',
         template: 'counselling-booking',
         data: {
-          username: booking.user.first_name,
-          counselling_title: booking.counselling.title,
-          counselling_mode: booking.counselling.mode,
-          starts_at: booking.startsAt,
-          ends_at: booking.endsAt,
+          // USER DETAILS
+          username: booking.user?.first_name,
+          user_email: booking.user?.email_address,
+
+          // COUNSELLING DETAILS
+          counselling_title: booking.counselling?.title,
+          counselling_mode: booking.counselling?.mode,
+          counselling_type: booking.counselling?.type,
+
+          // BOOKING-SPECIFIC SNAPSHOTS
+          booking_reference: booking.reference,
+          booking_status: booking.status,
+          duration_minutes: booking.durationMinutes,
           price: booking.priceAtBooking,
+
+          // DATETIME FIELDS
+          start_date: booking.startsAt,
+          end_date: booking.endsAt,
+          paid_at: booking.paidAt,
+
+          // LOCATION / MEETING DETAILS
+          location_text: booking.locationText || null,
+
+          meeting_link: booking.meetingLink || null,
+
+          // COUNSELLOR
+          counsellor_name:
+            `${booking.counsellor?.first_name || ''} ${
+              booking.counsellor?.last_name || ''
+            }`.trim() || null,
+
+          // ATTENDANCE & PAYMENT
+          attended: booking.attended,
+          transaction_ref: booking.transaction_ref,
+
+          // NOTES
+          client_notes: booking.clientNotes || null,
+          counsellor_notes: booking.counsellorNotes || null,
         },
       })
       .then((res) => this.logger.log(res))

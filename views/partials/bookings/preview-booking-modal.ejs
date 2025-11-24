@@ -1,0 +1,340 @@
+<!-- PREVIEW COUNSELLING BOOKING MODAL -->
+<div
+  id="previewBookingModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 text-xs overflow-hidden"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Booking Preview</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closePreviewBookingModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div id="previewBookingContent" class="space-y-4">
+      <!-- Counselling & client info -->
+      <div>
+        <p
+          id="previewBookingCounsellingTitle"
+          class="font-semibold text-gray-800 text-sm"
+        ></p>
+        <div class="mt-1 text-[11px] text-gray-600 space-y-0.5">
+          <p>
+            <span class="font-medium text-gray-700">Client:&nbsp;</span>
+            <span id="previewBookingClientName"></span>
+          </p>
+          <p>
+            <span class="font-medium text-gray-700">Email:&nbsp;</span>
+            <span id="previewBookingClientEmail"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Status / Reference / Mode / Type -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <span class="text-[10px] text-gray-500">Status</span>
+          <p
+            id="previewBookingStatus"
+            class="text-[11px] font-medium text-gray-800"
+          ></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Booking Ref</span>
+          <p
+            id="previewBookingReference"
+            class="text-[11px] font-medium text-gray-800"
+          ></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Mode</span>
+          <p
+            id="previewBookingMode"
+            class="text-[11px] font-medium text-gray-800"
+          ></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Type</span>
+          <p
+            id="previewBookingType"
+            class="text-[11px] font-medium text-gray-800"
+          ></p>
+        </div>
+      </div>
+
+      <!-- Times & duration -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <span class="text-[10px] text-gray-500">Starts at</span>
+          <p id="previewBookingStartsAt" class="text-[11px] text-gray-800"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Ends at</span>
+          <p id="previewBookingEndsAt" class="text-[11px] text-gray-800"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Duration</span>
+          <p id="previewBookingDuration" class="text-[11px] text-gray-800"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Price</span>
+          <p id="previewBookingPrice" class="text-[11px] text-gray-800"></p>
+        </div>
+      </div>
+
+      <!-- Location / Meeting link -->
+      <div class="space-y-1">
+        <div>
+          <span class="text-[10px] text-gray-500">Location</span>
+          <p
+            id="previewBookingLocationText"
+            class="text-[11px] font-medium text-gray-800"
+          ></p>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500 block">Meeting link</span>
+          <a
+            id="previewBookingMeetingLink"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-[var(--color-primary-dark)] underline"
+          >
+            N/A
+          </a>
+        </div>
+      </div>
+
+      <!-- Payment / attendance -->
+      <div class="grid grid-cols-2 gap-3 border-t pt-3">
+        <div>
+          <span class="text-[10px] text-gray-500">Paid at</span>
+          <p id="previewBookingPaidAt" class="text-[11px] text-gray-800"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Attended</span>
+          <p id="previewBookingAttended" class="text-[11px] text-gray-800"></p>
+        </div>
+        <div class="col-span-2">
+          <span class="text-[10px] text-gray-500">Transaction Ref</span>
+          <p
+            id="previewBookingTransactionRef"
+            class="text-[11px] text-gray-800 break-all"
+          ></p>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="border-t pt-3 space-y-2">
+        <div>
+          <span class="text-[10px] text-gray-500 block mb-0.5"
+            >Client notes</span
+          >
+          <p
+            id="previewBookingClientNotes"
+            class="text-[11px] text-gray-800 whitespace-pre-line"
+          ></p>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500 block mb-0.5"
+            >Counsellor notes</span
+          >
+          <p
+            id="previewBookingCounsellorNotes"
+            class="text-[11px] text-gray-800 whitespace-pre-line"
+          ></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div
+      id="previewBookingLoading"
+      class="hidden text-[11px] text-gray-500 text-center py-4"
+    >
+      Loading booking details...
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end">
+      <button
+        type="button"
+        class="px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+        onclick="closePreviewBookingModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setPreviewBookingLoading(isLoading) {
+    const content = document.getElementById('previewBookingContent');
+    const loading = document.getElementById('previewBookingLoading');
+    if (!content || !loading) return;
+
+    if (isLoading) {
+      content.classList.add('hidden');
+      loading.classList.remove('hidden');
+    } else {
+      content.classList.remove('hidden');
+      loading.classList.add('hidden');
+    }
+  }
+
+  function formatBookingDateTime(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+
+    const options = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    };
+    return date.toLocaleString('en-US', options);
+  }
+
+  async function openPreviewBookingModal(btn) {
+    const modal = document.getElementById('previewBookingModal');
+    if (!modal) return;
+
+    const bookingId = btn.dataset.bookingId;
+    if (!bookingId) {
+      console.error('Missing data-booking-id on preview button');
+      return;
+    }
+
+    // Show modal + loading state
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setPreviewBookingLoading(true);
+
+    try {
+      // Uses your GET /counselling/booking/find/:id endpoint
+      const res = await fetch(`/counselling/booking/${bookingId}/find`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        console.error('Failed to fetch booking details', res.status);
+        setPreviewBookingLoading(false);
+        document.getElementById('previewBookingCounsellingTitle').textContent =
+          'Error loading booking';
+        return;
+      }
+
+      const data = await res.json();
+      console.log({ data });
+      const booking = data.booking || data; // handle { booking: {...} } or plain object
+      const user = booking.user || {};
+      const counselling = booking.counselling || {};
+
+      setPreviewBookingLoading(false);
+
+      // Title & client
+      document.getElementById('previewBookingCounsellingTitle').textContent =
+        counselling.title || '-';
+      document.getElementById('previewBookingClientName').textContent =
+        user.fullName || user.name || '-';
+      document.getElementById('previewBookingClientEmail').textContent =
+        user.email || user.email_address || '-';
+
+      // Status / internal reference
+      document.getElementById('previewBookingStatus').textContent =
+        booking.status || '-';
+      document.getElementById('previewBookingReference').textContent =
+        booking.reference || booking.id || '-';
+
+      // Mode / type from counselling
+      document.getElementById('previewBookingMode').textContent =
+        counselling.mode || '-';
+      document.getElementById('previewBookingType').textContent =
+        counselling.type || '-';
+
+      // Dates & duration
+      document.getElementById('previewBookingStartsAt').textContent =
+        formatBookingDateTime(booking.startsAt);
+      document.getElementById('previewBookingEndsAt').textContent =
+        formatBookingDateTime(booking.endsAt);
+
+      const duration =
+        booking.durationMinutes ?? counselling.durationMinutes ?? null;
+      document.getElementById('previewBookingDuration').textContent = duration
+        ? `${duration} mins`
+        : '-';
+
+      // Price (prefer price at booking, fallback to counselling price)
+      const priceAtBooking =
+        booking.priceAtBooking ?? booking.price ?? counselling.price ?? null;
+
+      if (
+        priceAtBooking === null ||
+        priceAtBooking === undefined ||
+        Number(priceAtBooking) === 0
+      ) {
+        document.getElementById('previewBookingPrice').textContent = 'Free';
+      } else {
+        document.getElementById('previewBookingPrice').textContent =
+          `₦${priceAtBooking}`;
+      }
+
+      // Location / meeting link
+      document.getElementById('previewBookingLocationText').textContent =
+        booking.locationText || counselling.locationText || '-';
+
+      const meetingEl = document.getElementById('previewBookingMeetingLink');
+      const meetingLink = booking.meetingLink || counselling.meetingLink || '';
+      if (meetingLink) {
+        meetingEl.href = meetingLink;
+        meetingEl.textContent = 'Open link';
+      } else {
+        meetingEl.href = '#';
+        meetingEl.textContent = 'N/A';
+      }
+
+      // Payment & attendance & txn ref
+      document.getElementById('previewBookingPaidAt').textContent =
+        formatBookingDateTime(booking.paidAt);
+      document.getElementById('previewBookingAttended').textContent =
+        booking.attended ? 'Yes' : 'No';
+      document.getElementById('previewBookingTransactionRef').textContent =
+        booking.transaction_ref ||
+        (booking.transaction && booking.transaction.transaction_ref) ||
+        '-';
+
+      // Notes
+      document.getElementById('previewBookingClientNotes').textContent =
+        booking.clientNotes || '-';
+      document.getElementById('previewBookingCounsellorNotes').textContent =
+        booking.counsellorNotes || '-';
+    } catch (err) {
+      console.error(err);
+      setPreviewBookingLoading(false);
+      document.getElementById('previewBookingCounsellingTitle').textContent =
+        'Error loading booking';
+    }
+  }
+
+  function closePreviewBookingModal() {
+    const modal = document.getElementById('previewBookingModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+</script>

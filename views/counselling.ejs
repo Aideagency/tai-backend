@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Counselling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "counselling" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', {
+        admin,
+        pageTitle: 'Counselling Sessions'
+      }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar: title + filters + Add Counselling -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)]
+                 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              Counselling Sessions
+            </h3>
+            <p class="text-xs text-gray-500">
+              Manage all counselling offers. Total: <%= meta?.totalItems || 0 %>
+            </p>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
+            <!-- Filters: search + type + mode -->
+            <form method="GET" action="/admin-views/counselling" class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
+              <!-- Search -->
+              <input type="text" name="q" placeholder="Search by title or description..." value="<%= (filters && filters.q) || q || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]" />
+
+              <!-- Type filter -->
+              <select name="type" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All types</option>
+                <option value="INDIVIDUAL" <%= (filters && filters.type === 'INDIVIDUAL') ? 'selected' : '' %>>
+                  Individual
+                </option>
+                <option value="COUPLES" <%= (filters && filters.type === 'COUPLES') ? 'selected' : '' %>>
+                  Couples
+                </option>
+                <option value="FAMILY" <%= (filters && filters.type === 'FAMILY') ? 'selected' : '' %>>
+                  Family
+                </option>
+                <option value="GROUP" <%= (filters && filters.type === 'GROUP') ? 'selected' : '' %>>
+                  Group
+                </option>
+              </select>
+
+              <!-- Mode filter -->
+              <select name="mode" class="rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-[var(--color-primary)]">
+                <option value="">All modes</option>
+                <option value="ONLINE" <%= (filters && filters.mode === 'ONLINE') ? 'selected' : '' %>>
+                  Online
+                </option>
+                <option value="OFFLINE" <%= (filters && filters.mode === 'OFFLINE') ? 'selected' : '' %>>
+                  Offline
+                </option>
+              </select>
+
+              <!-- Active only toggle -->
+              <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                <input type="checkbox" name="isActive" value="true" <%= (filters && filters.isActive) ? 'checked' : '' %> class="rounded border-gray-300 text-[var(--color-primary)]
+                         focus:ring-[var(--color-primary)]" />
+                Active only
+              </label>
+
+              <!-- Free / Paid toggles -->
+              <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                <input type="checkbox" name="freeOnly" value="true" <%= (filters && filters.freeOnly) ? 'checked' : '' %> class="rounded border-gray-300 text-[var(--color-primary)]
+                         focus:ring-[var(--color-primary)]" />
+                Free only
+              </label>
+
+              <label class="inline-flex items-center gap-1 text-[11px] text-gray-600">
+                <input type="checkbox" name="paidOnly" value="true" <%= (filters && filters.paidOnly) ? 'checked' : '' %> class="rounded border-gray-300 text-[var(--color-primary)]
+                         focus:ring-[var(--color-primary)]" />
+                Paid only
+              </label>
+
+              <button type="submit" class="inline-flex items-center rounded-lg
+                       bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                Apply
+              </button>
+            </form>
+
+            <!-- Add Counselling button -->
+            <button type="button" onclick="openAddCounsellingModal()" class="inline-flex items-center justify-center rounded-lg
+                     bg-[var(--color-secondary-dark)] text-white text-xs font-semibold px-4 py-2
+                     hover:bg-[var(--color-primary-dark)]
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+              + Add Counselling
+            </button>
+          </div>
+        </section>
+
+        <!-- Counselling table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Title</th>
+                  <th class="px-3 py-2 text-left font-medium">Type</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-left font-medium">Mode</th>
+                  <th class="px-3 py-2 text-left font-medium">Duration</th>
+                  <th class="px-3 py-2 text-left font-medium">Price</th>
+                  <th class="px-3 py-2 text-left font-medium text-center">Max Clients</th>
+                  <th class="px-3 py-2 text-left font-medium text-center">Active</th>
+                  <th class="px-3 py-2 text-left font-medium text-center">Featured</th>
+                  <th class="px-3 py-2 text-left font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(counselling, index) { %>
+                <tr class="hover:bg-gray-50">
+                  <!-- Index -->
+                  <td class="px-3 py-2 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+
+                  <!-- Title + description snippet -->
+                  <td class="px-3 py-2">
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-gray-800">
+                        <%= counselling.title || '-' %>
+                      </span>
+                      <% if (counselling.description) { %>
+                      <span class="text-[10px] text-gray-500 line-clamp-2">
+                        <%= counselling.description %>
+                      </span>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <!-- Type -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                              bg-[var(--color-secondary-light)] text-[var(--color-secondary-dark)]">
+                      <%= counselling.type || '-' %>
+                    </span>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-3 py-2">
+                    <% if (counselling.status === 'PUBLISHED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-green-50 text-green-700">
+                      Published
+                    </span>
+                    <% } else if (counselling.status === 'DRAFT') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-yellow-50 text-yellow-700">
+                      Draft
+                    </span>
+                    <% } else if (counselling.status === 'ARCHIVED') { %>
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600">
+                      Archived
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-500 text-[10px]">
+                      <%= counselling.status || '-' %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Mode -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <%= counselling.mode || '-' %>
+                  </td>
+
+                  <!-- Duration -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (counselling.durationMinutes) { %>
+                    <span class="text-[11px] text-gray-800">
+                      <%= counselling.durationMinutes %> mins
+                    </span>
+                    <% } else { %>
+                    -
+                    <% } %>
+                  </td>
+
+                  <!-- Price -->
+                  <td class="px-3 py-2 text-gray-700">
+                    <% if (counselling.price === null || counselling.price === 0) { %>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium">
+                      Free
+                    </span>
+                    <% } else { %>
+                    <span class="text-[11px] text-gray-800">
+                      ₦<%= counselling.price %>
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Max clients -->
+                  <td class="px-3 py-2 text-center text-gray-700">
+                    <%= counselling.maxClientsPerSession || '-' %>
+                  </td>
+
+                  <!-- Active -->
+                  <td class="px-3 py-2 text-center">
+                    <% if (counselling.isActive) { %>
+                    <span class="inline-flex items-center rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[10px] font-medium">
+                      Yes
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[10px] font-medium">
+                      No
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Featured -->
+                  <td class="px-3 py-2 text-center">
+                    <% if (counselling.isFeatured) { %>
+                    <span class="inline-flex items-center rounded-full bg-purple-50 text-purple-700 px-2 py-0.5 text-[10px] font-medium">
+                      Featured
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[10px] font-medium">
+                      Normal
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
+                    <!-- Preview -->
+                    <button type="button" class="inline-flex items-center rounded-md border border-sky-500 text-sky-600 px-2 py-1 text-[11px] font-semibold hover:bg-sky-50 transition" data-counselling-id="<%= counselling.id %>" onclick="openPreviewCounsellingModal(this)">
+                      Preview
+                    </button>
+
+
+                    <!-- View bookings (extra action) -->
+                    <a href="/admin-views/counselling/<%= counselling.id %>/bookings" class="inline-flex items-center rounded-md border border-indigo-500 text-indigo-600 px-2 py-1 text-[11px] font-semibold hover:bg-indigo-50 transition">
+                      Bookings
+                    </a>
+
+                    <!-- Update -->
+                    <button type="button" class="inline-flex items-center rounded-md border 
+                          border-[var(--color-primary)] text-[var(--color-primary-dark)] px-2 py-1 text-[11px] font-semibold hover:bg-[var(--color-secondary-light)] transition" onclick="openUpdateCounsellingModal(this)" data-counselling-id="<%= counselling.id %>" data-counselling-title="<%= counselling.title || '' %>" data-counselling-description="<%- counselling.description || '' %>" data-counselling-type="<%= counselling.type || '' %>" data-counselling-status="<%= counselling.status || '' %>" data-counselling-mode="<%= counselling.mode || '' %>" data-counselling-duration="<%= counselling.durationMinutes || '' %>" data-counselling-price="<%= counselling.price || '' %>" data-counselling-max-clients="<%= counselling.maxClientsPerSession || '' %>" data-counselling-what-you-get="<%- counselling.whatYouGet || '' %>" data-counselling-who-its-for="<%- counselling.whoItsFor || '' %>" data-counselling-how-it-works="<%- counselling.howItWorks || '' %>" data-counselling-cover-url="<%= counselling.coverUrl || '' %>" data-counselling-is-active="<%= counselling.isActive ? 'true' : 'false' %>" data-counselling-is-featured="<%= counselling.isFeatured ? 'true' : 'false' %>">
+                      Update
+                    </button>
+
+                    <!-- Toggle Active (extra action mirroring entity boolean) -->
+                    <button type="button" class="inline-flex items-center rounded-md border border-amber-500 text-amber-600 px-2 py-1 text-[11px] font-semibold hover:bg-amber-50 transition" onclick="openToggleCounsellingModal(this)" data-counselling-id="<%= counselling.id %>" data-counselling-title="<%= counselling.title || '' %>" data-counselling-is-active="<%= counselling.isActive %>">
+                      <%= counselling.isActive ? 'Deactivate' : 'Activate' %>
+                    </button>
+
+                    <!-- Delete -->
+                    <button type="button" class="inline-flex items-center px-2 py-1 text-[11px] rounded-md border border-red-500 text-red-600 hover:bg-red-50" onclick="openDeleteCounsellingModal(this)" data-counselling-id="<%= counselling.id %>" data-counselling-title="<%= counselling.title || '' %>">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="11" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No counselling sessions found.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> counselling offers
+            </div>
+
+            <div class="flex items-center gap-1">
+              <% const currentQ = (filters && filters.q) || q || ''; %>
+              <% const currentType = (filters && filters.type) || ''; %>
+              <% const currentMode = (filters && filters.mode) || ''; %>
+              <% const activeOnly = (filters && filters.isActive) ? 'true' : ''; %>
+              <% const freeOnly = (filters && filters.freeOnly) ? 'true' : ''; %>
+              <% const paidOnly = (filters && filters.paidOnly) ? 'true' : ''; %>
+
+              <% function buildQuery(pageNum) {
+                     let qs = '?page=' + pageNum;
+                     if (currentQ) qs += '&q=' + encodeURIComponent(currentQ);
+                     if (currentType) qs += '&type=' + encodeURIComponent(currentType);
+                     if (currentMode) qs += '&mode=' + encodeURIComponent(currentMode);
+                     if (activeOnly) qs += '&isActive=true';
+                     if (freeOnly) qs += '&freeOnly=true';
+                     if (paidOnly) qs += '&paidOnly=true';
+                     return qs;
+                   } %>
+
+              <!-- Prev -->
+              <% if (meta.currentPage > 1) { %>
+              <a href={"/admin-views/counselling" + buildQuery(meta.currentPage - 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Prev
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Prev
+              </span>
+              <% } %>
+
+              <!-- Page numbers -->
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href={"/admin-views/counselling" + buildQuery(p)} class="px-2 py-1 rounded border text-xs
+                      <%= p === meta.currentPage
+                        ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold'
+                        : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <!-- Next -->
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href={"/admin-views/counselling" + buildQuery(meta.currentPage + 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">
+                Next
+              </a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">
+                Next
+              </span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals as partials (you’ll create the matching EJS files) -->
+  <%- include('partials/counselling/add-counselling-modal') %>
+  <%- include('partials/counselling/preview-counselling-modal') %>
+  <%- include('partials/counselling/update-counselling-modal') %>
+  <%- include('partials/counselling/delete-counselling-modal') %>
+  <%- include('partials/counselling/toggle-counselling-active-modal') %>
+
+</body>
+
+</html>

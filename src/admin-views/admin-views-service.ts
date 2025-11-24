@@ -20,6 +20,9 @@ import { GetEventsFilterDto } from 'src/event/dtos/get-events-query.dto';
 import { EventService } from 'src/event/event.service';
 import { ChallengesService } from 'src/challenges/challenges.service';
 import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.dto';
+import { CounsellingService } from 'src/counselling/counselling.service';
+import { GetCounsellingsFilterDto } from 'src/counselling/dtos/get-counselling-filter.dto';
+import { GetCounsellingBookingsFilterDto } from 'src/counselling/dtos/get-counselling-booking-filter.dto';
 
 @Injectable()
 export class AdminViewsService {
@@ -35,6 +38,7 @@ export class AdminViewsService {
     private adminService: AdminService,
     private readonly eventService: EventService,
     private readonly challengeService: ChallengesService,
+    private readonly counsellingService: CounsellingService,
   ) {}
 
   async listUsers(params: UserSearchParams) {
@@ -47,5 +51,16 @@ export class AdminViewsService {
 
   async listChallengess(params: GetChallengesQueryDto) {
     return this.challengeService.listEveryChallenge(params);
+  }
+
+  async listCounselling(params: GetCounsellingsFilterDto) {
+    return this.counsellingService.getAllCounsellings(params);
+  }
+
+  async listCounsellingBookings(
+    counsellingId: number,
+    params: GetCounsellingBookingsFilterDto,
+  ) {
+    return this.counsellingService.getCounsellingBookingsPaginated(counsellingId,  params);
   }
 }

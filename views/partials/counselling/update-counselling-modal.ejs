@@ -1,0 +1,492 @@
+<div
+  id="updateCounsellingModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Update Counselling Session</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeUpdateCounsellingModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="updateCounsellingForm"
+      action=""
+      method="POST"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- TITLE -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          id="updateCounsellingTitle"
+          type="text"
+          name="title"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+          required
+        />
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Description</label>
+        <textarea
+          id="updateCounsellingDescription"
+          name="description"
+          rows="3"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- TYPE + STATUS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Type</label>
+          <select
+            id="updateCounsellingType"
+            name="type"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="INDIVIDUAL">Individual</option>
+            <option value="COUPLES">Couples</option>
+            <option value="FAMILY">Family</option>
+            <option value="GROUP">Group</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Status</label>
+          <select
+            id="updateCounsellingStatus"
+            name="status"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MODE + DURATION -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Mode</label>
+          <select
+            id="updateCounsellingMode"
+            name="mode"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          >
+            <option value="ONLINE">Online</option>
+            <option value="OFFLINE">Offline</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Duration (minutes)
+          </label>
+          <input
+            id="updateCounsellingDuration"
+            type="number"
+            name="durationMinutes"
+            min="1"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <!-- PRICE + MAX CLIENTS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Price (₦, optional)
+          </label>
+          <input
+            id="updateCounsellingPrice"
+            type="number"
+            name="price"
+            step="0.01"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Max clients per session (optional)
+          </label>
+          <input
+            id="updateCounsellingMaxClients"
+            type="number"
+            name="maxClientsPerSession"
+            min="1"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
+
+      <!-- WHAT YOU GET -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          What clients get (optional)
+        </label>
+        <textarea
+          id="updateCounsellingWhatYouGet"
+          name="whatYouGet"
+          rows="2"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- WHO IT'S FOR -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Who this is for (optional)
+        </label>
+        <textarea
+          id="updateCounsellingWhoItsFor"
+          name="whoItsFor"
+          rows="2"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          How it works (optional)
+        </label>
+        <textarea
+          id="updateCounsellingHowItWorks"
+          name="howItWorks"
+          rows="2"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <!-- ACTIVE / FEATURED -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="flex items-center gap-2">
+          <input
+            id="updateCounsellingIsActive"
+            type="checkbox"
+            name="isActive"
+            value="true"
+            class="rounded border-gray-300 text-[var(--color-primary)]
+                   focus:ring-[var(--color-primary)]"
+          />
+          <label
+            for="updateCounsellingIsActive"
+            class="text-[11px] text-gray-700 font-medium"
+          >
+            Active
+          </label>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            id="updateCounsellingIsFeatured"
+            type="checkbox"
+            name="isFeatured"
+            value="true"
+            class="rounded border-gray-300 text-[var(--color-primary)]
+                   focus:ring-[var(--color-primary)]"
+          />
+          <label
+            for="updateCounsellingIsFeatured"
+            class="text-[11px] text-gray-700 font-medium"
+          >
+            Featured
+          </label>
+        </div>
+      </div>
+
+      <!-- COVER IMAGE -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Cover image (optional)
+        </label>
+
+        <input
+          id="updateCounsellingCoverImage"
+          type="file"
+          name="coverUrl"
+          accept="image/*"
+          class="w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3
+                 file:rounded-md file:border-0 file:text-xs file:font-semibold
+                 file:bg-[var(--color-primary)] file:text-white
+                 hover:file:bg-[var(--color-primary-dark)]"
+        />
+
+        <p
+          id="updateCounsellingCoverImageInfo"
+          class="mt-1 text-[10px] text-gray-500"
+        >
+          No current cover image.
+        </p>
+
+        <img
+          id="updateCounsellingCoverImagePreview"
+          src=""
+          alt="Current cover image"
+          class="mt-2 h-20 w-full object-cover rounded-md hidden"
+        />
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+          onclick="closeUpdateCounsellingModal()"
+        >
+          Cancel
+        </button>
+        <button
+          id="updateCounsellingSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <span id="updateCounsellingSubmitText">Save changes</span>
+          <svg
+            id="updateCounsellingSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openUpdateCounsellingModal(btn) {
+    const modal = document.getElementById('updateCounsellingModal');
+    if (!modal) return;
+
+    const counsellingId = btn.dataset.counsellingId;
+    const form = document.getElementById('updateCounsellingForm');
+
+    if (form && counsellingId) {
+      form.dataset.counsellingId = counsellingId;
+      // match your NestJS route: @Put('update/:id')
+      form.action = '/counselling/update/' + counsellingId;
+    }
+
+    // Prefill text fields
+    document.getElementById('updateCounsellingTitle').value =
+      btn.dataset.counsellingTitle || '';
+    document.getElementById('updateCounsellingDescription').value =
+      btn.dataset.counsellingDescription || '';
+    document.getElementById('updateCounsellingType').value =
+      btn.dataset.counsellingType || '';
+    document.getElementById('updateCounsellingStatus').value =
+      btn.dataset.counsellingStatus || '';
+    document.getElementById('updateCounsellingMode').value =
+      btn.dataset.counsellingMode || '';
+    document.getElementById('updateCounsellingDuration').value =
+      btn.dataset.counsellingDuration || '';
+    document.getElementById('updateCounsellingPrice').value =
+      btn.dataset.counsellingPrice || '';
+    document.getElementById('updateCounsellingMaxClients').value =
+      btn.dataset.counsellingMaxClients || '';
+    document.getElementById('updateCounsellingWhatYouGet').value =
+      btn.dataset.counsellingWhatYouGet || '';
+    document.getElementById('updateCounsellingWhoItsFor').value =
+      btn.dataset.counsellingWhoItsFor || '';
+    document.getElementById('updateCounsellingHowItWorks').value =
+      btn.dataset.counsellingHowItWorks || '';
+
+    // Booleans from data attributes ('true' / 'false')
+    const isActive =
+      btn.dataset.counsellingIsActive === 'true' ||
+      btn.dataset.counsellingIsActive === true;
+    const isFeatured =
+      btn.dataset.counsellingIsFeatured === 'true' ||
+      btn.dataset.counsellingIsFeatured === true;
+
+    document.getElementById('updateCounsellingIsActive').checked = !!isActive;
+    document.getElementById('updateCounsellingIsFeatured').checked = !!isFeatured;
+
+    // Cover image preview
+    const coverUrl = btn.dataset.counsellingCoverUrl || '';
+    const preview = document.getElementById('updateCounsellingCoverImagePreview');
+    const info = document.getElementById('updateCounsellingCoverImageInfo');
+
+    if (coverUrl) {
+      preview.src = coverUrl;
+      preview.classList.remove('hidden');
+      info.textContent = 'Current cover image:';
+    } else {
+      preview.src = '';
+      preview.classList.add('hidden');
+      info.textContent = 'No current cover image.';
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeUpdateCounsellingModal() {
+    const modal = document.getElementById('updateCounsellingModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    const form = document.getElementById('updateCounsellingForm');
+    if (form) {
+      form.reset();
+      delete form.dataset.counsellingId;
+    }
+
+    const btn = document.getElementById('updateCounsellingSubmitBtn');
+    const text = document.getElementById('updateCounsellingSubmitText');
+    const spinner = document.getElementById('updateCounsellingSubmitSpinner');
+
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = 'Save changes';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('updateCounsellingForm');
+    if (!form) return;
+
+    const submitBtn = document.getElementById('updateCounsellingSubmitBtn');
+    const submitText = document.getElementById('updateCounsellingSubmitText');
+    const submitSpinner = document.getElementById('updateCounsellingSubmitSpinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const counsellingId = form.dataset.counsellingId;
+      if (!counsellingId) {
+        alert('Missing counselling id.');
+        return;
+      }
+
+      // Loader state
+      submitBtn.disabled = true;
+      submitSpinner.classList.remove('hidden');
+      submitText.textContent = 'Saving...';
+
+      const fd = new FormData();
+
+      fd.append('title', form.title.value);
+      fd.append('description', form.description.value || '');
+      fd.append('type', form.type.value || '');
+      fd.append('status', form.status.value || '');
+      fd.append('mode', form.mode.value || '');
+
+      if (form.durationMinutes.value !== '') {
+        fd.append('durationMinutes', form.durationMinutes.value);
+      }
+      if (form.price.value !== '') {
+        fd.append('price', form.price.value);
+      }
+      if (form.maxClientsPerSession.value !== '') {
+        fd.append('maxClientsPerSession', form.maxClientsPerSession.value);
+      }
+      if (form.whatYouGet.value) {
+        fd.append('whatYouGet', form.whatYouGet.value);
+      }
+      if (form.whoItsFor.value) {
+        fd.append('whoItsFor', form.whoItsFor.value);
+      }
+      if (form.howItWorks.value) {
+        fd.append('howItWorks', form.howItWorks.value);
+      }
+
+      // Booleans: send only if true; DTO Transform will handle correctly
+      if (form.isActive.checked) {
+        fd.append('isActive', 'true');
+      }
+      if (form.isFeatured.checked) {
+        fd.append('isFeatured', 'true');
+      }
+
+      // Cover image (optional)
+      const coverInput = document.getElementById('updateCounsellingCoverImage');
+      if (coverInput && coverInput.files && coverInput.files[0]) {
+        fd.append('coverUrl', coverInput.files[0]);
+      }
+
+      try {
+        const res = await fetch('/counselling/update/' + counsellingId, {
+          method: 'PUT',
+          credentials: 'include',
+          body: fd,
+        });
+
+        if (!res.ok) {
+          let msg = 'Error updating counselling session.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+          alert(msg);
+
+          submitBtn.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitText.textContent = 'Save changes';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        submitBtn.disabled = false;
+        submitSpinner.classList.add('hidden');
+        submitText.textContent = 'Save changes';
+      }
+    });
+  });
+</script>

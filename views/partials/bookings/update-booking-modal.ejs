@@ -1,0 +1,266 @@
+<div
+  id="updateBookingStatusModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 text-xs">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">
+        Update Booking Status
+      </h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeUpdateBookingStatusModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form id="updateBookingStatusForm" class="space-y-3 text-xs">
+      <input type="hidden" id="updateBookingId" />
+
+      <!-- Status -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Status</label>
+        <select
+          id="updateBookingStatus"
+          name="status"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        >
+          <option value="PENDING_PAYMENT">Pending payment</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="NO_SHOW">No-show</option>
+          <option value="REFUNDED">Refunded</option>
+        </select>
+      </div>
+
+      <!-- Attended -->
+      <div class="flex items-center gap-2">
+        <input
+          id="updateBookingAttended"
+          type="checkbox"
+          class="rounded border-gray-300 text-[var(--color-primary)]
+                 focus:ring-[var(--color-primary)]"
+        />
+        <label for="updateBookingAttended" class="text-[11px] text-gray-700">
+          Mark as attended
+        </label>
+      </div>
+
+      <!-- Meeting link -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Meeting link (online)
+        </label>
+        <input
+          id="updateBookingMeetingLink"
+          type="url"
+          name="meetingLink"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Location text -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Location text (offline)
+        </label>
+        <input
+          id="updateBookingLocationText"
+          type="text"
+          name="locationText"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Counsellor notes -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Counsellor notes
+        </label>
+        <textarea
+          id="updateBookingCounsellorNotes"
+          name="counsellorNotes"
+          rows="3"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        ></textarea>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+          onclick="closeUpdateBookingStatusModal()"
+        >
+          Cancel
+        </button>
+        <button
+          id="updateBookingStatusSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <span id="updateBookingStatusSubmitText">Save changes</span>
+          <svg
+            id="updateBookingStatusSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openUpdateBookingStatusModal(btn) {
+    const modal = document.getElementById('updateBookingStatusModal');
+    if (!modal) return;
+
+    const bookingId = btn.dataset.bookingId;
+    if (!bookingId) {
+      console.error('Missing data-booking-id on update button');
+      return;
+    }
+
+    // Prefill from data attributes
+    document.getElementById('updateBookingId').value = bookingId;
+    document.getElementById('updateBookingStatus').value =
+      btn.dataset.bookingStatus || 'CONFIRMED';
+
+    const attendedVal = btn.dataset.bookingAttended === 'true';
+    document.getElementById('updateBookingAttended').checked = attendedVal;
+
+    document.getElementById('updateBookingMeetingLink').value =
+      btn.dataset.bookingMeetingLink || '';
+    document.getElementById('updateBookingLocationText').value =
+      btn.dataset.bookingLocationText || '';
+    document.getElementById('updateBookingCounsellorNotes').value =
+      btn.dataset.bookingCounsellorNotes || '';
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeUpdateBookingStatusModal() {
+    const modal = document.getElementById('updateBookingStatusModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    const form = document.getElementById('updateBookingStatusForm');
+    if (form) {
+      form.reset();
+      document.getElementById('updateBookingId').value = '';
+    }
+
+    const btn = document.getElementById('updateBookingStatusSubmitBtn');
+    const text = document.getElementById('updateBookingStatusSubmitText');
+    const spinner = document.getElementById(
+      'updateBookingStatusSubmitSpinner',
+    );
+
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = 'Save changes';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('updateBookingStatusForm');
+    const btn = document.getElementById('updateBookingStatusSubmitBtn');
+    const text = document.getElementById('updateBookingStatusSubmitText');
+    const spinner = document.getElementById(
+      'updateBookingStatusSubmitSpinner',
+    );
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const bookingId = document.getElementById('updateBookingId').value;
+      if (!bookingId) {
+        alert('Missing booking id.');
+        return;
+      }
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      text.textContent = 'Saving...';
+
+      const payload = {
+        status: document.getElementById('updateBookingStatus').value,
+        attended: document.getElementById('updateBookingAttended').checked,
+        meetingLink: document.getElementById('updateBookingMeetingLink').value || null,
+        locationText: document.getElementById('updateBookingLocationText').value || null,
+        counsellorNotes:
+          document.getElementById('updateBookingCounsellorNotes').value || null,
+      };
+
+      try {
+        // 🔁 Adjust this URL + method to your actual API
+        const res = await fetch(
+          `/counselling-bookings/${bookingId}/status`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+          },
+        );
+
+        if (!res.ok) {
+          let msg = 'Error updating booking.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+          alert(msg);
+
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Save changes';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Save changes';
+      }
+    });
+  });
+</script>

@@ -5,9 +5,16 @@ import { AdminModule } from 'src/admin/admin.module';
 import { AdminViewsService } from './admin-views-service';
 import { EventModule } from 'src/event/event.module';
 import { ChallengesModule } from 'src/challenges/challenges.module';
+import { CounsellingModule } from 'src/counselling/counselling.module';
 
 @Module({
-  imports: [AdminAuthModule, AdminModule, EventModule, ChallengesModule],
+  imports: [
+    AdminAuthModule,
+    AdminModule,
+    EventModule,
+    ChallengesModule,
+    CounsellingModule,
+  ],
   controllers: [AdminViewsController],
   providers: [AdminViewsService],
   exports: [AdminViewsService],

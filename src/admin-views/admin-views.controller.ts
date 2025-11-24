@@ -8,6 +8,8 @@ import {
   Req,
   UseGuards,
   Query,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AdminAuthService } from 'src/admin/auth/admin-auth.service';
@@ -17,6 +19,8 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { GetEventsFilterDto } from 'src/event/dtos/get-events-query.dto';
 import { Helper } from 'src/utils/helper';
 import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.dto';
+import { GetCounsellingsFilterDto } from 'src/counselling/dtos/get-counselling-filter.dto';
+import { GetCounsellingBookingsFilterDto } from 'src/counselling/dtos/get-counselling-booking-filter.dto';
 
 @Controller('admin-views')
 @ApiExcludeController()
@@ -123,6 +127,57 @@ export class AdminViewsController {
       items: response.items,
       meta: response.meta,
       filters: query,
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('counsellings')
+  @UseGuards(AdminJwtGuard)
+  @Render('counselling')
+  async getCounsellings(
+    @Req() req: any,
+    @Query() query: GetCounsellingsFilterDto,
+  ) {
+    const response = await this.viewsService.listCounselling(query);
+
+    return {
+      admin: req.user,
+      items: response.items,
+      meta: response.meta,
+      filters: {
+        q: query.q || '',
+        mode: query.mode || '',
+        // minPrice: query.minPrice ?? '',
+        // maxPrice: query.maxPrice ?? '',
+        isActive: query.isActive ?? '',
+        isFeatured: query.isFeatured ?? '',
+      },
+      q: query.q || '',
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('counselling/:counsellingId/bookings')
+  @UseGuards(AdminJwtGuard)
+  @Render('bookings')
+  async getCounsellingBookings(
+    @Req() req: any,
+    @Param('counsellingId', ParseIntPipe) counsellingId: number,
+    @Query() query: GetCounsellingBookingsFilterDto,
+  ) {
+    // Expect viewsService to return:
+    // { counselling, items, meta }
+    const response = await this.viewsService.listCounsellingBookings(
+      counsellingId,
+      query,
+    );
+
+    return {
+      admin: req.user,
+      counselling: response.items, // the counselling offer
+      items: response.items, // bookings array
+      meta: response.meta, // pagination
+      filters: query, // for keeping filter state in the UI
       currentPath: req.originalUrl,
     };
   }
