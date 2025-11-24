@@ -17,6 +17,7 @@ import * as crypto from 'crypto';
 import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
 import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
 import { EventService } from 'src/event/event.service';
+import { CounsellingService } from 'src/counselling/counselling.service';
 
 @Injectable()
 export class PaymentService {
@@ -28,6 +29,8 @@ export class PaymentService {
     private readonly transactionRepository: TransactionRepository,
     @Inject(forwardRef(() => EventService))
     private readonly eventService: EventService,
+    @Inject(forwardRef(() => CounsellingService))
+    private readonly counsellingService: CounsellingService,
   ) {}
 
   // Initialize Payment
@@ -169,6 +172,11 @@ export class PaymentService {
         ) {
           if (transaction.paid_for === PaidFor.EVENT) {
             await this.eventService.handlePaymentConfirmation(
+              txRef,
+              transaction.email_address,
+            );
+          } else if (transaction.paid_for === PaidFor.COUNSELLING) {
+            await this.counsellingService.handlePaymentConfirmation(
               txRef,
               transaction.email_address,
             );

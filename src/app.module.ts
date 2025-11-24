@@ -24,6 +24,7 @@ import { EventModule } from './event/event.module';
 import { AdminViewsController } from './admin-views/admin-views.controller';
 import { AdminViewsModule } from './admin-views/admin-views.module';
 import { AdminAuthModule } from './admin/auth/admin-auth.module';
+import { CounsellingModule } from './counselling/counselling.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AdminAuthModule } from './admin/auth/admin-auth.module';
     // ZohoModule,
     AdminModule,
     AdminAuthModule,
+    CounsellingModule,
     // PaymentModule,
   ],
   controllers: [AppController, PostController, AdminViewsController],
