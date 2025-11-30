@@ -1,8 +1,9 @@
+
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import { AddMemberDto } from './dtos/add-member.dto';
-import { ListCoursesQueryDto } from './dtos/list-course-query.dto';
+import { CommonHttpService } from 'src/common/common.service';
 import { EnrollUserDto } from './dtos/enroll-user.dto';
+import { AddMemberDto } from './dtos/add-member.dto';
+import { ListCoursesQueryDto } from './dtos/list-courses-query.dto';
 
 @Injectable()
 export class ZohoService {
@@ -14,6 +15,8 @@ export class ZohoService {
   private readonly clientSecret = process.env.ZOHO_CLIENT_SECRET!;
   private readonly refreshToken = process.env.ZOHO_REFRESH_TOKEN!;
 
+  constructor(private httpService: CommonHttpService) {}
+
   private async getAccessToken(): Promise<string> {
     const url = `${this.accountsBase}/oauth/v2/token`;
     const body = new URLSearchParams({
@@ -23,7 +26,7 @@ export class ZohoService {
       refresh_token: this.refreshToken,
     });
 
-    const { data } = await axios.post(url, body.toString(), {
+    const { data } = await this.httpService.post(url, body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
@@ -35,7 +38,7 @@ export class ZohoService {
   async listCourses(queryParams: ListCoursesQueryDto) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.get(
+    const { data } = await this.httpService.get(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
       {
         headers: { Authorization: `Zoho-oauthtoken ${token}` },
@@ -49,7 +52,7 @@ export class ZohoService {
   async enrollUser(enrollDto: EnrollUserDto) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.post(
+    const { data } = await this.httpService.post(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${enrollDto.courseId}/enroll`,
       { user_id: enrollDto.userId },
       {
@@ -65,7 +68,7 @@ export class ZohoService {
   async addMember(addMemberDto: AddMemberDto) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.post(
+    const { data } = await this.httpService.post(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${addMemberDto.courseId}/member`,
       { user_id: addMemberDto.userId },
       {
@@ -80,14 +83,10 @@ export class ZohoService {
 
   /** -------- New: enrollment & membership helpers -------- */
 
-  /**
-   * Get enrollment requests for a course
-   * GET /portal/<networkurl>/course/<courseId>/requests
-   */
   async getEnrollmentRequests(courseId: string) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.get(
+    const { data } = await this.httpService.get(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/requests`,
       {
         headers: {
@@ -96,17 +95,13 @@ export class ZohoService {
       },
     );
 
-    return data; // { REQUESTS: [...], STATUS: 'OK' }
+    return data;
   }
 
-  /**
-   * Get all members in a course
-   * GET /portal/<networkurl>/course/<courseId>/member
-   */
   async getCourseMembers(courseId: string) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.get(
+    const { data } = await this.httpService.get(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/member`,
       {
         headers: {
@@ -115,17 +110,13 @@ export class ZohoService {
       },
     );
 
-    return data; // typically { DATA: [...], STATUS: 'OK' } or similar
+    return data;
   }
 
-  /**
-   * Get single course data by course URL
-   * GET /portal/<networkurl>/course?course.url=<courseUrl>
-   */
   async getCourseDataByUrl(courseUrl: string) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.get(
+    const { data } = await this.httpService.get(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
       {
         headers: {
@@ -140,14 +131,10 @@ export class ZohoService {
     return data;
   }
 
-  /**
-   * Get list of course resources/files
-   * GET /portal/<networkurl>/course/<courseId>/file
-   */
   async getCourseResources(courseId: string) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.get(
+    const { data } = await this.httpService.get(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/file`,
       {
         headers: {
@@ -159,14 +146,10 @@ export class ZohoService {
     return data;
   }
 
-  /**
-   * Mark a course as completed for the current learner / context
-   * POST /portal/<networkurl>/course/<courseId>/complete
-   */
   async completeCourse(courseId: string) {
     const token = await this.getAccessToken();
 
-    const { data } = await axios.post(
+    const { data } = await this.httpService.post(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/complete`,
       {},
       {
@@ -176,6 +159,36 @@ export class ZohoService {
       },
     );
 
-    return data; // { STATUS: 'OK' } on success
+    return data;
+  }
+
+  async inviteUserToCustomPortal(
+    email: string,
+    firstName?: string,
+    lastName?: string,
+  ) {
+    const token = await this.getAccessToken();
+
+    const { data } = await this.httpService.post(
+      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/invite`,
+      {
+        userlist: [
+          {
+            emailId: email,
+            fname: firstName,
+            lname: lastName,
+          },
+        ],
+        mailContent: '',
+        customPortalId: process.env.ZOHO_CUSTOM_PORTAL_ID,
+      },
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      },
+    );
+
+    return data;
   }
 }
