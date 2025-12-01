@@ -100,13 +100,23 @@ export class CounsellingBookingRepository extends BaseRepository<
   }
 
   /** Find a user’s booking for a counselling offer (if any) */
+  async findUserBookings(userId: number, counsellingId: number) {
+    return this.repository.find({
+      where: {
+        user: { id: userId } as any,
+        counselling: { id: counsellingId } as any,
+      },
+      // relations: ['user'],
+    });
+  }
+
   async findUserBooking(userId: number, counsellingId: number) {
     return this.repository.findOne({
       where: {
         user: { id: userId } as any,
         counselling: { id: counsellingId } as any,
       },
-      relations: ['counselling'],
+      // relations: ['counselling', 'user'],
     });
   }
 
@@ -202,16 +212,47 @@ export class CounsellingBookingRepository extends BaseRepository<
   }
 
   /** Cancel a booking (service should enforce policy: time window, etc.) */
+  // async cancel(bookingId: number, userId: number) {
+  //   const booking = await this.repository.findOne({
+  //     where: { id: bookingId, user: { id: userId } as any },
+  //   });
+  //   if (!booking) throw new NotFoundException('Booking not found');
+
+  //   await this.repository.update(
+  //     { id: booking.id },
+  //     { status: CounsellingBookingStatus.CANCELLED },
+  //   );
+  //   return true;
+  // }
+
   async cancel(bookingId: number, userId: number) {
-    const booking = await this.repository.findOne({
-      where: { id: bookingId, user: { id: userId } as any },
-    });
-    if (!booking) throw new NotFoundException('Booking not found');
+    // const booking = await this.repository.findOne({
+    //   where: { id: bookingId, user: { id: userId } as any },
+    // });
+
+    // if (!booking) throw new NotFoundException('Booking not found');
+
+    // // Calculate time difference
+    // const start = new Date(booking.startsAt);
+    // const now = new Date();
+
+    // const diffMs = start.getTime() - now.getTime(); // milliseconds difference
+    // const diffHours = diffMs / (1000 * 60 * 60); // convert to hours
+
+    // // ----- Your business rules -----
+    // if (diffHours > 24) {
+    //   console.log('1 day');
+    // } else if (diffHours <= 24 && diffHours >= 12) {
+    //   console.log('you are qualified');
+    // } else {
+    //   console.log('nope');
+    // }
 
     await this.repository.update(
-      { id: booking.id },
+      { id: bookingId, user: { id: userId } as any },
       { status: CounsellingBookingStatus.CANCELLED },
     );
+
     return true;
   }
 
@@ -246,5 +287,48 @@ export class CounsellingBookingRepository extends BaseRepository<
       throw new NotFoundException('Counselling offer not found');
     }
     return counselling;
+  }
+
+  async rescheduleBooking({
+    bookingId,
+    userId,
+    newStartsAt,
+    newEndsAt,
+  }: {
+    bookingId: number;
+    userId: number;
+    newStartsAt: Date;
+    newEndsAt?: Date;
+  }) {
+    const booking = await this.repository.findOne({
+      where: { id: bookingId, user: { id: userId } as any },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // ❌ Block if they’ve already rescheduled once
+    if (booking.hasRescheduled) {
+      throw new BadRequestException(
+        'You have already updated this session once and cannot reschedule again.',
+      );
+    }
+
+    // (Optional) also block based on time rules, status, etc.
+    if (booking.status !== CounsellingBookingStatus.CONFIRMED) {
+      throw new BadRequestException(
+        'Only confirmed bookings can be rescheduled.',
+      );
+    }
+
+    // ✅ Apply new times & mark as rescheduled
+    booking.startsAt = newStartsAt;
+    booking.endsAt = newEndsAt ?? booking.endsAt;
+    booking.hasRescheduled = true;
+
+    await this.repository.save(booking);
+
+    return booking;
   }
 }
