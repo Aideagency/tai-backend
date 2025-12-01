@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { TransactionEntity } from './transaction.entity';
 import { PrayerWallEntity } from './prayer-wall.entity';
+import { UserCourseProgressEntity } from './user-course-progress.entity';
 
 export enum UserGender {
   MALE = 'MALE',
@@ -91,4 +92,7 @@ export class UserEntity extends CustomEntity {
 
   @OneToMany(() => PrayerWallEntity, (prayer) => prayer.user)
   prayers: PrayerWallEntity[];
+
+  @OneToMany(() => UserCourseProgressEntity, (progress) => progress.user)
+  courseProgress: UserCourseProgressEntity[];
 }

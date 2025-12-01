@@ -40,6 +40,8 @@ import { CounsellingEntity } from 'src/database/entities/counselling.entity';
 import { CounsellingBookingEntity } from 'src/database/entities/counselling-booking.entity';
 import { CounsellingBookingRepository } from './counselling/counselling-booking.repostiory';
 import { CounsellingRepository } from './counselling/counselling.repostiory';
+import { RefundRequestRepository } from './refund/refund-request.repository';
+import { RefundRequestEntity } from 'src/database/entities/refund-request.entity';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { CounsellingRepository } from './counselling/counselling.repostiory';
       EventRegistrationEntity,
       CounsellingEntity,
       CounsellingBookingEntity,
+      RefundRequestEntity
     ]),
   ],
   providers: [
@@ -87,6 +90,7 @@ import { CounsellingRepository } from './counselling/counselling.repostiory';
     EventRepository,
     CounsellingRepository,
     CounsellingBookingRepository,
+    RefundRequestRepository,
   ],
   exports: [
     UserRepository,
@@ -104,6 +108,7 @@ import { CounsellingRepository } from './counselling/counselling.repostiory';
     EventRepository,
     CounsellingRepository,
     CounsellingBookingRepository,
+    RefundRequestRepository,
   ],
 })
 export class RepositoryModule {}

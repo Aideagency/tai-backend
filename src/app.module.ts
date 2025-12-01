@@ -25,6 +25,7 @@ import { AdminViewsController } from './admin-views/admin-views.controller';
 import { AdminViewsModule } from './admin-views/admin-views.module';
 import { AdminAuthModule } from './admin/auth/admin-auth.module';
 import { CounsellingModule } from './counselling/counselling.module';
+import { RefundRequestModule } from './refund-request/refund-request.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CounsellingModule } from './counselling/counselling.module';
     AdminModule,
     AdminAuthModule,
     CounsellingModule,
+    RefundRequestModule,
     // PaymentModule,
   ],
   controllers: [AppController, PostController, AdminViewsController],

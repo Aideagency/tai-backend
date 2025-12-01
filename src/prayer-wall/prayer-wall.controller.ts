@@ -22,7 +22,7 @@ import {
 } from './dto/list-prayers.query.dto';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtGuards } from 'src/auth/jwt.guards';
-import { IsOptional } from 'class-validator';
+// import { IsOptional } from 'class-validator';
 
 function toBool(v: any): boolean | undefined {
   if (v === undefined) return undefined;
