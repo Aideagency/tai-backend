@@ -8,13 +8,18 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { RefundRequestService } from './refund-request.service';
 import { CreateRefundRequestDto } from './dtos/create-refund-request.dto';
 import { UpdateRefundStatusDto } from './dtos/update-refund-request.dto';
 import { RefundRequestSearchQueryDto } from './dtos/refund-search-query.dto';
+import { JwtGuards } from 'src/auth/jwt.guards';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller('refund-requests')
+@UseGuards(JwtGuards)
+@ApiBearerAuth()
 export class RefundRequestController {
   constructor(private readonly refundRequestService: RefundRequestService) {}
 
