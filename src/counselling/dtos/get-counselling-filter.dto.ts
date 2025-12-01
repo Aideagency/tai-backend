@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsNumber,
 } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import {
   CounsellingMode,
   CounsellingStatus,
@@ -18,6 +19,7 @@ export class GetCounsellingsFilterDto {
     example: 1,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   page?: number;
 
@@ -26,6 +28,7 @@ export class GetCounsellingsFilterDto {
     example: 10,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   pageSize?: number;
 
@@ -56,11 +59,15 @@ export class GetCounsellingsFilterDto {
   @IsEnum(CounsellingMode)
   mode?: CounsellingMode;
 
+  // -----------------------------
+  // BOOLEAN TRANSFORMERS
+  // -----------------------------
   @ApiPropertyOptional({
     description: 'Return only active counselling offers',
     example: true,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isActive?: boolean;
 
@@ -69,6 +76,7 @@ export class GetCounsellingsFilterDto {
     example: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isFeatured?: boolean;
 
@@ -77,6 +85,7 @@ export class GetCounsellingsFilterDto {
     example: 12,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   counsellorId?: number;
 
@@ -85,6 +94,7 @@ export class GetCounsellingsFilterDto {
     example: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   freeOnly?: boolean;
 
@@ -93,6 +103,7 @@ export class GetCounsellingsFilterDto {
     example: true,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   paidOnly?: boolean;
 
