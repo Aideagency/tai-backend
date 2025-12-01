@@ -305,46 +305,6 @@ export class CounsellingService {
     });
   }
 
-  // async getCounsellingBookings(counsellingId: number) {
-  //   return this.counsellingBookingRepository.findAll(
-  //     { counselling: { id: counsellingId } },
-  //     ['user'],
-  //   );
-  // }
-  // async getCounsellingBookings(counsellingId: number) {
-  //   return this.counsellingBookingRepository
-  //     .query('cb')
-  //     .leftJoin('cb.user', 'u')
-  //     .where('cb.counselling.id = :cid', { cid: counsellingId })
-  //     .select([
-  //       'cb.id',
-  //       'cb.status',
-
-  //       // selected user fields only
-  //       'u.id',
-  //       'u.first_name',
-  //       'u.last_name',
-  //       'u.email_address',
-  //     ])
-  //     .getMany();
-  // }
-  // async getCounsellingBookings(counsellingId: number) {
-  //   return this.counsellingBookingRepository
-  //     .query('cb')
-  //     .leftJoinAndSelect('cb.user', 'u')
-  //     .where('cb.counselling.id = :cid', { cid: counsellingId }) // or cb.counselling_id depending on your mapping
-  //     .select([
-  //       'cb', // selects ALL columns of the booking entity
-
-  //       // Only these user fields:
-  //       'u.id',
-  //       'u.firstName',
-  //       'u.lastName',
-  //       'u.emailAddress',
-  //     ])
-  //     .getMany();
-  // }
-
   async getCounsellingBookingsPaginated(
     counsellingId: number,
     filters: GetCounsellingBookingsFilterDto,
@@ -556,6 +516,12 @@ export class CounsellingService {
       where: { id: bookingId, user: { id: userId } as any },
     });
 
+    const start = new Date(booking.startsAt);
+    const now = new Date();
+
+    const diffMs = start.getTime() - now.getTime(); // milliseconds difference
+    const diffHours = diffMs / (1000 * 60 * 60); // convert to hours
+
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
@@ -580,10 +546,16 @@ export class CounsellingService {
     }
 
     // Prevent rescheduling into the past
-    const now = new Date();
+    // const now = new Date();
     if (newStartsAt < now) {
       throw new BadRequestException(
         'You cannot reschedule a session to a past time',
+      );
+    }
+
+    if (diffHours < 12) {
+      throw new BadRequestException(
+        'You cannot reschedule a session less than 12 hours before it starts.',
       );
     }
 
