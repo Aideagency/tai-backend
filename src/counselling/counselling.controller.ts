@@ -17,6 +17,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiExcludeEndpoint,
+  ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -31,6 +32,8 @@ import { BookCounsellingDto } from './dtos/book-counselling.dto';
 import { GetCounsellingsFilterDto } from './dtos/get-counselling-filter.dto';
 import { UpdateCounsellingDto } from './dtos/update-counselling.dto';
 import { CreateCounsellingDto } from './dtos/create-counselling.dto';
+import { CancelBookingDto } from './dtos/cancel-booking.dto';
+import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
 
 @ApiTags('counselling')
 @Controller('counselling')
@@ -99,13 +102,30 @@ export class CounsellingController {
   @UseGuards(JwtGuards)
   @Get('all')
   @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Gel all counselling offers with optional filters',
+  })
   async fetchCounsellings(@Query() query: GetCounsellingsFilterDto) {
     return this.counsellingService.getAllCounsellings(query);
   }
 
   @UseGuards(JwtGuards)
+  @Get('my-bookings/:counsellingId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my booking information under a counselling plan',
+  })
+  async fetchBooks(
+    @Param('counsellingId') counsellingId: number,
+    @Req() req: any,
+  ) {
+    return this.counsellingService.getUserBookings(req.user.id, counsellingId);
+  }
+
+  @UseGuards(JwtGuards)
   @Get(':counsellingId')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get counselling information' })
   async fetchCounselling(@Param('counsellingId') counsellingId: number) {
     return this.counsellingService.getCounsellingById(counsellingId);
   }
@@ -115,12 +135,29 @@ export class CounsellingController {
   @UseGuards(JwtGuards)
   @Post('book/:counsellingId')
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Book a session' })
   async bookCounselling(
     @Param('counsellingId') counsellingId: number,
     @Body() body: BookCounsellingDto,
     @Req() req: any,
   ) {
     return this.counsellingService.bookCounselling(req, counsellingId, body);
+  }
+
+  @UseGuards(JwtGuards)
+  @Put('book/:bookingId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Reschedule a session' })
+  async rescheduleCounselling(
+    @Param('bookingId') bookingId: number,
+    @Body() body: RescheduleBookingDto,
+    @Req() req: any,
+  ) {
+    return this.counsellingService.rescheduleBooking(
+      bookingId,
+      req.user.id,
+      body,
+    );
   }
 
   // Update a booking (e.g., by admin or counsellor)
@@ -154,8 +191,16 @@ export class CounsellingController {
   @UseGuards(JwtGuards)
   @Post('booking/cancel/:bookingId')
   @ApiBearerAuth()
-  async cancelBooking(@Param('bookingId') bookingId: number, @Req() req: any) {
-    return this.counsellingService.cancelBooking(bookingId, req.user.id);
+  async cancelBooking(
+    @Param('bookingId') bookingId: number,
+    @Req() req: any,
+    @Body() body: CancelBookingDto,
+  ) {
+    return this.counsellingService.cancelBooking({
+      bookingId,
+      userId: req.user.id,
+      reason: body.reason,
+    });
   }
 
   // All bookings for a counselling offer (e.g. for admin dashboard)

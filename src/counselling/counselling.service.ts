@@ -6,10 +6,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 
-import {
-  CounsellingEntity,
-  CounsellingMode,
-} from 'src/database/entities/counselling.entity';
+import { CounsellingEntity } from 'src/database/entities/counselling.entity';
 import {
   CounsellingBookingEntity,
   CounsellingBookingStatus,
@@ -25,6 +22,13 @@ import { TracerLogger } from 'src/logger/logger.service';
 import { CounsellingBookingRepository } from 'src/repository/counselling/counselling-booking.repostiory';
 import { CounsellingRepository } from 'src/repository/counselling/counselling.repostiory';
 import { GetCounsellingBookingsFilterDto } from './dtos/get-counselling-booking-filter.dto';
+import { RefundRequestService } from 'src/refund-request/refund-request.service';
+import {
+  RefundRequestEntity,
+  RefundType,
+} from 'src/database/entities/refund-request.entity';
+import { RefundRequestRepository } from 'src/repository/refund/refund-request.repository';
+import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
 // import { GetCounsellingsFilterDto } from './dtos/get-counselling-query.dto';
 
 @Injectable()
@@ -37,6 +41,7 @@ export class CounsellingService {
     private readonly transactionRepo: TransactionRepository,
     private readonly emailService: EmailService,
     private readonly logger: TracerLogger,
+    private readonly refundRequestRepo: RefundRequestRepository,
   ) {}
 
   /** ---------- Counselling CRUD ---------- */
@@ -76,6 +81,22 @@ export class CounsellingService {
     params: any, // replace `any` with GetCounsellingsFilterDto when you create it
   ) {
     return this.counsellingRepository.searchCounsellingsPaginated(params);
+  }
+
+  async getUserBookings(
+    userId: number,
+    counsellingId: number, // replace `any` with GetCounsellingsFilterDto when you create it
+  ) {
+    return this.counsellingBookingRepository.findUserBookings(
+      userId,
+      counsellingId,
+    );
+
+    // return this.counsellingBookingRepository.findAll(
+    //   { user: { id: userId } },
+    //   { counselling: { id: counsellingId } },
+    //   ['user'],
+    // );
   }
 
   // Get a single counselling offer
@@ -230,7 +251,50 @@ export class CounsellingService {
   }
 
   // Cancel booking (by user)
-  async cancelBooking(bookingId: number, userId: number): Promise<boolean> {
+  async cancelBooking({
+    bookingId,
+    userId,
+    reason,
+  }: {
+    userId: number;
+    bookingId: number;
+    reason?: string;
+  }): Promise<boolean> {
+    const booking = await this.counsellingBookingRepository.findOne({
+      id: bookingId,
+      user: { id: userId } as any,
+    });
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+    const start = new Date(booking.startsAt);
+    const now = new Date();
+
+    const diffMs = start.getTime() - now.getTime(); // milliseconds difference
+    const diffHours = diffMs / (1000 * 60 * 60); // convert to hours
+
+    const refundData = new RefundRequestEntity();
+
+    refundData.counsellingBooking = { id: booking.id } as any;
+    refundData.user = { id: userId } as any;
+    refundData.reason = reason || 'No reason provided';
+    refundData.paidFor = PaidFor.COUNSELLING;
+
+    if (diffHours > 24) {
+      refundData.type = RefundType.FULL;
+      refundData.requestedAmount = booking.priceAtBooking
+        ? String(booking.priceAtBooking)
+        : '0';
+    } else if (diffHours <= 24 && diffHours >= 12) {
+      refundData.type = RefundType.PARTIAL;
+      refundData.requestedAmount = booking.priceAtBooking
+        ? String(booking.priceAtBooking / 2)
+        : '0';
+    } else {
+      console.log('nope');
+    }
+    await this.refundRequestRepo.save(refundData);
+
     return this.counsellingBookingRepository.cancel(bookingId, userId);
   }
 
@@ -240,6 +304,46 @@ export class CounsellingService {
       counselling: { id: counsellingId },
     });
   }
+
+  // async getCounsellingBookings(counsellingId: number) {
+  //   return this.counsellingBookingRepository.findAll(
+  //     { counselling: { id: counsellingId } },
+  //     ['user'],
+  //   );
+  // }
+  // async getCounsellingBookings(counsellingId: number) {
+  //   return this.counsellingBookingRepository
+  //     .query('cb')
+  //     .leftJoin('cb.user', 'u')
+  //     .where('cb.counselling.id = :cid', { cid: counsellingId })
+  //     .select([
+  //       'cb.id',
+  //       'cb.status',
+
+  //       // selected user fields only
+  //       'u.id',
+  //       'u.first_name',
+  //       'u.last_name',
+  //       'u.email_address',
+  //     ])
+  //     .getMany();
+  // }
+  // async getCounsellingBookings(counsellingId: number) {
+  //   return this.counsellingBookingRepository
+  //     .query('cb')
+  //     .leftJoinAndSelect('cb.user', 'u')
+  //     .where('cb.counselling.id = :cid', { cid: counsellingId }) // or cb.counselling_id depending on your mapping
+  //     .select([
+  //       'cb', // selects ALL columns of the booking entity
+
+  //       // Only these user fields:
+  //       'u.id',
+  //       'u.firstName',
+  //       'u.lastName',
+  //       'u.emailAddress',
+  //     ])
+  //     .getMany();
+  // }
 
   async getCounsellingBookingsPaginated(
     counsellingId: number,
@@ -441,5 +545,58 @@ export class CounsellingService {
       })
       .then((res) => this.logger.log(res))
       .catch((err) => this.logger.error(err));
+  }
+
+  async rescheduleBooking(
+    bookingId: number,
+    userId: number,
+    dto: RescheduleBookingDto,
+  ): Promise<CounsellingBookingEntity> {
+    const booking = await this.counsellingBookingRepository.findOne({
+      where: { id: bookingId, user: { id: userId } as any },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // Enforce “only once” rule
+    if (booking.hasRescheduled) {
+      throw new BadRequestException(
+        'You have already updated this session once and cannot reschedule again.',
+      );
+    }
+
+    // Optional rule: only allow reschedule for confirmed bookings
+    if (booking.status !== CounsellingBookingStatus.CONFIRMED) {
+      throw new BadRequestException(
+        'Only confirmed bookings can be rescheduled.',
+      );
+    }
+
+    const newStartsAt = new Date(dto.newStartsAt);
+    if (isNaN(newStartsAt.getTime())) {
+      throw new BadRequestException('Invalid new start date/time');
+    }
+
+    // Prevent rescheduling into the past
+    const now = new Date();
+    if (newStartsAt < now) {
+      throw new BadRequestException(
+        'You cannot reschedule a session to a past time',
+      );
+    }
+
+    // Recompute endsAt from stored durationMinutes
+    const durationMinutes = booking.durationMinutes;
+    const newEndsAt = new Date(
+      newStartsAt.getTime() + durationMinutes * 60_000,
+    );
+
+    booking.startsAt = newStartsAt;
+    booking.endsAt = newEndsAt;
+    booking.hasRescheduled = true;
+
+    return this.counsellingBookingRepository.save(booking);
   }
 }

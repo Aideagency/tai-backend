@@ -27,6 +27,11 @@ export enum PaidFor {
 @Entity({ name: 'RefundRequests' })
 @Index(['registration', 'status'], { unique: false })
 export class RefundRequestEntity extends CustomEntity {
+  @ManyToOne(() => UserEntity, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  user: UserEntity | null;
   /**
    * If refund is for an event, this will be filled
    */

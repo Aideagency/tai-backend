@@ -22,28 +22,23 @@ export class CounsellingBookingEntity extends CustomEntity {
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
   user: UserEntity;
 
-  // The counselling offer being booked
   @ManyToOne(() => CounsellingEntity, (c) => c.bookings, {
     onDelete: 'CASCADE',
   })
   counselling: CounsellingEntity;
 
-  // Optionally override counsellor per booking (in case multiple counsellors share a product)
   @ManyToOne(() => AdminEntity, { nullable: true })
   counsellor: AdminEntity | null;
 
-  // When this particular session starts/ends
   @Column({ type: 'timestamp' })
   startsAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
   endsAt: Date | null;
 
-  // Snapshot of duration at booking time (in minutes)
   @Column({ type: 'int', nullable: false })
   durationMinutes: number;
 
-  // Snapshot of price at booking time (even if the counselling price changes later)
   @Column({ type: 'decimal', nullable: false })
   priceAtBooking: number;
 
@@ -54,27 +49,21 @@ export class CounsellingBookingEntity extends CustomEntity {
   })
   status: CounsellingBookingStatus;
 
-  // For ONLINE sessions – e.g. Zoom, Meet link
   @Column({ nullable: true })
   meetingLink: string | null;
 
-  // For OFFLINE sessions – address or location text
   @Column({ nullable: true })
   locationText: string | null;
 
-  // Booking reference / code (for emails, lookups, etc.)
   @Column({ nullable: true, unique: true })
   reference: string | null;
 
-  // Notes from the client (what they’re dealing with, context, etc.)
   @Column({ type: 'text', nullable: true })
   clientNotes: string | null;
 
-  // Notes from the counsellor about this booking
   @Column({ type: 'text', nullable: true })
   counsellorNotes: string | null;
 
-  // Whether client has attended / checked in (separate from status if you want)
   @Column({ type: 'boolean', default: false })
   attended: boolean;
 
@@ -83,4 +72,9 @@ export class CounsellingBookingEntity extends CustomEntity {
 
   @Column({ nullable: true })
   transaction_ref: string;
+
+  // 👇 NEW: user can only reschedule once
+  @Column({ type: 'boolean', default: false })
+  hasRescheduled: boolean;
 }
+
