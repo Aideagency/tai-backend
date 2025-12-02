@@ -19,13 +19,13 @@ import { ConnectionsModule } from './connections/connections.module';
 import { PostService } from './post/post.service';
 import { PostController } from './post/post.controller';
 import { PostModule } from './post/post.module';
-import { ZohoModule } from './zoho/zoho.module';
 import { EventModule } from './event/event.module';
 import { AdminViewsController } from './admin-views/admin-views.controller';
 import { AdminViewsModule } from './admin-views/admin-views.module';
 import { AdminAuthModule } from './admin/auth/admin-auth.module';
 import { CounsellingModule } from './counselling/counselling.module';
 import { RefundRequestModule } from './refund-request/refund-request.module';
+import { CoursesModule } from './courses/courses.module';
 
 @Module({
   imports: [
@@ -53,6 +53,7 @@ import { RefundRequestModule } from './refund-request/refund-request.module';
     AdminAuthModule,
     CounsellingModule,
     RefundRequestModule,
+    CoursesModule,
     // PaymentModule,
   ],
   controllers: [AppController, PostController, AdminViewsController],

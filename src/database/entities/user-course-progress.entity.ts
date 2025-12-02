@@ -16,32 +16,32 @@ export class UserCourseProgressEntity extends CustomEntity {
   user: UserEntity;
 
   @Column()
-  userId: string;
+  userId: string; // FK to UserEntity
 
   @ManyToOne(() => CourseEntity, (course) => course.progressRecords)
   course: CourseEntity;
 
   @Column()
-  courseId: string;
+  courseId: string; // FK to CourseEntity
 
   @Column({
     type: 'enum',
     enum: CourseStatus,
     default: CourseStatus.NOT_STARTED,
   })
-  status: CourseStatus;
+  status: CourseStatus; // Tracks the course status for the user
 
   @Column({ type: 'float', default: 0 })
-  progressPercent: number; // 0–100
+  progressPercent: number; // 0–100, tracks the completion percentage
 
   @Column({ type: 'timestamp', nullable: true })
-  startedAt: Date | null;
+  startedAt: Date | null; // When the user starts the course
 
   @Column({ type: 'timestamp', nullable: true })
-  completedAt: Date | null;
+  completedAt: Date | null; // When the user completes the course
 
   @Column({ type: 'timestamp', nullable: true })
-  lastAccessedAt: Date | null;
+  lastAccessedAt: Date | null; // When the user last accessed the course
 
   @OneToMany(() => UserLessonProgressEntity, (ulp) => ulp.userCourseProgress)
   lessonProgress: UserLessonProgressEntity[];
