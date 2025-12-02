@@ -30,7 +30,11 @@ import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { UserRepository } from 'src/repository/user/user.repository';
 import { AuthService } from 'src/auth/auth.service';
 import { UpdateChallengeDto } from './dtos/update-challenge.dto';
-import { AddTasksDto, CreateChallengeTaskDto, RemoveTasksDto } from './dtos/create-challenge-task.dto';
+import {
+  AddTasksDto,
+  // CreateChallengeTaskDto,
+  RemoveTasksDto,
+} from './dtos/create-challenge-task.dto';
 import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
 // import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
@@ -70,7 +74,7 @@ export class ChallengesController {
     };
   }
 
-  @Get(':id')
+  @Get('single/:id')
   @HttpCode(HttpStatus.CREATED)
   @ApiExcludeEndpoint()
   async getChallenge(@Param('id', ParseIntPipe) id: string) {
@@ -183,9 +187,10 @@ export class ChallengesController {
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
   async listAvailable(
-    @Req() req,
+    @Req() req: any,
     @Query() query: ListAvailableChallengesQueryDto,
   ) {
+    console.log('query', query);
     const user = this.authService.toSubmissionResponse(
       await this.userRepo.findByEmail(req.user.email),
     );
@@ -200,10 +205,32 @@ export class ChallengesController {
     };
   }
 
+  // @Get('available')
+  // @UseGuards(JwtGuards)
+  // @ApiBearerAuth()
+  // async listAvailable(
+  //   @Req() req,
+  //   @Query(new ValidationPipe({ transform: true, whitelist: true }))
+  //   query: ListAvailableChallengesQueryDto,
+  // ) {
+  //   const user = this.authService.toSubmissionResponse(
+  //     await this.userRepo.findByEmail(req.user.email),
+  //   );
+  //   const challenges = await this.challengeService.listAllChallenges(
+  //     user.community,
+  //     query,
+  //   );
+  //   return {
+  //     message: 'Available Challenge fetched Successfully!',
+  //     data: challenges,
+  //     status: 200,
+  //   };
+  // }
+
   @Get('available/:id')
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
-  async getSingleChallenge(@Req() req, @Param('id', ParseIntPipe) id: string) {
+  async getSingleChallenge(@Param('id') id: string) {
     // const user = this.authService.toSubmissionResponse(
     //   await this.userRepo.findByEmail(req.user.email),
     // );
@@ -219,8 +246,9 @@ export class ChallengesController {
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
   async combinedChallenges(
-    @Req() req,
-    @Query() query: CombinedChallengesQueryDto,
+    @Req() req: any,
+    @Query(new ValidationPipe({ transform: true, whitelist: true }))
+    query: CombinedChallengesQueryDto,
   ) {
     const params: any = {
       page: query.page ?? 1,

@@ -1,9 +1,6 @@
-
 import { Injectable } from '@nestjs/common';
 import { CommonHttpService } from 'src/common/common.service';
-import { EnrollUserDto } from './dtos/enroll-user.dto';
-import { AddMemberDto } from './dtos/add-member.dto';
-import { ListCoursesQueryDto } from './dtos/list-courses-query.dto';
+// import { ListCoursesQueryDto } from '../zoho/dtos/list-courses-query.dto';
 
 @Injectable()
 export class ZohoService {
@@ -33,9 +30,8 @@ export class ZohoService {
     return data.access_token;
   }
 
-  /** -------- Existing methods -------- */
-
-  async listCourses(queryParams: ListCoursesQueryDto) {
+  /** -------- Fetch Courses -------- */
+  async listCourses(queryParams: any) {
     const token = await this.getAccessToken();
 
     const { data } = await this.httpService.get(
@@ -49,45 +45,12 @@ export class ZohoService {
     return data;
   }
 
-  async enrollUser(enrollDto: EnrollUserDto) {
-    const token = await this.getAccessToken();
-
-    const { data } = await this.httpService.post(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${enrollDto.courseId}/enroll`,
-      { user_id: enrollDto.userId },
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
-        },
-      },
-    );
-
-    return data;
-  }
-
-  async addMember(addMemberDto: AddMemberDto) {
-    const token = await this.getAccessToken();
-
-    const { data } = await this.httpService.post(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${addMemberDto.courseId}/member`,
-      { user_id: addMemberDto.userId },
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
-        },
-      },
-    );
-
-    return data;
-  }
-
-  /** -------- New: enrollment & membership helpers -------- */
-
-  async getEnrollmentRequests(courseId: string) {
+  /** -------- Fetch Course Resources (Including E-books) -------- */
+  async getCourseResources(courseId: string) {
     const token = await this.getAccessToken();
 
     const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/requests`,
+      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/file`,
       {
         headers: {
           Authorization: `Zoho-oauthtoken ${token}`,
@@ -95,14 +58,24 @@ export class ZohoService {
       },
     );
 
-    return data;
+    // Filter e-books (PDF, DOCX, etc.) and return them separately if needed
+    const eBooks = data.files.filter(
+      (file) =>
+        file.type === 'pdf' || file.type === 'docx' || file.type === 'epub',
+    );
+
+    return {
+      allResources: data.files, // Return all resources (videos, articles, PDFs, etc.)
+      eBooks: eBooks, // Return only the e-books (if needed separately)
+    };
   }
 
-  async getCourseMembers(courseId: string) {
+  /** -------- Fetch Course Articles -------- */
+  async getCourseArticles(courseId: string) {
     const token = await this.getAccessToken();
 
     const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/member`,
+      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/article`,
       {
         headers: {
           Authorization: `Zoho-oauthtoken ${token}`,
@@ -113,6 +86,7 @@ export class ZohoService {
     return data;
   }
 
+  /** -------- Fetch Course Data by URL -------- */
   async getCourseDataByUrl(courseUrl: string) {
     const token = await this.getAccessToken();
 
@@ -131,57 +105,13 @@ export class ZohoService {
     return data;
   }
 
-  async getCourseResources(courseId: string) {
-    const token = await this.getAccessToken();
-
-    const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/file`,
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
-        },
-      },
-    );
-
-    return data;
-  }
-
+  /** -------- Optional: Complete Course (if needed for reporting purposes) -------- */
   async completeCourse(courseId: string) {
     const token = await this.getAccessToken();
 
     const { data } = await this.httpService.post(
       `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/complete`,
       {},
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
-        },
-      },
-    );
-
-    return data;
-  }
-
-  async inviteUserToCustomPortal(
-    email: string,
-    firstName?: string,
-    lastName?: string,
-  ) {
-    const token = await this.getAccessToken();
-
-    const { data } = await this.httpService.post(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/invite`,
-      {
-        userlist: [
-          {
-            emailId: email,
-            fname: firstName,
-            lname: lastName,
-          },
-        ],
-        mailContent: '',
-        customPortalId: process.env.ZOHO_CUSTOM_PORTAL_ID,
-      },
       {
         headers: {
           Authorization: `Zoho-oauthtoken ${token}`,

@@ -49,7 +49,7 @@ export class BibleController {
   @Get('get-new-book-chapters/:bookId/:chapterId')
   @ApiOperation({ summary: 'List all the verses in a chapter of the book' })
   async getNewBookChatperInformation(
-    @Param('chapterNumber', ParseIntPipe) chapterNumber: number,
+    @Param('chapterId') chapterNumber: number,
     @Param('bookId') bookId: string,
   ) {
     const data = await this.bibleService.getBookChapterInformation({

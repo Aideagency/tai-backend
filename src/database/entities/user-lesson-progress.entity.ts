@@ -9,23 +9,23 @@ export class UserLessonProgressEntity extends CustomEntity {
   userCourseProgress: UserCourseProgressEntity;
 
   @Column()
-  userCourseProgressId: string;
+  userCourseProgressId: string; // FK to UserCourseProgressEntity
 
   @ManyToOne(() => LessonEntity)
   lesson: LessonEntity;
 
   @Column()
-  lessonId: string;
+  lessonId: string; // FK to LessonEntity
 
   @Column({ default: false })
   isCompleted: boolean;
 
   @Column({ type: 'float', default: 0 })
-  progressPercent: number; // optional, 0–100
+  progressPercent: number; // Tracks lesson progress percentage (0–100)
 
   @Column({ type: 'int', default: 0 })
-  secondsWatched: number;
+  secondsWatched: number; // Tracks time spent on a lesson
 
   @Column({ type: 'timestamp', nullable: true })
-  lastAccessedAt: Date | null;
+  lastAccessedAt: Date | null; // Tracks the last accessed time for the lesson
 }
