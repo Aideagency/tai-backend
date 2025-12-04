@@ -180,7 +180,7 @@ export abstract class BaseRepository<
     }
   }
   async findByUserId(userId: number): Promise<Entity | undefined> {
-    return this.findOne({ user: { id: userId } }, { user: true });
+    return this.findOne({ id: userId });
   }
 
   async insert(

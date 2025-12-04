@@ -11,6 +11,9 @@ import {
   UploadedFile,
   ValidationPipe,
   UsePipes,
+  Redirect,
+  Res,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -42,10 +45,16 @@ import * as path from 'path';
 import { CommunityTag, UserGender } from 'src/database/entities/user.entity';
 import { VerifyAccountDto } from './dtos/verify-account.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { Response } from 'express';
+import axios from 'axios';
 // import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
 export class AuthController {
+  private readonly clientId = process.env.ZOHO_CLIENT_ID!;
+  private readonly clientSecret = process.env.ZOHO_CLIENT_SECRET!;
+  private readonly redirectUri = 'http://localhost:3000/callback';
+
   constructor(
     private readonly authService: AuthService,
     private readonly logger: TracerLogger,
@@ -331,5 +340,50 @@ export class AuthController {
     // req.user comes from GoogleStrategy.validate()
     await this.authService.generateSampleEmail();
     return 'Email sent';
+  }
+
+  @Get('callback')
+  async handleCallback(@Query('code') code: string, @Res() res: Response) {
+    if (!code) {
+      return res.status(400).send('Authorization code is missing');
+    }
+
+    try {
+      // Step 1: Exchange the authorization code for access and refresh tokens
+      const tokenResponse = await axios.post(
+        'https://accounts.zoho.com/oauth/v2/token',
+        new URLSearchParams({
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          code: code,
+          redirect_uri: this.redirectUri,
+          grant_type: 'authorization_code',
+        }).toString(),
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        },
+      );
+
+      // Step 2: Store the tokens (access token and refresh token)
+      const { access_token, refresh_token, expires_in } = tokenResponse.data;
+      console.log('Access Token:', access_token);
+      console.log('Refresh Token:', refresh_token);
+
+      // Store these tokens securely (e.g., in the session, DB, or env variables)
+
+      // Step 3: Redirect to a success page or home
+      return res.redirect('/success'); // Or you can return a JSON response with tokens if needed
+    } catch (error) {
+      console.error('Error exchanging authorization code:', error);
+      return res.status(500).send('Failed to exchange authorization code');
+    }
+  }
+
+  @Get('success')
+  @Redirect('http://localhost:3000/dashboard', 302)
+  successPage() {
+    return {
+      message: 'OAuth flow completed successfully!',
+    };
   }
 }

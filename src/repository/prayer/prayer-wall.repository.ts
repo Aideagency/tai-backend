@@ -398,4 +398,25 @@ export class PrayerWallRepository extends BaseRepository<
       .execute();
     return true;
   }
+
+  async getUserPrayers(
+    userId: string | number,
+    params: PrayerSearchParams = {},
+  ) {
+    const page = Math.max(params.page || 1, 1);
+    const pageSize = Math.max(params.pageSize || 20, 1);
+
+    const qb = this.repository
+      .createQueryBuilder('prayer')
+      .where('prayer.user.id = :userId', { userId }) // Use prayer.user.id here
+      .andWhere('prayer.isVisible = :isVisible', { isVisible: true }) // Optional filter for visible prayers
+      .orderBy('prayer.createdAt', 'DESC');
+
+    // Paginate results
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const prayers = await qb.getMany();
+
+    return prayers;
+  }
 }

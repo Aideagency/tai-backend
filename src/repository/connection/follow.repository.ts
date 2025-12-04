@@ -13,6 +13,8 @@ import {
   FollowStatus,
 } from 'src/database/entities/follow.entity';
 import { UserEntity } from 'src/database/entities/user.entity';
+import { PostEntity } from 'src/database/entities/post.entity';
+import { PrayerWallEntity } from 'src/database/entities/prayer-wall.entity';
 
 export interface FollowListParams {
   page?: number;
@@ -34,6 +36,11 @@ export class FollowRepository extends BaseRepository<
   constructor(
     @InjectRepository(FollowEntity)
     repository: Repository<FollowEntity>,
+    @InjectRepository(PostEntity)
+    private readonly postRepo: Repository<PostEntity>,
+
+    @InjectRepository(PrayerWallEntity)
+    private readonly prayerRepo: Repository<PrayerWallEntity>,
   ) {
     super(repository);
   }
@@ -197,7 +204,10 @@ export class FollowRepository extends BaseRepository<
     );
   }
 
-  async listPendingFollowers(userId: string | number, params: FollowListParams = {}) {
+  async listPendingFollowers(
+    userId: string | number,
+    params: FollowListParams = {},
+  ) {
     const page = Math.max(params.page || 1, 1);
     const pageSize = Math.max(params.pageSize || 20, 1);
 
@@ -215,6 +225,55 @@ export class FollowRepository extends BaseRepository<
       { follower: false, followee: true },
       qb,
     );
+  }
+
+  // async getMutualFriends(
+  //   followeeId: number | string,
+  //   otherFollowerId: number | string,
+  // ) {
+  //   console.log(followeeId, otherFollowerId);
+  //   const qb = this.repository
+  //     .createQueryBuilder('f')
+  //     // Get all followers of the followee
+  //     .innerJoin('f.follower', 'follower')
+  //     .innerJoin('f.followee', 'followee')
+  //     .where('f.followee.id = :followeeId', { followeeId })
+  //     .andWhere(
+  //       'f.follower.id IN (SELECT f2.follower.id FROM user_follows f2 WHERE f2.followee.id = :otherFollowerId)',
+  //       { otherFollowerId },
+  //     )
+  //     .leftJoinAndSelect('f.follower', 'follower') // Get follower details
+  //     .leftJoinAndSelect('f.followee', 'followee'); // Get followee details
+
+  //   const mutualFriends = await qb.getMany(); // Retrieve all mutual followers
+
+  //   return mutualFriends;
+  // }
+  async getMutualFriends(
+    followeeId: number | string,
+    otherFollowerId: number | string,
+  ) {
+    const qb = this.repository
+      .createQueryBuilder('f')
+      // join once and select the relations
+      .innerJoinAndSelect('f.follower', 'follower')
+      .innerJoinAndSelect('f.followee', 'followee')
+      // followers of this followee
+      .where('followee.id = :followeeId', { followeeId })
+      // who are also followers of otherFollowerId
+      .andWhere(
+        `
+      follower.id IN (
+        SELECT f2."follower_id"
+        FROM "user_follows" f2
+        WHERE f2."followee_id" = :otherFollowerId
+      )
+    `,
+        { otherFollowerId },
+      );
+
+    const mutualFriends = await qb.getMany();
+    return mutualFriends;
   }
 
   /**
@@ -361,5 +420,55 @@ export class FollowRepository extends BaseRepository<
     return this.repository.metadata.columns.some(
       (c) => c.propertyName === 'isDeleted',
     );
+  }
+
+  async getUserContentFeed(userId: number | string) {
+    // 1. Get posts by this user
+    const posts = await this.postRepo
+      .createQueryBuilder('post')
+      .innerJoin('post.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('post.isActive = :isActive', { isActive: true })
+      .orderBy('post.createdAt', 'DESC')
+      .getMany();
+
+    // 2. Get prayers by this user
+    const prayers = await this.prayerRepo
+      .createQueryBuilder('prayer')
+      .innerJoin('prayer.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('prayer.isVisible = :visible', { visible: true })
+      .orderBy('prayer.createdAt', 'DESC')
+      .getMany();
+
+    // 3. Normalise into a single feed list
+    const feed = [
+      ...posts.map((p) => ({
+        id: p.id,
+        type: 'post' as const,
+        title: p.title,
+        body: p.body,
+        createdAt: p.createdAt,
+        stats: {
+          comments: p.commentCount,
+          likes: p.likeCount,
+          amens: 0, // posts don't have amens
+        },
+      })),
+      ...prayers.map((pr) => ({
+        id: pr.id,
+        type: 'prayer' as const,
+        title: pr.title,
+        body: pr.body,
+        createdAt: pr.createdAt,
+        stats: {
+          comments: pr.commentCount,
+          likes: 0, // prayers don't have likes
+          amens: pr.amenCount,
+        },
+      })),
+    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return feed;
   }
 }

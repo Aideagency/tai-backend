@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommonHttpService } from 'src/common/common.service';
 // import { ListCoursesQueryDto } from '../zoho/dtos/list-courses-query.dto';
+require('dotenv').config();
 
 @Injectable()
 export class ZohoService {
@@ -17,17 +18,21 @@ export class ZohoService {
   private async getAccessToken(): Promise<string> {
     const url = `${this.accountsBase}/oauth/v2/token`;
     const body = new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      refresh_token: this.refreshToken,
+      grant_type: 'refresh_token', // Use refresh_token flow
+      client_id: this.clientId, // Your Zoho client ID
+      client_secret: this.clientSecret, // Your Zoho client secret
+      refresh_token: this.refreshToken, // Your Zoho refresh token
     });
 
-    const { data } = await this.httpService.post(url, body.toString(), {
+    console.log(body.toString());
+
+    const res = await this.httpService.post(url, body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    return data.access_token;
+    // console.log(res);
+
+    return res;
   }
 
   /** -------- Fetch Courses -------- */

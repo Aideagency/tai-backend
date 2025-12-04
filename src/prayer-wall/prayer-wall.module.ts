@@ -7,5 +7,6 @@ import { RepositoryModule } from 'src/repository/repository.module';
   imports: [RepositoryModule],
   providers: [PrayerWallService],
   controllers: [PrayerWallController],
+  exports: [PrayerWallService],
 })
 export class PrayerWallModule {}
