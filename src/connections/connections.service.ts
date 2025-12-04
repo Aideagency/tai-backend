@@ -90,6 +90,8 @@ export class ConnectionsService {
 
     const userFeeds = await this.follows.getUserContentFeed(followeeId);
 
+    const checkIsFollowing = await this.isFollowing(userId, followeeId);
+
     // const edge = await this.follows.getEdge(userId, followeeId);
 
     // console.log('EDGE', edge);
@@ -102,6 +104,7 @@ export class ConnectionsService {
 
     return {
       // connectionDetails,
+      checkIsFollowing,
       user,
       userFeeds,
       mutualFriends,
