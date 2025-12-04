@@ -35,7 +35,6 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
-    
   ) {}
 
   toSubmissionResponse(user: UserEntity) {
@@ -215,6 +214,19 @@ export class AuthService {
   async getProfileInformation(email: string) {
     try {
       const user = await this.userRepository.findByEmail(email);
+      if (!user) throw new NotFoundException('User not found');
+      return this.toSubmissionResponse(user);
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException('Could not fetch profile');
+    }
+  }
+
+  async getUserInformation(id: number) {
+    try {
+      const user = await this.userRepository.findByUserId(id);
+      
       if (!user) throw new NotFoundException('User not found');
       return this.toSubmissionResponse(user);
     } catch (error) {
@@ -513,7 +525,6 @@ export class AuthService {
         Array.isArray(community) &&
         community.length > 0
       ) {
-
         const msTags = community.filter(
           (v) => v === CommunityTag.SINGLE || v === CommunityTag.MARRIED,
         );

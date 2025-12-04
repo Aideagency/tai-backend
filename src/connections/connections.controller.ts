@@ -116,7 +116,10 @@ export class ConnectionsController {
       'Returns pending follows of a user. Supports pagination, sorting, and optional quick search.',
   })
   @Get('pending-followers')
-  async listPendingFollowers(@Request() req: any, @Query() query: FollowListQueryDto) {
+  async listPendingFollowers(
+    @Request() req: any,
+    @Query() query: FollowListQueryDto,
+  ) {
     const params = {
       ...query,
       includePending: true,
@@ -189,6 +192,26 @@ export class ConnectionsController {
     return {
       status: 200,
       data: await this.connections.searchPaginated(query, req.user.id),
+    };
+  }
+
+  @Get('connection-details/:connectionId')
+  @ApiOperation({
+    summary:
+      'Get connection details and prayers between authenticated user and a follower',
+    description:
+      'Fetching connection details and prayers between the authenticated user and the specified follower.',
+  })
+  async getConnectionDetails(
+    @Request() req: any,
+    @Param('connectionId') connectionId: string,
+  ) {
+    return {
+      status: 200,
+      data: await this.connections.getUserConnectionDetailsAndPrayers({
+        userId: req.user.id,
+        followeeId: connectionId,
+      }),
     };
   }
 }
