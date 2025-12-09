@@ -1,7 +1,7 @@
 // src/modules/connections/connections.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
-import { PrayerWallService } from 'src/prayer-wall/prayer-wall.service';
+// import { PrayerWallService } from 'src/prayer-wall/prayer-wall.service';
 import {
   FollowRepository,
   FollowListParams,

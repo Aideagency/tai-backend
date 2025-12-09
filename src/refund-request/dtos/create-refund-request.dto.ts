@@ -65,11 +65,11 @@ export class CreateRefundRequestDto {
   // ───────────────────────────────────────────────────────────────
   // Transaction ID (optional, may be used for any type)
   // ───────────────────────────────────────────────────────────────
-  @ApiPropertyOptional({
-    example: 777,
-    description: 'Optional: Related transaction ID',
-  })
-  @IsOptional()
-  @IsNumber()
-  transactionId?: number;
+  // @ApiPropertyOptional({
+  //   example: 777,
+  //   description: 'Optional: Related transaction ID',
+  // })
+  // @IsOptional()
+  // @IsNumber()
+  // transactionId?: number;
 }

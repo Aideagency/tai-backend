@@ -227,7 +227,7 @@ export class AuthService {
     try {
       const user = await this.userRepository.findByUserId(id);
       
-      if (!user) throw new NotFoundException('User not found');
+      // if (!user) throw new NotFoundException('User not found');
       return this.toSubmissionResponse(user);
     } catch (error) {
       this.logger.error(error);
