@@ -10,6 +10,7 @@ import {
 import { CommunityTag as CommunityType } from 'src/database/entities/user.entity';
 import { UserChallengeEntity } from 'src/database/entities/user-challenge.entity';
 import { UserTaskProgressEntity } from 'src/database/entities/user-task-progress.entity';
+import { ChallengeTaskEntity } from 'src/database/entities/challenge-task.entity';
 
 export interface ChallengeSearchParams {
   page?: number;
@@ -24,6 +25,7 @@ export interface ChallengeSearchParams {
 
   // sorting
   orderBy?: 'createdAt' | 'id' | 'title' | 'durationDays';
+
   orderDir?: 'ASC' | 'DESC';
 }
 
@@ -36,6 +38,8 @@ export class ChallengeRepository extends BaseRepository<
 
   constructor(
     @InjectRepository(ChallengeEntity) repository: Repository<ChallengeEntity>,
+    @InjectRepository(ChallengeTaskEntity)
+    private readonly taskRepository: Repository<ChallengeTaskEntity>,
   ) {
     super(repository);
   }
@@ -345,6 +349,120 @@ export class ChallengeRepository extends BaseRepository<
     }));
 
     return { ...pageResult, items: mappedItems };
+  }
+
+  async getOneWithTasksForUser(challengeId: number, userId: number) {
+    // --- 1) Challenge + user enrollment/progress (same pattern as listCombinedForUser) ---
+
+    const qb = this.baseQB({}).andWhere('c.id = :challengeId', { challengeId });
+
+    qb.leftJoin(
+      UserChallengeEntity,
+      'uc',
+      'uc.challengeId = c.id AND uc.userId = :userId AND uc.isArchived = false',
+      { userId },
+    );
+
+    qb.addSelect(
+      (sub) =>
+        sub
+          .select('COUNT(p.id)')
+          .from(UserTaskProgressEntity, 'p')
+          .where('p.userChallengeId = uc.id')
+          .andWhere('p.completedByUser = true'),
+      'tasksCompleted',
+    );
+
+    qb.addSelect('uc.id', 'userChallengeId')
+      .addSelect('uc.progressPercent', 'progressPercent')
+      .addSelect('uc.isCompleted', 'isCompleted')
+      .addSelect('uc.startDate', 'startDate')
+      .addSelect('uc.endDate', 'endDate')
+      .addSelect(
+        `CASE WHEN uc.id IS NULL THEN false ELSE true END`,
+        'enrolled',
+      );
+
+    const { raw, entities } = await qb.getRawAndEntities();
+    const entity = entities[0];
+
+    if (!entity) {
+      throw new NotFoundException('Challenge not found');
+    }
+
+    const r = raw[0];
+
+    const enrolled =
+      r['enrolled'] === true || r['enrolled'] === 'true' || r['enrolled'] === 1;
+
+    const userChallengeId = r['userChallengeId']
+      ? Number(r['userChallengeId'])
+      : null;
+
+    const challenge = {
+      ...entity,
+      enrolled,
+      userChallengeId,
+      progressPercent:
+        r['progressPercent'] != null ? Number(r['progressPercent']) : null,
+      isCompleted: r['isCompleted'] ?? null,
+      startDate: r['startDate'] ?? null,
+      endDate: r['endDate'] ?? null,
+      tasksCompleted:
+        r['tasksCompleted'] != null ? Number(r['tasksCompleted']) : 0,
+    };
+
+    // --- 2) Tasks + per-task progress for this user ---
+
+    const tasksQb = this.taskRepository
+      .createQueryBuilder('t')
+      .innerJoin('t.challenge', 'c', 'c.id = :challengeId', { challengeId })
+      .orderBy('t.weekNumber', 'ASC', 'NULLS FIRST')
+      .addOrderBy('t.dayNumber', 'ASC')
+      .addOrderBy('t.id', 'ASC');
+
+    if (userChallengeId) {
+      tasksQb
+        .leftJoin(
+          UserTaskProgressEntity,
+          'p',
+          'p.taskId = t.id AND p.userChallengeId = :userChallengeId',
+          { userChallengeId },
+        )
+        .addSelect('p.id', 'progressId')
+        .addSelect('p.completedByUser', 'completedByUser')
+        .addSelect('p.completedAt', 'completedAt');
+    }
+
+    const { raw: tasksRaw, entities: taskEntities } =
+      await tasksQb.getRawAndEntities();
+
+    const tasks = taskEntities.map((task, index) => {
+      const tr = tasksRaw[index];
+
+      const completedByUser =
+        tr?.['completedByUser'] === true ||
+        tr?.['completedByUser'] === 'true' ||
+        tr?.['completedByUser'] === 1;
+
+      return {
+        ...task,
+        progress: userChallengeId
+          ? {
+              id: tr?.['progressId'] ? Number(tr['progressId']) : null,
+              completedByUser,
+              completedAt: tr?.['completedAt'] ?? null,
+            }
+          : null,
+      };
+    });
+
+    // --- 3) Final combined structure ---
+
+    return {
+      ...challenge,
+      tasks,
+    };
   }
 
   async deleteById(id: number): Promise<void> {

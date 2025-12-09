@@ -143,8 +143,6 @@ export class ChallengesService {
       const challenge = await this.getChallenge(challengeId);
       // const example = await this.challengeRepo.findOneWithTask(challengeId);
 
-      
-
       // Update the main Challenge entity (only fields provided in DTO)
       if (dto.community) challenge.community = dto.community;
       if (dto.title) challenge.title = dto.title;
@@ -162,7 +160,7 @@ export class ChallengesService {
       // Step 1: Add new tasks to the challenge
       if (dto.tasks && dto.tasks.length > 0) {
         const tasks = await this.addNewTasksToChallenge(challengeId, dto.tasks);
-        challenge.tasks = [...tasks, ...challenge.tasks]
+        challenge.tasks = [...tasks, ...challenge.tasks];
       }
 
       // Save the challenge with updated tasks
@@ -429,5 +427,25 @@ export class ChallengesService {
       ...mergedParams,
       prioritizeEnrolled,
     });
+  }
+
+  async getSingleChallengeDetails({
+    userId,
+    challengeId,
+  }: {
+    userId: number;
+    challengeId: number;
+  }) {
+    try {
+      const challenge = await this.challengeRepo.getOneWithTasksForUser(
+        challengeId,
+        userId,
+      );
+
+      return challenge;
+    } catch (error) {
+      console.error('Error getting challenge enrollment details:', error);
+      throw new Error('Failed to get enrollment detail');
+    }
   }
 }

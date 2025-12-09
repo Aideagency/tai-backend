@@ -269,6 +269,27 @@ export class ChallengesController {
     };
   }
 
+  @Get('combinedChallenge/:id')
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  async getChallengeInformation(
+    @Req() req,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const challenge = await this.challengeService.getSingleChallengeDetails({
+      userId: req.user.id,
+      challengeId: id,
+    });
+
+    return {
+      status: 200,
+      message: 'Challenge details fetched successfully',
+      challenge,
+    };
+    // return this.userChallengesService.complete(user.id, userChallengeId);
+  }
+
   @Post(':challengeId/enroll/:startDate')
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
