@@ -124,15 +124,18 @@ export class UpdateProfileDto {
   })
   profilePicture?: any;
 
+  @IsOptional()
   @ApiProperty({ example: 'Biola' })
   @IsNotEmpty({ message: 'First Name is required' })
   first_name: string;
 
+  @IsOptional()
   @ApiProperty({ example: 'Chukwudi' })
   @IsNotEmpty({ message: 'Last Name is required' })
   last_name: string;
 
   @ApiProperty({ example: 'sample@email.com' })
+  @IsOptional()
   @IsEmail()
   @IsNotEmpty({ message: 'Email is required' })
   @Transform(({ value }) =>
