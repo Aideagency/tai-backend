@@ -8,10 +8,6 @@ export class ArticlesController {
 
   @Get()
   async getPosts(@Query() query: ArticlesQueryDto) {
-    if (query.slug) {
-      return this.wordPressService.fetchPostBySlug(query.slug);
-    }
-
     return this.wordPressService.fetchPosts({
       page: query.page,
       perPage: query.perPage,

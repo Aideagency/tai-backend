@@ -43,14 +43,6 @@ export class ArticlesQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Fetch a single article by slug',
-    example: 'food-systems-in-africa',
-  })
-  @IsOptional()
-  @IsString()
-  slug?: string;
-
-  @ApiPropertyOptional({
     description: 'Sort order of results',
     enum: ArticleOrder,
     example: ArticleOrder.DESC,

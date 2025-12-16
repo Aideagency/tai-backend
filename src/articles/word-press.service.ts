@@ -24,59 +24,75 @@ function mapPost(post: any) {
   };
 }
 
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: {
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+};
+
 @Injectable()
 export class WordpressService {
   private readonly baseUrl = 'https://theagudahinstitute.com/wp-json/wp/v2';
 
   constructor(private readonly http: HttpService) {}
 
-  /**
-   * Fetch posts using the same options as the ArticlesQueryDto.
-   * - maps perPage -> per_page
-   * - orderBy -> orderby (WP expects "orderby")
-   * - always uses _embed for featured image
-   */
-  async fetchPosts(query: ArticlesQueryDto = {}) {
+  async fetchPosts(
+    query: ArticlesQueryDto = {},
+  ): Promise<PaginatedResponse<ReturnType<typeof mapPost>>> {
     const url = `${this.baseUrl}/posts`;
 
+    const page = query.page ?? 1;
+    const perPage = query.perPage ?? 10;
+
     const params: Record<string, any> = {
-      page: query.page ?? 1,
-      per_page: query.perPage ?? 10,
+      page,
+      per_page: perPage,
       _embed: true,
     };
 
-    // Only include optional params when present
     if (query.search) params.search = query.search;
-    if (query.order) params.order = query.order; // 'asc' | 'desc'
-    if (query.orderBy) params.orderby = query.orderBy; // 'date' | 'title' | 'slug'
+    if (query.order) params.order = query.order;
+    if (query.orderBy) params.orderby = query.orderBy;
 
     const res = await firstValueFrom(this.http.get(url, { params }));
 
-    return (res.data ?? []).map(mapPost);
+    // WordPress pagination headers (string values)
+    const total = Number(res.headers?.['x-wp-total'] ?? 0);
+    const totalPages = Number(res.headers?.['x-wp-totalpages'] ?? 0);
+
+    const data = (res.data ?? []).map(mapPost);
+
+    return {
+      data,
+      meta: {
+        page,
+        perPage,
+        total,
+        totalPages,
+        hasNext: totalPages ? page < totalPages : data.length === perPage,
+        hasPrev: page > 1,
+      },
+    };
   }
 
-  /**
-   * Fetch a single post by slug (still mapped)
-   */
   async fetchPostBySlug(slug: string) {
     const url = `${this.baseUrl}/posts`;
 
     const res = await firstValueFrom(
-      this.http.get(url, {
-        params: { slug, _embed: true },
-      }),
+      this.http.get(url, { params: { slug, _embed: true } }),
     );
 
     const post = res.data?.[0];
     return post ? mapPost(post) : null;
   }
 
-  /**
-   * Optional convenience method:
-   * If slug exists, return single post; otherwise return list.
-   */
   async fetchPostsOrSingle(query: ArticlesQueryDto = {}) {
-    if (query.slug) return this.fetchPostBySlug(query.slug);
     return this.fetchPosts(query);
   }
 }
