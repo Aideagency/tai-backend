@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommonHttpService } from 'src/common/common.service';
+import axios from 'axios';
 // import { ListCoursesQueryDto } from '../zoho/dtos/list-courses-query.dto';
 require('dotenv').config();
 
@@ -24,55 +25,71 @@ export class ZohoService {
       refresh_token: this.refreshToken, // Your Zoho refresh token
     });
 
-    console.log(body.toString());
-
     const res = await this.httpService.post(url, body.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    // console.log(res);
+    // ZohoLearn.course.READ,ZohoLearn.attachment.READ,ZohoLearn.article.READ,ZohoLearn.member.READ,ZohoLearn.profile.READ,ZohoLearn.network.READ
 
-    return res;
+    return res.access_token;
   }
 
   /** -------- Fetch Courses -------- */
-  async listCourses(queryParams: any) {
-    const token = await this.getAccessToken();
+  async listCourses(queryParams: Record<string, any> = { view: 'all' }) {
+    try {
+      const token = await this.getAccessToken();
 
-    const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
-      {
-        headers: { Authorization: `Zoho-oauthtoken ${token}` },
-        params: queryParams,
-      },
-    );
+      const { data } = await axios.get(
+        `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
+        {
+          headers: { Authorization: `Zoho-oauthtoken ${token}` },
+          params: queryParams,
+        },
+      );
 
-    return data;
+      return data.DATA;
+    } catch (error) {
+      console.log(error, 'Zoho Error Response Data'); // <-- Add this line
+      console.error(
+        'Error fetching courses from Zoho:',
+        error.response?.message || error.message,
+      );
+    }
   }
+
+  // https://learn.zoho.com/learn/api/v1/portal/zylker-network/course/6342496000000086001/file
+
+  // https://learn.zoho.com/learn/api/v1/portal/zylker-network/course/6342496000000086001/file
 
   /** -------- Fetch Course Resources (Including E-books) -------- */
   async getCourseResources(courseId: string) {
-    const token = await this.getAccessToken();
+    try {
+      const token = await this.getAccessToken();
 
-    const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/file`,
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
+      const res = await axios.get(
+        `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course/${courseId}/file`,
+        {
+          headers: {
+            Authorization: `Zoho-oauthtoken ${token}`,
+          },
         },
-      },
-    );
+      );
 
-    // Filter e-books (PDF, DOCX, etc.) and return them separately if needed
-    const eBooks = data.files.filter(
-      (file) =>
-        file.type === 'pdf' || file.type === 'docx' || file.type === 'epub',
-    );
+      return res.data;
 
-    return {
-      allResources: data.files, // Return all resources (videos, articles, PDFs, etc.)
-      eBooks: eBooks, // Return only the e-books (if needed separately)
-    };
+      // Filter e-books (PDF, DOCX, etc.) and return them separately if needed
+      // const eBooks = data.ATTACHMENTS.filter(
+      //   (file) =>
+      //     file.type === 'pdf' || file.type === 'docx' || file.type === 'epub',
+      // );
+
+      // return {
+      //   allResources: data.files, // Return all resources (videos, articles, PDFs, etc.)
+      //   eBooks: eBooks, // Return only the e-books (if needed separately)
+      // };
+    } catch (error) {
+      console.log('Error getting course resources:', error);
+    }
   }
 
   /** -------- Fetch Course Articles -------- */
@@ -93,21 +110,25 @@ export class ZohoService {
 
   /** -------- Fetch Course Data by URL -------- */
   async getCourseDataByUrl(courseUrl: string) {
-    const token = await this.getAccessToken();
+    try {
+      const token = await this.getAccessToken();
 
-    const { data } = await this.httpService.get(
-      `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${token}`,
+      const { data } = await axios.get(
+        `${this.learnBase}/portal/${encodeURIComponent(this.portal)}/course`,
+        {
+          headers: {
+            Authorization: `Zoho-oauthtoken ${token}`,
+          },
+          params: {
+            'course.url': courseUrl,
+          },
         },
-        params: {
-          'course.url': courseUrl,
-        },
-      },
-    );
+      );
 
-    return data;
+      return data;
+    } catch (error) {
+      console.log('Error getting course data:', error);
+    }
   }
 
   /** -------- Optional: Complete Course (if needed for reporting purposes) -------- */

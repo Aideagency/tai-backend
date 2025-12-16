@@ -1,9 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+// src/repository/courses/user-course-progress.repository.ts
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { BaseRepository } from '../base.repository';
-import { UserCourseProgressEntity } from 'src/database/entities/user-course-progress.entity';
-import { CourseStatus } from 'src/database/entities/user-course-progress.entity';
+import {
+  UserCourseProgressEntity,
+  CourseStatus,
+} from 'src/database/entities/user-course-progress.entity';
+import { CourseEntity } from 'src/database/entities/course.entity';
 
 @Injectable()
 export class UserCourseProgressRepository extends BaseRepository<
@@ -14,54 +18,50 @@ export class UserCourseProgressRepository extends BaseRepository<
 
   constructor(
     @InjectRepository(UserCourseProgressEntity)
-    repository: Repository<UserCourseProgressEntity>,
+    repo: Repository<UserCourseProgressEntity>,
+    @InjectRepository(CourseEntity)
+    private readonly courseRepo: Repository<CourseEntity>,
+    private readonly dataSource: DataSource,
   ) {
-    super(repository);
+    super(repo);
   }
 
-  //   Create or update a user's progress for a course
-  async createOrUpdateProgress(
-    userId: string,
-    courseId: string,
-    status: CourseStatus,
-    progressPercent: number,
-    startedAt: Date | null = null,
-    completedAt: Date | null = null,
-  ): Promise<UserCourseProgressEntity> {
-    const existingProgress = await this.findOne({ userId, courseId });
-
-    if (existingProgress) {
-      // Update existing progress
-      existingProgress.status = status;
-      existingProgress.progressPercent = progressPercent;
-      existingProgress.startedAt = startedAt;
-      existingProgress.completedAt = completedAt;
-      return this.repository.save(existingProgress);
-    }
-
-    // Create a new progress record
-    const newProgress = this.repository.create({
-      userId,
-      courseId,
-      status,
-      progressPercent,
-      startedAt,
-      completedAt,
+  async getForUserCourse(userId: number, courseId: number) {
+    return this.repository.findOne({
+      where: { userId, courseId },
+      relations: ['course', 'lessonProgress'],
     });
-
-    return this.repository.save(newProgress);
   }
 
-  // Find progress for a specific user and course
-  async findByUserAndCourse(
-    userId: string,
-    courseId: string,
-  ): Promise<UserCourseProgressEntity | undefined> {
-    return this.findOne({ userId, courseId });
+  async enrollIfNotExists(userId: number, courseId: number) {
+    const course = await this.courseRepo.findOne({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+
+    const existing = await this.repository.findOne({
+      where: { userId, courseId },
+    });
+    if (existing) return existing;
+
+    return this.dataSource.transaction(async (manager) => {
+      const row = manager.create(UserCourseProgressEntity, {
+        user: { id: userId } as any,
+        userId,
+        course: { id: courseId } as any,
+        courseId,
+        status: CourseStatus.IN_PROGRESS,
+        progressPercent: 0,
+        startedAt: new Date(),
+        lastAccessedAt: new Date(),
+      });
+
+      return manager.save(UserCourseProgressEntity, row);
+    });
   }
 
-  // Find all progress records for a specific user
-  async findByUser(userId: string): Promise<UserCourseProgressEntity[]> {
-    return this.findAll({ userId });
+  async touchLastAccess(userId: number, courseId: number) {
+    await this.repository.update(
+      { userId, courseId },
+      { lastAccessedAt: new Date() },
+    );
   }
 }
