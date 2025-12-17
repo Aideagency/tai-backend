@@ -52,6 +52,9 @@ import { UserCourseProgressRepository } from './resourses/user-course-progress.r
 import { UserLessonProgressRepository } from './resourses/user-lesson-progress.repository';
 import { LessonRepository } from './resourses/lesson.repository';
 import { UserSubscriptionRepository } from './resourses/user-subscription.repository';
+import { BookRepository } from './book/book.repository';
+import { BookEntity } from 'src/database/entities/book.entity';
+import { UserBookDownloadEntity } from 'src/database/entities/user-book-download.entity';
 
 @Module({
   imports: [
@@ -88,6 +91,8 @@ import { UserSubscriptionRepository } from './resourses/user-subscription.reposi
       LessonEntity,
       UserSubscriptionEntity,
       UserLessonProgressRepository,
+      BookEntity,
+      UserBookDownloadEntity,
     ]),
   ],
   providers: [
@@ -112,6 +117,7 @@ import { UserSubscriptionRepository } from './resourses/user-subscription.reposi
     UserCourseProgressRepository,
     CourseRepository,
     UserLessonProgressRepository,
+    BookRepository,
   ],
   exports: [
     UserRepository,
@@ -135,6 +141,7 @@ import { UserSubscriptionRepository } from './resourses/user-subscription.reposi
     UserLessonProgressRepository,
     UserCourseProgressRepository,
     CourseRepository,
+    BookRepository,
   ],
 })
 export class RepositoryModule {}

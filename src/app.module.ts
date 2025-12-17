@@ -27,6 +27,7 @@ import { CounsellingModule } from './counselling/counselling.module';
 import { RefundRequestModule } from './refund-request/refund-request.module';
 import { CoursesModule } from './courses/courses.module';
 import { ArticlesModule } from './articles/articles.module';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ArticlesModule } from './articles/articles.module';
     RefundRequestModule,
     CoursesModule,
     ArticlesModule,
+    BooksModule,
     // PaymentModule,
   ],
   controllers: [AppController, PostController, AdminViewsController],
