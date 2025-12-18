@@ -13,7 +13,7 @@ export enum PaidFor {
   EVENT = 'EVENT',
   COUNSELLING = 'COUNSELLING',
   COURSE = 'COURSE',
-  BOOK = 'BOOk',
+  BOOK = 'BOOK',
 }
 
 @Entity('Transactions')

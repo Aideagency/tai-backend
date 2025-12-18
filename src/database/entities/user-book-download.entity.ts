@@ -6,7 +6,7 @@ import { BookEntity } from './book.entity';
 
 export enum OwnershipStatus {
   PENDING_PAYMENT = 'PENDING_PAYMENT',
-  CONFIRMED = 'CONFIRMED', // RSVP successful or payment confirmed
+  CONFIRMED = 'CONFIRMED',
   CANCELLED = 'CANCELLED',
 }
 
@@ -38,7 +38,7 @@ export class UserBookDownloadEntity extends CustomEntity {
   @Column({
     type: 'enum',
     enum: OwnershipStatus,
-    enumName: 'user_book_download_status_enum', // any name you like
+    enumName: 'user_book_download_ownership_status_enum', // any name you like
     default: OwnershipStatus.PENDING_PAYMENT, // optional but usually useful
   })
   status: OwnershipStatus;
