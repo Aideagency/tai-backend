@@ -8,8 +8,6 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { InfrastructureModule } from 'src/infrastructure/infrastructure.module';
-// import { SupabaseStrategy } from './supabase.strategy';
-// import { SupabaseService } from './supabase.service';
 import { GoogleStrategy } from './google.strategy';
 
 @Module({
@@ -19,7 +17,7 @@ import { GoogleStrategy } from './google.strategy';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRATION },
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION || '1h' },
     }),
   ],
   providers: [
