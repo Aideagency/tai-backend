@@ -101,7 +101,6 @@ export class EventService {
         reference: paymentResponse.reference,
       });
 
-      // Return the checkout url
       return {
         message: 'Payment initiated',
         data: {

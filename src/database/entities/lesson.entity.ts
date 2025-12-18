@@ -1,38 +1,58 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { CourseEntity } from './course.entity';
 
-export enum LessonType {
-  VIDEO = 'VIDEO',
-  PDF = 'PDF',
-  ARTICLE = 'ARTICLE',
+export enum ZohoLessonType {
+  CHAPTER = 'CHAPTER',
+  DOCUMENT = 'DOCUMENT',
+  ASSIGNMENT = 'ASSIGNMENT',
   QUIZ = 'QUIZ',
+  VIDEO = 'VIDEO',
+  ARTICLE = 'ARTICLE',
 }
 
-@Entity({ name: 'Lessons' })
+export enum LessonStatus {
+  ACTIVE = 'ACTIVE',
+  UNPUBLISHED = 'UNPUBLISHED',
+  INACTIVE = 'INACTIVE',
+}
+
+@Entity({ name: 'lessons' })
+@Index(['course', 'zohoLessonId'], { unique: true })
 export class LessonEntity extends CustomEntity {
-  @ManyToOne(() => CourseEntity, (course) => course.lessons)
+  @ManyToOne(() => CourseEntity, (course) => course.lessons, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'course_id' })
   course: CourseEntity;
 
-  @Column()
-  courseId: string; // FK to CourseEntity.id
+  @Column({ name: 'zoho_lesson_id' })
+  zohoLessonId: string; // Zoho: lesson.id (works for CHAPTER + child lessons)
 
-  @Column()
-  zoho_file_id: string; // from Zoho `getCourseResources`
+  @Column({ name: 'zoho_parent_id', nullable: true })
+  zohoParentId: string | null; // Zoho: parentId (null for CHAPTER)
 
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   title: string;
 
-  @Column({ type: 'enum', enum: LessonType, default: LessonType.VIDEO })
-  type: LessonType;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  slug: string | null; // Zoho: url
 
-  @Column({ default: 0 })
-  sortOrder: number;
+  @Column({ type: 'enum', enum: ZohoLessonType })
+  zohoType: ZohoLessonType; // Zoho: type
+
+  @Column({ type: 'enum', enum: LessonStatus, default: LessonStatus.ACTIVE })
+  status: LessonStatus;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number; // Zoho: order (convert string -> number)
 
   @Column({ type: 'int', nullable: true })
   estimatedDurationSeconds: number | null;
 
-  // if you cache/download file to your own storage:
-  @Column({ nullable: true })
-  localUrl: string;
+  @Column({ type: 'json', nullable: true })
+  zohoMeta: any | null; // lessonMeta etc.
+
+  @Column({ type: 'timestamptz', nullable: true })
+  zohoModifiedAt: Date | null; // from modifiedTime epoch ms
 }

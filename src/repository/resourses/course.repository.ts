@@ -1,9 +1,22 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+// src/repository/courses/course.repository.ts
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder, In } from 'typeorm';
 import { BaseRepository } from '../base.repository';
-import { CourseEntity } from 'src/database/entities/course.entity';
-import { ZohoService } from 'src/courses/zoho.service';
+import {
+  CourseEntity,
+  CourseAccessType,
+} from 'src/database/entities/course.entity';
+
+export interface CourseListParams {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  accessType?: CourseAccessType;
+  publishedOnly?: boolean;
+  orderBy?: 'createdAt' | 'updatedAt' | 'title' | 'id';
+  orderDir?: 'ASC' | 'DESC';
+}
 
 @Injectable()
 export class CourseRepository extends BaseRepository<
@@ -12,42 +25,54 @@ export class CourseRepository extends BaseRepository<
 > {
   protected logger = new Logger(CourseRepository.name);
 
-  constructor(
-    @InjectRepository(CourseEntity) repository: Repository<CourseEntity>,
-    private readonly zohoService: ZohoService, // Inject ZohoService for syncing
-  ) {
-    super(repository);
+  constructor(@InjectRepository(CourseEntity) repo: Repository<CourseEntity>) {
+    super(repo);
   }
 
-  // Fetch all courses and sync with Zoho (or fetch directly from Zoho)
-//   async fetchAndSyncCourses() {
-//     try {
-//       const zohoCourses = await this.zohoService.listCourses({}); // Fetch all courses from Zoho
+  qb(params: CourseListParams): SelectQueryBuilder<CourseEntity> {
+    const qb = this.query('c');
 
-//       // Sync with local DB (you could filter or handle them differently)
-//       for (const course of zohoCourses) {
-//         await this.repository.save({
-//           ...course,
-//           zoho_course_id: course.zoho_course_id,
-//           title: course.title,
-//           description: course.description,
-//           accessType: course.accessType || 'FREE', // Default to FREE if not provided
-//           price: course.price || null,
-//           isPublished: course.isPublished || true,
-//         });
-//       }
+    if (params.q) {
+      const q = `%${params.q.toLowerCase()}%`;
+      qb.andWhere(
+        '(LOWER(c.title) ILIKE :q OR LOWER(c.description) ILIKE :q)',
+        { q },
+      );
+    }
+    if (params.accessType)
+      qb.andWhere('c.accessType = :a', { a: params.accessType });
+    if (params.publishedOnly) qb.andWhere('c.isPublished = true');
 
-//       return zohoCourses;
-//     } catch (error) {
-//       this.logger.error('Error syncing courses from Zoho', error);
-//       throw new BadRequestException('Error syncing courses from Zoho');
-//     }
-//   }
+    // qb.leftJoinAndSelect('c.lessons', 'l'); // optional; remove if too heavy
+    qb.orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC');
 
-  // Find course by Zoho ID
-  async findByZohoCourseId(
-    zohoCourseId: string,
-  ): Promise<CourseEntity | undefined> {
-    return this.findOne({ zoho_course_id: zohoCourseId });
+    return qb;
+  }
+
+  async listPaginated(params: CourseListParams) {
+    const page = Math.max(params.page || 1, 1);
+    const pageSize = Math.max(params.pageSize || 20, 1);
+
+    const qb = this.qb(params);
+    return this.paginate({ page, limit: pageSize }, {}, { id: 'DESC' }, {}, qb);
+  }
+
+  async findByZohoCourseId(zoho_course_id: string) {
+    return this.findOne({ zoho_course_id });
+  }
+
+  async findByZohoCourseIds(ids: string[]) {
+    if (!ids.length) return [];
+    return this.repository.find({ where: { zoho_course_id: In(ids) } });
+  }
+
+  async findOneWithDetails(courseId: number) {
+    return this.query('c')
+      .leftJoinAndSelect('c.lessons', 'l', 'l.status = :active', {
+        active: 'ACTIVE',
+      })
+      .where('c.id = :id', { id: courseId })
+      .orderBy('l.sortOrder', 'ASC')
+      .getOne();
   }
 }

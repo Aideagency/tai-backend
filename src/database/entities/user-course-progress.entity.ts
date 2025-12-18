@@ -15,14 +15,14 @@ export class UserCourseProgressEntity extends CustomEntity {
   @ManyToOne(() => UserEntity, (user) => user.courseProgress)
   user: UserEntity;
 
-  @Column()
-  userId: string; // FK to UserEntity
-
   @ManyToOne(() => CourseEntity, (course) => course.progressRecords)
   course: CourseEntity;
 
   @Column()
-  courseId: string; // FK to CourseEntity
+  userId: number;
+
+  @Column()
+  courseId: number;
 
   @Column({
     type: 'enum',

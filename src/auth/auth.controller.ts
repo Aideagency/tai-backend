@@ -358,6 +358,7 @@ export class AuthController {
           code: code,
           redirect_uri: this.redirectUri,
           grant_type: 'authorization_code',
+          scope: 'ZohoLearn.course.READ ZohoCRM.modules.ALL',
         }).toString(),
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -368,6 +369,7 @@ export class AuthController {
       const { access_token, refresh_token, expires_in } = tokenResponse.data;
       console.log('Access Token:', access_token);
       console.log('Refresh Token:', refresh_token);
+      console.log(tokenResponse.data, 'response');
 
       // Store these tokens securely (e.g., in the session, DB, or env variables)
 

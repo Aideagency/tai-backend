@@ -9,8 +9,8 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   RefundType,
-  PaidFor,
 } from 'src/database/entities/refund-request.entity';
+import { PaidFor } from 'src/database/entities/transaction.entity';
 
 export class CreateRefundRequestDto {
   @ApiProperty({

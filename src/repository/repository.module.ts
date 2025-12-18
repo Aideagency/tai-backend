@@ -42,6 +42,19 @@ import { CounsellingBookingRepository } from './counselling/counselling-booking.
 import { CounsellingRepository } from './counselling/counselling.repostiory';
 import { RefundRequestRepository } from './refund/refund-request.repository';
 import { RefundRequestEntity } from 'src/database/entities/refund-request.entity';
+import { CourseEntity } from 'src/database/entities/course.entity';
+import { UserLessonProgressEntity } from 'src/database/entities/user-lesson-progress.entity';
+import { UserCourseProgressEntity } from 'src/database/entities/user-course-progress.entity';
+import { LessonEntity } from 'src/database/entities/lesson.entity';
+import { UserSubscriptionEntity } from 'src/database/entities/user-subscription.entity';
+import { CourseRepository } from './resourses/course.repository';
+import { UserCourseProgressRepository } from './resourses/user-course-progress.repository';
+import { UserLessonProgressRepository } from './resourses/user-lesson-progress.repository';
+import { LessonRepository } from './resourses/lesson.repository';
+import { UserSubscriptionRepository } from './resourses/user-subscription.repository';
+import { BookRepository } from './book/book.repository';
+import { BookEntity } from 'src/database/entities/book.entity';
+import { UserBookDownloadEntity } from 'src/database/entities/user-book-download.entity';
 
 @Module({
   imports: [
@@ -71,7 +84,15 @@ import { RefundRequestEntity } from 'src/database/entities/refund-request.entity
       EventRegistrationEntity,
       CounsellingEntity,
       CounsellingBookingEntity,
-      RefundRequestEntity
+      RefundRequestEntity,
+      CourseEntity,
+      UserLessonProgressEntity,
+      UserCourseProgressEntity,
+      LessonEntity,
+      UserSubscriptionEntity,
+      UserLessonProgressRepository,
+      BookEntity,
+      UserBookDownloadEntity,
     ]),
   ],
   providers: [
@@ -91,6 +112,12 @@ import { RefundRequestEntity } from 'src/database/entities/refund-request.entity
     CounsellingRepository,
     CounsellingBookingRepository,
     RefundRequestRepository,
+    UserSubscriptionRepository,
+    LessonRepository,
+    UserCourseProgressRepository,
+    CourseRepository,
+    UserLessonProgressRepository,
+    BookRepository,
   ],
   exports: [
     UserRepository,
@@ -109,6 +136,12 @@ import { RefundRequestEntity } from 'src/database/entities/refund-request.entity
     CounsellingRepository,
     CounsellingBookingRepository,
     RefundRequestRepository,
+    UserSubscriptionRepository,
+    LessonRepository,
+    UserLessonProgressRepository,
+    UserCourseProgressRepository,
+    CourseRepository,
+    BookRepository,
   ],
 })
 export class RepositoryModule {}

@@ -18,6 +18,7 @@ import { EventRegistrationRepository } from 'src/repository/event/event-registra
 import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
 import { EventService } from 'src/event/event.service';
 import { CounsellingService } from 'src/counselling/counselling.service';
+import { BooksService } from 'src/books/books.service';
 
 @Injectable()
 export class PaymentService {
@@ -31,6 +32,8 @@ export class PaymentService {
     private readonly eventService: EventService,
     @Inject(forwardRef(() => CounsellingService))
     private readonly counsellingService: CounsellingService,
+    @Inject(forwardRef(() => CounsellingService))
+    private readonly bookService: BooksService,
   ) {}
 
   // Initialize Payment
@@ -177,6 +180,11 @@ export class PaymentService {
             );
           } else if (transaction.paid_for === PaidFor.COUNSELLING) {
             await this.counsellingService.handlePaymentConfirmation(
+              txRef,
+              transaction.email_address,
+            );
+          } else if (transaction.paid_for === PaidFor.BOOK) {
+            await this.bookService.handlePaymentConfirmation(
               txRef,
               transaction.email_address,
             );

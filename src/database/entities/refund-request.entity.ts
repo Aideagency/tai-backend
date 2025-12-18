@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne, Index } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { UserEntity } from './user.entity';
 import { EventRegistrationEntity } from './event-registration.entity';
-import { TransactionEntity } from './transaction.entity';
+import { PaidFor, TransactionEntity } from './transaction.entity';
 import { CounsellingBookingEntity } from './counselling-booking.entity';
 
 export enum RefundType {
@@ -16,12 +16,6 @@ export enum RefundStatus {
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   PROCESSED = 'PROCESSED',
-}
-
-export enum PaidFor {
-  EVENT = 'EVENT',
-  COUNSELLING = 'COUNSELLING',
-  COURSE = 'COURSE',
 }
 
 @Entity({ name: 'RefundRequests' })

@@ -6,8 +6,8 @@ import {
   RefundRequestEntity,
   RefundStatus,
   RefundType,
-  PaidFor,
 } from 'src/database/entities/refund-request.entity';
+import { PaidFor } from 'src/database/entities/transaction.entity';
 
 export interface RefundRequestSearchParams {
   page?: number;
