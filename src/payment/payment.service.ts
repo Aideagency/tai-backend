@@ -146,8 +146,6 @@ export class PaymentService {
         .update(JSON.stringify(req.body))
         .digest('hex');
 
-      console.log({ hash });
-
       if (hash === req.headers['x-paystack-signature']) {
         const txRef = req.body?.data?.reference;
         const forwarded = req.headers['x-forwarded-for'];
@@ -169,6 +167,7 @@ export class PaymentService {
 
         const transaction =
           await this.transactionRepository.findOneByReference(txRef);
+        console.log(transaction);
         if (
           transaction &&
           req.body.data?.requested_amount === transaction.actualAmount * 100
