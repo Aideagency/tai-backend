@@ -1,9 +1,9 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 
 export enum BookOwnershipType {
-  IN_HOUSE = 'IN_HOUSE', // we host the PDF
-  EXTERNAL = 'EXTERNAL', // we only link out
+  IN_HOUSE = 'IN_HOUSE',
+  EXTERNAL = 'EXTERNAL',
 }
 
 export enum BookAccessType {
@@ -11,22 +11,31 @@ export enum BookAccessType {
   PAID = 'PAID',
 }
 
+function slugify(text = '') {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 @Entity({ name: 'Books' })
 export class BookEntity extends CustomEntity {
   @Column({ unique: true })
-  slug: string; // e.g. "the-meaning-of-marriage" (useful for routing)
+  slug: string;
 
   @Column()
-  title: string; // "The Meaning of Marriage"
+  title: string;
 
   @Column({ nullable: true })
-  author: string; // "Timothy Keller"
+  author: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ nullable: true })
-  coverImageUrl: string; // book cover image
+  coverImageUrl: string;
 
   @Column({ nullable: true })
   coverImagePublicId: string;
@@ -38,10 +47,6 @@ export class BookEntity extends CustomEntity {
   })
   ownershipType: BookOwnershipType;
 
-  /**
-   * IN_HOUSE books can be FREE or PAID (downloadable PDF).
-   * EXTERNAL books should leave accessType/price/pdfUrl null and use externalUrl.
-   */
   @Column({
     type: 'enum',
     enum: BookAccessType,
@@ -50,26 +55,44 @@ export class BookEntity extends CustomEntity {
   accessType: BookAccessType | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  price: number | null; // only relevant when ownershipType=IN_HOUSE and accessType=PAID
+  price: number | null;
 
   @Column({ default: 'NGN' })
-  currency: string; // "NGN" to match ₦ display
+  currency: string;
 
   @Column({ type: 'text', nullable: true })
-  pdfUrl: string | null; // in-house PDF location (S3/Cloudinary/local path)
+  pdfUrl: string | null;
 
   @Column({ nullable: true })
   pdfPublicId: string;
 
   @Column({ type: 'text', nullable: true })
-  externalUrl: string | null; // where users can get the book externally
+  externalUrl: string | null;
 
   @Column({ default: true })
   isPublished: boolean;
 
   @Column({ nullable: true })
-  publishDate: string; // optional (or use Date type if you prefer)
+  publishDate: string;
 
   @Column({ nullable: true })
-  isbn: string; // optional
+  isbn: string;
+
+  @BeforeInsert()
+  setSlugOnInsert() {
+    if (!this.slug) {
+      // add a small suffix to reduce collisions
+      const suffix = Math.random().toString(36).slice(2, 7);
+      this.slug = `${slugify(this.title)}-${suffix}`;
+    }
+  }
+
+  @BeforeUpdate()
+  setSlugOnUpdate() {
+    // optional: if slug is missing for any reason
+    if (!this.slug && this.title) {
+      const suffix = Math.random().toString(36).slice(2, 7);
+      this.slug = `${slugify(this.title)}-${suffix}`;
+    }
+  }
 }

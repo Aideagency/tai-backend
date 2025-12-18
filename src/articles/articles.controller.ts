@@ -1,7 +1,12 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { WordpressService } from './word-press.service';
 import { ArticlesQueryDto } from './dtos/article-query.dto';
+import { JwtGuards } from 'src/auth/jwt.guards';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Articles')
+@UseGuards(JwtGuards)
+@ApiBearerAuth()
 @Controller('articles')
 export class ArticlesController {
   constructor(private readonly wordPressService: WordpressService) {}

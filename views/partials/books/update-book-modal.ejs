@@ -1,0 +1,434 @@
+<!-- Update Book Modal -->
+<div
+  id="updateBookModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div
+    class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 mx-auto my-8 max-h-[calc(100vh-4rem)] overflow-y-auto"
+  >
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Update Book</h3>
+
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeUpdateBookModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="updateBookForm"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- Title -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          type="text"
+          id="updateTitle"
+          name="title"
+          maxlength="200"
+          required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Author -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Author</label>
+        <input
+          type="text"
+          id="updateAuthor"
+          name="author"
+          maxlength="140"
+          required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Description (Rich Text) -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Description (optional)
+        </label>
+
+        <div
+          id="updateBookDescriptionEditor"
+          class="bg-white border border-gray-300 rounded-lg"
+          style="min-height: 120px"
+        ></div>
+
+        <textarea
+          id="updateBookDescription"
+          name="description"
+          class="hidden"
+        ></textarea>
+
+        <p class="text-[11px] text-gray-500 mt-1">
+          Supports formatting, lists, and links.
+        </p>
+      </div>
+
+      <!-- Existing assets (preview) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="rounded-lg border border-gray-200 p-2">
+          <p class="text-[11px] font-semibold text-gray-700 mb-1">
+            Current Cover
+          </p>
+          <div id="updateCoverPreview" class="text-[11px] text-gray-500">
+            No cover uploaded.
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 p-2">
+          <p class="text-[11px] font-semibold text-gray-700 mb-1">
+            Current PDF
+          </p>
+          <div id="updatePdfPreview" class="text-[11px] text-gray-500">
+            No PDF uploaded.
+          </div>
+        </div>
+      </div>
+
+      <!-- Replace Cover Image -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Replace Cover Image (optional)
+        </label>
+        <input
+          type="file"
+          name="coverImage"
+          accept="image/*"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+        />
+      </div>
+
+      <!-- Ownership + Publish -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Ownership Type
+          </label>
+          <select
+            id="updateBookOwnershipType"
+            name="ownershipType"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="IN_HOUSE">In-house</option>
+            <option value="EXTERNAL">External</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Publish</label>
+          <select
+            id="updateIsPublished"
+            name="isPublished"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="true">Published</option>
+            <option value="false">Draft</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- In-house Fields -->
+      <div id="updateInHouseFields" class="space-y-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Replace PDF File (optional)
+          </label>
+          <input
+            type="file"
+            name="pdfFile"
+            accept="application/pdf"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+          />
+          <p class="text-[11px] text-gray-500 mt-1">
+            Leave empty to keep the current PDF.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              Access Type
+            </label>
+            <select
+              id="updateBookAccessType"
+              name="accessType"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="">--</option>
+              <option value="FREE">Free</option>
+              <option value="PAID">Paid</option>
+            </select>
+          </div>
+
+          <div id="updatePriceField" class="hidden">
+            <label class="block font-medium text-gray-700 mb-1">
+              Price <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="updateBookPrice"
+              type="number"
+              name="price"
+              min="0"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- External Fields -->
+      <div id="updateExternalFields" class="hidden">
+        <label class="block font-medium text-gray-700 mb-1">
+          External URL <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="updateExternalUrl"
+          type="url"
+          name="externalUrl"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300"
+          onclick="closeUpdateBookModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="updateBookSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold"
+        >
+          <span id="updateBookSubmitText">Update book</span>
+
+          <svg
+            id="updateBookSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let updateBookDescriptionQuill;
+
+  function openUpdateBookModal(btn) {
+    const modal = document.getElementById('updateBookModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Read dataset
+    const id = btn.dataset.bookId;
+    const title = btn.dataset.bookTitle || '';
+    const author = btn.dataset.bookAuthor || '';
+    const descriptionHtml = btn.dataset.bookDescription || '';
+    const ownershipType = btn.dataset.bookOwnershipType || 'IN_HOUSE';
+    const accessType = btn.dataset.bookAccessType || '';
+    const price = btn.dataset.bookPrice || '';
+    const externalUrl = btn.dataset.bookExternalUrl || '';
+    const isPublished = btn.dataset.bookIsPublished || 'true';
+    const coverUrl = btn.dataset.bookCoverImageUrl || '';
+    const pdfUrl = btn.dataset.bookPdfUrl || '';
+
+    // Set form action (PATCH simulation via POST + _method, if you use method-override)
+    const form = document.getElementById('updateBookForm');
+    form.action = `/admin/books/${id}`;
+
+    // If you use method-override, ensure _method exists and is PATCH
+    // let method = form.querySelector('input[name="_method"]');
+    // if (!method) {
+    //   method = document.createElement('input');
+    //   method.type = 'hidden';
+    //   method.name = '_method';
+    //   form.appendChild(method);
+    // }
+    // method.value = 'PATCH';
+
+    document.getElementById('updateTitle').value = title;
+    document.getElementById('updateAuthor').value = author;
+    document.getElementById('updateBookOwnershipType').value = ownershipType;
+    document.getElementById('updateBookAccessType').value = accessType || '';
+    document.getElementById('updateBookPrice').value = price
+      ? Number(price)
+      : '';
+    document.getElementById('updateExternalUrl').value = externalUrl;
+    document.getElementById('updateIsPublished').value = isPublished;
+
+    // Preview current assets
+    const coverPreview = document.getElementById('updateCoverPreview');
+    coverPreview.innerHTML = coverUrl
+      ? `<a href="${coverUrl}" target="_blank" class="text-[var(--color-primary-dark)] underline">View cover</a>`
+      : `No cover uploaded.`;
+
+    const pdfPreview = document.getElementById('updatePdfPreview');
+    pdfPreview.innerHTML = pdfUrl
+      ? `<a href="${pdfUrl}" target="_blank" class="text-[var(--color-primary-dark)] underline">View PDF</a>`
+      : `No PDF uploaded.`;
+
+    // Quill content
+    if (updateBookDescriptionQuill) {
+      if (!descriptionHtml || descriptionHtml.trim() === '') {
+        updateBookDescriptionQuill.setContents([]);
+      } else {
+        updateBookDescriptionQuill.root.innerHTML = descriptionHtml;
+      }
+    }
+
+    syncUpdateBookFields();
+  }
+
+  function closeUpdateBookModal() {
+    const modal = document.getElementById('updateBookModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    const form = document.getElementById('updateBookForm');
+    form.reset();
+
+    if (updateBookDescriptionQuill) updateBookDescriptionQuill.setContents([]);
+
+    document.getElementById('updateCoverPreview').textContent =
+      'No cover uploaded.';
+    document.getElementById('updatePdfPreview').textContent =
+      'No PDF uploaded.';
+
+    syncUpdateBookFields();
+  }
+
+  function syncUpdateBookFields() {
+    const ownership = document.getElementById('updateBookOwnershipType').value;
+    const inHouse = document.getElementById('updateInHouseFields');
+    const external = document.getElementById('updateExternalFields');
+
+    if (ownership === 'EXTERNAL') {
+      inHouse.classList.add('hidden');
+      external.classList.remove('hidden');
+    } else {
+      inHouse.classList.remove('hidden');
+      external.classList.add('hidden');
+    }
+
+    syncUpdatePriceField();
+  }
+
+  function syncUpdatePriceField() {
+    const access = document.getElementById('updateBookAccessType')?.value;
+    const priceField = document.getElementById('updatePriceField');
+
+    if (access === 'PAID') {
+      priceField.classList.remove('hidden');
+    } else {
+      priceField.classList.add('hidden');
+      document.getElementById('updateBookPrice').value = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Init Quill (Update)
+    updateBookDescriptionQuill = new Quill('#updateBookDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Update the book description...',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+
+    document
+      .getElementById('updateBookOwnershipType')
+      .addEventListener('change', syncUpdateBookFields);
+
+    document
+      .getElementById('updateBookAccessType')
+      .addEventListener('change', syncUpdatePriceField);
+
+    const form = document.getElementById('updateBookForm');
+    const submitBtn = document.getElementById('updateBookSubmitBtn');
+    const submitText = document.getElementById('updateBookSubmitText');
+    const spinner = document.getElementById('updateBookSubmitSpinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Sync Quill → textarea
+      const description = document.getElementById('updateBookDescription');
+      description.value = updateBookDescriptionQuill.root.innerHTML;
+
+      if (
+        description.value === '<p><br></p>' ||
+        description.value.trim() === ''
+      ) {
+        description.value = '';
+      }
+
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+      submitText.textContent = 'Updating...';
+
+      try {
+        const formData = new FormData(form);
+
+        // If no new file chosen, remove from payload
+        if (!formData.get('coverImage')?.name) formData.delete('coverImage');
+        if (!formData.get('pdfFile')?.name) formData.delete('pdfFile');
+
+        const res = await fetch(form.action, {
+          method: 'PATCH', // method-override will convert to PATCH on server
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          alert('Failed to update book.');
+          submitBtn.disabled = false;
+          spinner.classList.add('hidden');
+          submitText.textContent = 'Update book';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+        submitBtn.disabled = false;
+        spinner.classList.add('hidden');
+        submitText.textContent = 'Update book';
+      }
+    });
+  });
+</script>

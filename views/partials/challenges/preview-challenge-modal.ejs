@@ -207,7 +207,7 @@
     modal.classList.add('flex');
 
     try {
-      const res = await fetch(`/challenges/${id}`);
+      const res = await fetch(`/challenges/single/${id}`);
       if (!res.ok) {
         throw new Error(`Failed to fetch challenge (status ${res.status})`);
       }

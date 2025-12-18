@@ -1,6 +1,8 @@
 // src/modules/books/books.service.ts
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,6 +26,7 @@ import { TracerLogger } from 'src/logger/logger.service';
 export class BooksService {
   constructor(
     private readonly booksRepo: BookRepository,
+    @Inject(forwardRef(() => PaymentService))
     private readonly paymentService: PaymentService,
     private readonly transactionRepo: TransactionRepository,
     private readonly emailService: EmailService,
@@ -119,6 +122,10 @@ export class BooksService {
     };
   }
 
+  async getBookByRef(ref: string) {
+    return this.booksRepo.findDownloadByTransactionRef(ref);
+  }
+
   async handlePaymentConfirmation(ref: string, email: string) {
     const download = await this.booksRepo.findDownloadByTransactionRef(ref);
     if (download) {
@@ -133,14 +140,13 @@ export class BooksService {
           subject: 'Download Successful',
           template: 'book-download',
           data: {
-            // username: registration.user.first_name,
-            // event_title: registration.event.title,
-            // event_mode: registration.event.mode,
-            // event_location:
-            //   registration.event.locationText || registration.event.locationUrl,
-            // price: registration.event.price,
-            // start_date: registration.event.startsAt,
-            // end_date: registration.event.endsAt,
+            username: download.user.first_name,
+            book_title: download.book.title,
+            book_author: download.book.author,
+            price: download.book.price,
+            transaction_ref: ref,
+            purchased_at: download.createdAt,
+            library_url: download.book.pdfUrl,
           },
         })
         .then((res) => {

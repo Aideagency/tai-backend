@@ -1,9 +1,10 @@
-<div id="addChallengeModal"
-  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+<div
+  id="addChallengeModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
   <div
     class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 text-xs overflow-hidden flex flex-col max-h-[90vh]"
   >
-    <!-- HEADER -->
     <div class="flex items-center justify-between mb-4 flex-shrink-0">
       <h3 class="text-base font-semibold text-gray-800">Add Challenge</h3>
       <button
@@ -29,8 +30,7 @@
             required
             minlength="3"
             maxlength="100"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
         </div>
 
@@ -43,37 +43,8 @@
             rows="3"
             minlength="10"
             maxlength="5000"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           ></textarea>
-        </div>
-
-        <!-- BOOK INFO -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[11px] font-medium text-gray-700 mb-1">
-              Book Title (optional)
-            </label>
-            <input
-              type="text"
-              name="bookTitle"
-              maxlength="200"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-gray-700 mb-1">
-              Book Author (optional)
-            </label>
-            <input
-              type="text"
-              name="bookAuthor"
-              maxlength="100"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-          </div>
         </div>
 
         <!-- COMMUNITY & STATUS -->
@@ -85,8 +56,7 @@
             <select
               name="community"
               required
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value="">Select</option>
               <option value="SINGLE">Single</option>
@@ -102,11 +72,10 @@
             <select
               name="status"
               required
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
-              <option value="DRAFT">Draft</option>
               <option value="ACTIVE">Active</option>
+              <option value="DRAFT">Draft</option>
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
@@ -121,8 +90,7 @@
             <select
               name="visibility"
               required
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value="PUBLIC">Public</option>
               <option value="COMMUNITY_ONLY">Community Only</option>
@@ -136,8 +104,7 @@
             <select
               name="frequency"
               required
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value="DAILY">Daily</option>
               <option value="WEEKLY">Weekly</option>
@@ -158,8 +125,7 @@
               min="1"
               max="365"
               required
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
 
@@ -171,24 +137,9 @@
               type="text"
               name="completionBadgeCode"
               maxlength="50"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             />
           </div>
-        </div>
-
-        <!-- DUAL CONFIRMATION -->
-        <div>
-          <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
-            <input
-              type="checkbox"
-              name="requireDualConfirmation"
-              value="true"
-              class="rounded border-gray-300 text-[var(--color-primary)]
-                     focus:ring-[var(--color-primary)]"
-            />
-            Require dual confirmation
-          </label>
         </div>
 
         <!-- TASKS SECTION -->
@@ -208,7 +159,10 @@
 
           <div id="taskList" class="space-y-3">
             <!-- Task item template (index 0 by default) -->
-            <div class="task-item space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200" data-index="0">
+            <div
+              class="task-item space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200"
+              data-index="0"
+            >
               <div class="flex items-center justify-between mb-1">
                 <span class="text-[11px] font-semibold text-gray-700">
                   Task <span class="task-label">1</span>
@@ -232,8 +186,7 @@
                   required
                   minlength="3"
                   maxlength="200"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                         focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
 
@@ -247,14 +200,15 @@
                   required
                   minlength="10"
                   maxlength="1000"
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                         focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 ></textarea>
               </div>
 
               <div class="grid grid-cols-3 gap-2">
                 <div>
-                  <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
                     Day #
                   </label>
                   <input
@@ -267,7 +221,9 @@
                 </div>
 
                 <div>
-                  <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
                     Week #
                   </label>
                   <input
@@ -280,14 +236,15 @@
                 </div>
 
                 <div>
-                  <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                  <label
+                    class="block text-[11px] font-medium text-gray-700 mb-1"
+                  >
                     Cadence
                   </label>
                   <select
                     name="tasks[0].frequency"
                     required
-                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                           focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   >
                     <option value="DAILY">Daily</option>
                     <option value="WEEKLY">Weekly</option>
@@ -296,13 +253,14 @@
               </div>
 
               <div>
-                <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
+                <label
+                  class="inline-flex items-center gap-2 text-[11px] text-gray-700"
+                >
                   <input
                     type="checkbox"
                     name="tasks[0].isMilestone"
                     value="true"
-                    class="rounded border-gray-300 text-[var(--color-primary)]
-                           focus:ring-[var(--color-primary)]"
+                    class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                   />
                   Milestone task
                 </label>
@@ -310,7 +268,6 @@
             </div>
           </div>
         </div>
-
       </form>
     </div>
 
@@ -369,7 +326,7 @@
       if (labelSpan) labelSpan.textContent = index + 1;
 
       const fields = item.querySelectorAll(
-        'input[name^="tasks["], textarea[name^="tasks["], select[name^="tasks["]'
+        'input[name^="tasks["], textarea[name^="tasks["], select[name^="tasks["]',
       );
       fields.forEach((field) => {
         const oldName = field.getAttribute('name');
@@ -440,8 +397,6 @@
 
     data.title = getVal('title');
     data.description = getVal('description') || undefined;
-    data.bookTitle = getVal('bookTitle') || undefined;
-    data.bookAuthor = getVal('bookAuthor') || undefined;
     data.community = getVal('community');
     data.status = getVal('status');
     data.visibility = getVal('visibility');
@@ -453,16 +408,15 @@
     const badge = getVal('completionBadgeCode');
     data.completionBadgeCode = badge || undefined;
 
-    const dualCheckbox = form.querySelector('[name="requireDualConfirmation"]');
-    data.requireDualConfirmation = dualCheckbox ? dualCheckbox.checked : undefined;
-
     // Tasks
     const taskItems = document.querySelectorAll('#taskList .task-item');
     const tasks = [];
 
     taskItems.forEach((item) => {
       const titleEl = item.querySelector('input[name$=".title"]');
-      const instructionsEl = item.querySelector('textarea[name$=".instructions"]');
+      const instructionsEl = item.querySelector(
+        'textarea[name$=".instructions"]',
+      );
       const dayEl = item.querySelector('input[name$=".dayNumber"]');
       const weekEl = item.querySelector('input[name$=".weekNumber"]');
       const freqEl = item.querySelector('select[name$=".frequency"]');

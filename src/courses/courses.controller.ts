@@ -1,6 +1,11 @@
 // src/courses/courses.controller.ts
 import { Controller, Get, Param, Post, Body, Query, Req } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExcludeController,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { CoursesService } from './courses.service';
 import { LessonProgressStatus } from 'src/database/entities/user-lesson-progress.entity';
@@ -9,6 +14,7 @@ import { ZohoService } from './zoho.service';
 
 @ApiTags('Courses')
 @Controller('courses')
+@ApiExcludeController()
 export class CoursesController {
   constructor(
     private readonly coursesService: CoursesService,

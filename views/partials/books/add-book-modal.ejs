@@ -1,0 +1,357 @@
+<!-- Add Book Modal -->
+<div
+  id="addBookModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 mx-auto my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Add Book</h3>
+
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeAddBookModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="addBookForm"
+      action="/admin/books"
+      method="POST"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- Title -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          type="text"
+          name="title"
+          maxlength="200"
+          required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Author -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Author</label>
+        <input
+          type="text"
+          name="author"
+          maxlength="140"
+          required
+          class="w-full rounded-lg border border-gray-300 px-3 py-2
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                 focus:border-[var(--color-primary)]"
+        />
+      </div>
+
+      <!-- Description (Rich Text) -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Description (optional)
+        </label>
+
+        <!-- Quill editor -->
+        <div
+          id="bookDescriptionEditor"
+          class="bg-white border border-gray-300 rounded-lg"
+          style="min-height: 120px"
+        ></div>
+
+        <!-- Hidden textarea -->
+        <textarea
+          id="bookDescription"
+          name="description"
+          class="hidden"
+        ></textarea>
+
+        <p class="text-[11px] text-gray-500 mt-1">
+          Supports formatting, lists, and links.
+        </p>
+      </div>
+
+      <!-- Cover Image -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Cover Image (optional)
+        </label>
+        <input
+          type="file"
+          name="coverImage"
+          accept="image/*"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+        />
+      </div>
+
+      <!-- Ownership + Publish -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            Ownership Type
+          </label>
+          <select
+            id="bookOwnershipType"
+            name="ownershipType"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="IN_HOUSE" selected>In-house</option>
+            <option value="EXTERNAL">External</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Publish</label>
+          <select
+            name="isPublished"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="true" selected>Published</option>
+            <option value="false">Draft</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- In-house Fields -->
+      <div id="inHouseFields" class="space-y-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">
+            PDF File <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="pdfFile"
+            type="file"
+            name="pdfFile"
+            accept="application/pdf"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              Access Type
+            </label>
+            <select
+              id="bookAccessType"
+              name="accessType"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="FREE" selected>Free</option>
+              <option value="PAID">Paid</option>
+            </select>
+          </div>
+
+          <div id="priceField" class="hidden">
+            <label class="block font-medium text-gray-700 mb-1">
+              Price <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="bookPrice"
+              type="number"
+              name="price"
+              min="0"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- External Fields -->
+      <div id="externalFields" class="hidden">
+        <label class="block font-medium text-gray-700 mb-1">
+          External URL <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="externalUrl"
+          type="url"
+          name="externalUrl"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2"
+        />
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300"
+          onclick="closeAddBookModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="addBookSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold"
+        >
+          <span id="addBookSubmitText">Save book</span>
+
+          <svg
+            id="addBookSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let bookDescriptionQuill;
+
+  function openAddBookModal() {
+    const modal = document.getElementById("addBookModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    syncBookFields();
+  }
+
+  function closeAddBookModal() {
+    const modal = document.getElementById("addBookModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+
+    const form = document.getElementById("addBookForm");
+    form.reset();
+
+    if (bookDescriptionQuill) {
+      bookDescriptionQuill.setContents([]);
+    }
+
+    syncBookFields();
+  }
+
+  function syncBookFields() {
+    const ownership = document.getElementById("bookOwnershipType").value;
+    const inHouse = document.getElementById("inHouseFields");
+    const external = document.getElementById("externalFields");
+
+    if (ownership === "EXTERNAL") {
+      inHouse.classList.add("hidden");
+      external.classList.remove("hidden");
+    } else {
+      inHouse.classList.remove("hidden");
+      external.classList.add("hidden");
+    }
+
+    syncPriceField();
+  }
+
+  function syncPriceField() {
+    const access = document.getElementById("bookAccessType")?.value;
+    const priceField = document.getElementById("priceField");
+
+    if (access === "PAID") {
+      priceField.classList.remove("hidden");
+    } else {
+      priceField.classList.add("hidden");
+      document.getElementById("bookPrice").value = "";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Init Quill
+    bookDescriptionQuill = new Quill("#bookDescriptionEditor", {
+      theme: "snow",
+      placeholder: "Write a short description of the book...",
+      modules: {
+        toolbar: [
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link"],
+          ["clean"],
+        ],
+      },
+    });
+
+    document
+      .getElementById("bookOwnershipType")
+      .addEventListener("change", syncBookFields);
+
+    document
+      .getElementById("bookAccessType")
+      .addEventListener("change", syncPriceField);
+
+    const form = document.getElementById("addBookForm");
+    const submitBtn = document.getElementById("addBookSubmitBtn");
+    const submitText = document.getElementById("addBookSubmitText");
+    const spinner = document.getElementById("addBookSubmitSpinner");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Sync Quill → textarea
+      const description = document.getElementById("bookDescription");
+      description.value = bookDescriptionQuill.root.innerHTML;
+
+      if (
+        description.value === "<p><br></p>" ||
+        description.value.trim() === ""
+      ) {
+        description.value = "";
+      }
+
+      submitBtn.disabled = true;
+      spinner.classList.remove("hidden");
+      submitText.textContent = "Saving...";
+
+      try {
+        const formData = new FormData(form);
+
+        if (!formData.get("coverImage")?.name) {
+          formData.delete("coverImage");
+        }
+
+        if (!formData.get("pdfFile")?.name) {
+          formData.delete("pdfFile");
+        }
+
+        const res = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          alert("Failed to create book.");
+          submitBtn.disabled = false;
+          spinner.classList.add("hidden");
+          submitText.textContent = "Save book";
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong.");
+        submitBtn.disabled = false;
+        spinner.classList.add("hidden");
+        submitText.textContent = "Save book";
+      }
+    });
+  });
+</script>
+

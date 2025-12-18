@@ -1,7 +1,7 @@
 // src/repository/books/book.repository.ts
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { BaseRepository } from '../base.repository';
 import { BookEntity } from 'src/database/entities/book.entity';
 import {
@@ -9,6 +9,7 @@ import {
   UserBookDownloadEntity,
 } from 'src/database/entities/user-book-download.entity';
 import { BooksQueryDto } from 'src/books/dtos/books-query.dto';
+import { AdminBooksQueryDto } from 'src/books/dtos/admin-books-query.dto';
 
 @Injectable()
 export class BookRepository extends BaseRepository<
@@ -177,7 +178,6 @@ export class BookRepository extends BaseRepository<
 
     const {
       id,
-      slug,
       title,
       author,
       description,
@@ -195,7 +195,6 @@ export class BookRepository extends BaseRepository<
 
     return {
       id,
-      slug,
       title,
       author,
       description,
@@ -237,5 +236,160 @@ export class BookRepository extends BaseRepository<
     }
 
     return download;
+  }
+
+  private adminBaseQB(
+    params: AdminBooksQueryDto,
+  ): SelectQueryBuilder<BookEntity> {
+    const qb = this.query('b');
+
+    if (params.publishedOnly === true) qb.andWhere('b.isPublished = true');
+    if (params.publishedOnly === false) qb.andWhere('b.isPublished = false');
+
+    if (params.q) {
+      const q = `%${params.q.toLowerCase()}%`;
+      qb.andWhere(
+        `(LOWER(b.title) ILIKE :q OR LOWER(b.author) ILIKE :q OR LOWER(b.slug) ILIKE :q)`,
+        { q },
+      );
+    }
+
+    if (params.ownershipType)
+      qb.andWhere('b.ownershipType = :ot', { ot: params.ownershipType });
+    if (params.accessType)
+      qb.andWhere('b.accessType = :at', { at: params.accessType });
+
+    const orderBy = params.orderBy ?? 'createdAt';
+    const orderDir = params.orderDir ?? 'DESC';
+    qb.orderBy(`b.${orderBy}`, orderDir);
+
+    return qb;
+  }
+
+  /**
+   * Admin paginated list + download stats
+   */
+  async searchAdminPaginated(params: AdminBooksQueryDto = {}) {
+    const page = Math.max(params.page ?? 1, 1);
+    const pageSize = Math.max(params.pageSize ?? 20, 1);
+
+    const qb = this.adminBaseQB(params);
+
+    // Page entities
+    const { entities } = await qb
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getRawAndEntities();
+
+    // Total count
+    const total = await qb.getCount();
+
+    // Download stats for only books on this page
+    const ids = entities.map((b) => b.id);
+    let statsByBookId: Record<
+      number,
+      { totalDownloads: number; activeDownloads: number }
+    > = {};
+
+    if (ids.length) {
+      const rawStats = await this.downloadRepo
+        .createQueryBuilder('ubd')
+        .select('ubd.bookId', 'bookId')
+        .addSelect('COUNT(*)::int', 'totalDownloads')
+        .addSelect(
+          'SUM(CASE WHEN ubd.isActive = true THEN 1 ELSE 0 END)::int',
+          'activeDownloads',
+        )
+        .where('ubd.bookId IN (:...ids)', { ids })
+        .groupBy('ubd.bookId')
+        .getRawMany();
+
+      statsByBookId = rawStats.reduce(
+        (acc, r) => {
+          acc[Number(r.bookId)] = {
+            totalDownloads: Number(r.totalDownloads ?? 0),
+            activeDownloads: Number(r.activeDownloads ?? 0),
+          };
+          return acc;
+        },
+        {} as Record<
+          number,
+          { totalDownloads: number; activeDownloads: number }
+        >,
+      );
+    }
+
+    return {
+      page,
+      pageSize,
+      totalItems: total,
+      totalPages: Math.ceil(total / pageSize),
+      items: entities.map((b) => ({
+        ...b,
+        downloadStats: statsByBookId[b.id] ?? {
+          totalDownloads: 0,
+          activeDownloads: 0,
+        },
+      })),
+    };
+  }
+
+  async findAdminBookWithDownloadsOrFail(bookId: number) {
+    const book = await this.repository.findOne({ where: { id: bookId } });
+    if (!book) throw new NotFoundException('Book not found');
+
+    const downloads = await this.downloadRepo.find({
+      where: { bookId },
+      relations: { user: true }, // requires UserBookDownloadEntity.user relation (you already have it)
+      order: { downloadedAt: 'DESC' },
+    });
+
+    const mappedDownloads = downloads.map((d) => ({
+      id: d.id,
+      bookId: d.bookId,
+      userId: d.userId,
+      userEmail: d.user?.email_address ?? null,
+      userName: d.user?.userName ?? null,
+      status: d.status,
+      isActive: d.isActive,
+      paymentRef: d.paymentRef ?? null,
+      downloadedAt: d.downloadedAt,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    }));
+
+    const totalDownloads = downloads.length;
+    const activeDownloads = downloads.filter((d) => d.isActive).length;
+
+    return {
+      book: book, // or: this.toPublic(book) if you want to hide admin-only fields
+      downloads: mappedDownloads,
+      downloadStats: {
+        total: totalDownloads,
+        active: activeDownloads,
+      },
+    };
+  }
+
+  async archiveBook(bookId: number, revokeActiveDownloads = false) {
+    const book = await this.repository.findOne({ where: { id: bookId } });
+    if (!book) throw new NotFoundException('Book not found');
+
+    // unpublish so it disappears from user list
+    book.isPublished = false;
+    await this.repository.save(book);
+
+    // optional: revoke active downloads (policy decision)
+    if (revokeActiveDownloads) {
+      await this.downloadRepo.update(
+        { bookId, isActive: true },
+        { isActive: false },
+      );
+    }
+
+    // soft-delete the book row (keeps data + relations)
+    await this.repository.softDelete({ id: bookId });
+
+    return { ok: true };
   }
 }

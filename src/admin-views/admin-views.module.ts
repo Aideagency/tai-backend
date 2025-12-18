@@ -6,6 +6,7 @@ import { AdminViewsService } from './admin-views-service';
 import { EventModule } from 'src/event/event.module';
 import { ChallengesModule } from 'src/challenges/challenges.module';
 import { CounsellingModule } from 'src/counselling/counselling.module';
+import { BooksModule } from 'src/books/books.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CounsellingModule } from 'src/counselling/counselling.module';
     EventModule,
     ChallengesModule,
     CounsellingModule,
+    BooksModule,
   ],
   controllers: [AdminViewsController],
   providers: [AdminViewsService],

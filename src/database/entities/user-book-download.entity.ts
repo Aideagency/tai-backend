@@ -38,7 +38,7 @@ export class UserBookDownloadEntity extends CustomEntity {
   @Column({
     type: 'enum',
     enum: OwnershipStatus,
-    enumName: 'event_registration_status_enum', // any name you like
+    enumName: 'user_book_download_status_enum', // any name you like
     default: OwnershipStatus.PENDING_PAYMENT, // optional but usually useful
   })
   status: OwnershipStatus;

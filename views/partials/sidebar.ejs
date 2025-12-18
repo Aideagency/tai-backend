@@ -78,6 +78,18 @@
       <span>Counselling</span>
     </a>
 
+    <a
+      href="/admin-views/books"
+      class="
+        flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all
+        <%= currentPath.includes('books')
+            ? 'bg-[var(--color-primary)] text-white'
+            : 'text-gray-700 hover:bg-[var(--color-secondary-light)] hover:text-gray-900' %>
+      "
+    >
+      <span>Books</span>
+    </a>
+
   </nav>
 
   <!-- Logout -->

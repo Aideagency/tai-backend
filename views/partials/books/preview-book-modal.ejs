@@ -1,0 +1,285 @@
+<!-- Preview Book Modal -->
+<div
+  id="previewBookModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 text-xs">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Book Preview</h3>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closePreviewBookModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div id="previewBookContent" class="space-y-3">
+      <!-- Header: Cover + Basic info -->
+      <div class="flex gap-3">
+        <img
+          id="previewBookCover"
+          src=""
+          alt="Book cover"
+          class="w-20 h-24 rounded-lg object-cover border border-gray-200 bg-gray-50"
+        />
+
+        <div class="min-w-0">
+          <p class="font-semibold text-gray-800 text-sm" id="previewBookTitle"></p>
+          <p class="text-[11px] text-gray-600">
+            By <span id="previewBookAuthor" class="font-medium"></span>
+          </p>
+          <p class="text-[11px] text-gray-600 mt-1" id="previewBookDescription"></p>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Ownership</span>
+          <p class="text-[11px] font-medium" id="previewBookOwnershipType"></p>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500">Access</span>
+          <p class="text-[11px] font-medium" id="previewBookAccessType"></p>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500">Published</span>
+          <p class="text-[11px] font-medium" id="previewBookPublished"></p>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500">Currency</span>
+          <p class="text-[11px] font-medium" id="previewBookCurrency"></p>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div>
+        <span class="text-[10px] text-gray-500">Price</span>
+        <p class="text-[11px]" id="previewBookPrice"></p>
+      </div>
+
+      <!-- Links -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">External URL</span>
+          <a
+            id="previewBookExternalUrl"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-[var(--color-primary-dark)] underline break-all"
+          >
+            N/A
+          </a>
+        </div>
+
+        <div>
+          <span class="text-[10px] text-gray-500">PDF URL</span>
+          <a
+            id="previewBookPdfUrl"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-[var(--color-primary-dark)] underline break-all"
+          >
+            N/A
+          </a>
+        </div>
+      </div>
+
+      <!-- Download summary -->
+      <div class="border-t pt-3 mt-2">
+        <span class="text-[10px] text-gray-500 block mb-1">Downloads</span>
+        <div class="grid grid-cols-2 gap-2">
+          <p class="text-[11px]">
+            Total: <span id="previewBookTotalDownloads" class="font-medium"></span>
+          </p>
+          <p class="text-[11px]">
+            Active: <span id="previewBookActiveDownloads" class="font-medium"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Dates -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <span class="text-[10px] text-gray-500">Created</span>
+          <p class="text-[11px]" id="previewBookCreatedAt"></p>
+        </div>
+        <div>
+          <span class="text-[10px] text-gray-500">Updated</span>
+          <p class="text-[11px]" id="previewBookUpdatedAt"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div
+      id="previewBookLoading"
+      class="hidden text-[11px] text-gray-500 text-center py-4"
+    >
+      Loading book details...
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button
+        type="button"
+        class="px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+        onclick="closePreviewBookModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setPreviewBookLoading(isLoading) {
+    const content = document.getElementById("previewBookContent");
+    const loading = document.getElementById("previewBookLoading");
+    if (!content || !loading) return;
+
+    if (isLoading) {
+      content.classList.add("hidden");
+      loading.classList.remove("hidden");
+    } else {
+      content.classList.remove("hidden");
+      loading.classList.add("hidden");
+    }
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+
+    return date.toLocaleString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  function money(value, currency) {
+    if (value === null || value === undefined || value === "") return "-";
+    const n = Number(value);
+    if (Number.isNaN(n)) return String(value);
+
+    // simple formatting; you can switch to Intl.NumberFormat if you want
+    return `${currency || ""} ${n.toLocaleString()}`.trim();
+  }
+
+  async function openPreviewBookModal(btn) {
+    const modal = document.getElementById("previewBookModal");
+    if (!modal) return;
+
+    const id = btn.dataset.bookId;
+    if (!id) {
+      console.error("Missing data-book-id on preview button");
+      return;
+    }
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setPreviewBookLoading(true);
+
+    try {
+      const res = await fetch(`/admin/books/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setPreviewBookLoading(false);
+        document.getElementById("previewBookTitle").textContent =
+          "Error loading book";
+        return;
+      }
+
+      const json = await res.json();
+      const payload = json?.data || {};
+      const book = payload?.book || {};
+      const stats = payload?.downloadStats || {};
+
+      setPreviewBookLoading(false);
+
+      // Cover
+      const coverEl = document.getElementById("previewBookCover");
+      coverEl.src =
+        book.coverImageUrl ||
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='14'%3ENo%20Cover%3C/text%3E%3C/svg%3E";
+      coverEl.alt = book.title ? `${book.title} cover` : "Book cover";
+
+      // Basic info
+      document.getElementById("previewBookTitle").textContent = book.title || "-";
+      document.getElementById("previewBookAuthor").textContent = book.author || "-";
+      document.getElementById("previewBookDescription").textContent =
+        book.description || "-";
+
+      // Meta
+      document.getElementById("previewBookOwnershipType").textContent =
+        book.ownershipType || "-";
+      document.getElementById("previewBookAccessType").textContent =
+        book.accessType || "-";
+      document.getElementById("previewBookPublished").textContent =
+        book.isPublished ? "Yes" : "No";
+      document.getElementById("previewBookCurrency").textContent =
+        book.currency || "-";
+
+      // Price rules
+      const priceEl = document.getElementById("previewBookPrice");
+      if (book.ownershipType === "EXTERNAL") {
+        priceEl.textContent = "-";
+      } else if (book.accessType === "FREE") {
+        priceEl.textContent = "Free";
+      } else if (book.accessType === "PAID") {
+        priceEl.textContent = money(book.price, book.currency || "NGN");
+      } else {
+        priceEl.textContent = "-";
+      }
+
+      // Links
+      const extEl = document.getElementById("previewBookExternalUrl");
+      const externalUrl = book.externalUrl || "";
+      extEl.href = externalUrl || "#";
+      extEl.textContent = externalUrl ? externalUrl : "N/A";
+
+      const pdfEl = document.getElementById("previewBookPdfUrl");
+      const pdfUrl = book.pdfUrl || "";
+      pdfEl.href = pdfUrl || "#";
+      pdfEl.textContent = pdfUrl ? "Open PDF" : "N/A";
+
+      // Downloads
+      document.getElementById("previewBookTotalDownloads").textContent =
+        stats.total ?? 0;
+      document.getElementById("previewBookActiveDownloads").textContent =
+        stats.active ?? 0;
+
+      // Dates
+      document.getElementById("previewBookCreatedAt").textContent =
+        formatDateTime(book.createdAt);
+      document.getElementById("previewBookUpdatedAt").textContent =
+        formatDateTime(book.updatedAt);
+    } catch (err) {
+      console.error(err);
+      setPreviewBookLoading(false);
+      document.getElementById("previewBookTitle").textContent =
+        "Error loading book";
+    }
+  }
+
+  function closePreviewBookModal() {
+    const modal = document.getElementById("previewBookModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+</script>

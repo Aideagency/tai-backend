@@ -1,0 +1,135 @@
+<!-- Delete Book Modal -->
+<div
+  id="deleteBookModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6">
+    <h3 class="text-sm font-semibold text-gray-800 mb-2">
+      Confirm Delete
+    </h3>
+
+    <p class="text-xs text-gray-600 mb-4">
+      Are you sure you want to delete
+      <span id="deleteBookTitle" class="font-semibold text-red-600"></span>?
+      This action cannot be undone.
+    </p>
+
+    <div class="flex justify-end gap-2 mt-4">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+        onclick="closeDeleteBookModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        id="confirmDeleteBookBtn"
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <span id="confirmDeleteBookText">Delete</span>
+
+        <!-- Spinner -->
+        <svg
+          id="confirmDeleteBookSpinner"
+          class="hidden animate-spin h-4 w-4 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedBookId = null;
+
+  function openDeleteBookModal(btn) {
+    const modal = document.getElementById("deleteBookModal");
+    if (!modal) return;
+
+    selectedBookId = btn.dataset.bookId;
+    const title = btn.dataset.bookTitle || "";
+
+    const titleSpan = document.getElementById("deleteBookTitle");
+    if (titleSpan) titleSpan.textContent = title;
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closeDeleteBookModal() {
+    const modal = document.getElementById("deleteBookModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    selectedBookId = null;
+
+    const btn = document.getElementById("confirmDeleteBookBtn");
+    const text = document.getElementById("confirmDeleteBookText");
+    const spinner = document.getElementById("confirmDeleteBookSpinner");
+
+    if (btn && text && spinner) {
+      btn.disabled = false;
+      spinner.classList.add("hidden");
+      text.textContent = "Delete";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("confirmDeleteBookBtn");
+    const text = document.getElementById("confirmDeleteBookText");
+    const spinner = document.getElementById("confirmDeleteBookSpinner");
+
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+      if (!selectedBookId) return;
+
+      try {
+        btn.disabled = true;
+        spinner.classList.remove("hidden");
+        text.textContent = "Deleting...";
+
+        // Update this route to match your backend
+        const res = await fetch(`/admin/books/archive/${selectedBookId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          btn.disabled = false;
+          spinner.classList.add("hidden");
+          text.textContent = "Delete";
+          alert("Error deleting book.");
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        spinner.classList.add("hidden");
+        text.textContent = "Delete";
+        alert("Something went wrong.");
+      }
+    });
+  });
+</script>

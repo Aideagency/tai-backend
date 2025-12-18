@@ -9,14 +9,17 @@ import {
   IsUrl,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   BookAccessType,
   BookOwnershipType,
 } from 'src/database/entities/book.entity';
 
 export class CreateBookDto {
+  /* ---------------- BASIC INFO ---------------- */
+
   @ApiProperty({ example: 'The Meaning of Marriage' })
   @IsString()
   @MaxLength(200)
@@ -34,15 +37,24 @@ export class CreateBookDto {
   @IsString()
   description?: string;
 
-  /**
-   * FILE UPLOAD (Cover Image)
-   */
+  /* ---------------- FILE UPLOADS ---------------- */
+
   @ApiPropertyOptional({
     type: 'string',
     format: 'binary',
     description: 'Cover image upload (jpg/png/webp).',
   })
   coverImage?: Express.Multer.File;
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'PDF upload (required when ownershipType = IN_HOUSE)',
+  })
+  @ValidateIf((o) => o.ownershipType === BookOwnershipType.IN_HOUSE)
+  pdfFile?: Express.Multer.File;
+
+  /* ---------------- OWNERSHIP ---------------- */
 
   @ApiProperty({
     enum: BookOwnershipType,
@@ -51,24 +63,28 @@ export class CreateBookDto {
   @IsEnum(BookOwnershipType)
   ownershipType: BookOwnershipType;
 
+  /* ---------------- ACCESS TYPE ---------------- */
+
   @ApiPropertyOptional({
     enum: BookAccessType,
     example: BookAccessType.PAID,
     description: 'Required when ownershipType = IN_HOUSE',
   })
-  @IsOptional()
+  @ValidateIf((o) => o.ownershipType === BookOwnershipType.IN_HOUSE)
   @IsEnum(BookAccessType)
   accessType?: BookAccessType;
 
-  /**
-   * 💰 PRICE
-   * Comes in as string → convert to number
-   */
+  /* ---------------- PRICE ---------------- */
+
   @ApiPropertyOptional({
     example: 25000,
     description: 'Required when accessType = PAID',
   })
-  @IsOptional()
+  @ValidateIf(
+    (o) =>
+      o.ownershipType === BookOwnershipType.IN_HOUSE &&
+      o.accessType === BookAccessType.PAID,
+  )
   @Transform(({ value }) =>
     value === '' || value === null || value === undefined
       ? undefined
@@ -78,31 +94,19 @@ export class CreateBookDto {
   @Min(0)
   price?: number;
 
-  /**
-   * 🌍 External URL
-   */
+  /* ---------------- EXTERNAL URL ---------------- */
+
   @ApiPropertyOptional({
     example: 'https://vendor.com/books/the-meaning-of-marriage',
     description: 'Required when ownershipType = EXTERNAL',
   })
-  @IsOptional()
+  @ValidateIf((o) => o.ownershipType === BookOwnershipType.EXTERNAL)
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsUrl()
   externalUrl?: string;
 
-  /**
-   * FILE UPLOAD (PDF)
-   */
-  @ApiPropertyOptional({
-    type: 'string',
-    format: 'binary',
-    description: 'PDF upload (required when ownershipType = IN_HOUSE)',
-  })
-  pdfFile?: Express.Multer.File;
+  /* ---------------- PUBLISHED FLAG ---------------- */
 
-  /**
-   * 📢 Published flag
-   * "true" | "false" → boolean
-   */
   @ApiPropertyOptional({
     example: true,
     description: 'Whether this book is visible to non-admin users.',

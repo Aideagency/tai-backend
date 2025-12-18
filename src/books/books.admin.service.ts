@@ -4,19 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-
 import {
   BookEntity,
   BookAccessType,
   BookOwnershipType,
 } from 'src/database/entities/book.entity';
-import { UserBookDownloadEntity } from 'src/database/entities/user-book-download.entity';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookRepository } from 'src/repository/book/book.repository';
 import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
+import { AdminBooksQueryDto } from './dtos/admin-books-query.dto';
 
 @Injectable()
 export class AdminBooksService {
@@ -96,8 +93,6 @@ export class AdminBooksService {
     book.pdfUrl = pdf?.url ?? null;
     book.pdfPublicId = pdf?.publicId ?? null;
 
-    console.log(book)
-
     return this.bookRepo.save(book);
   }
 
@@ -145,34 +140,22 @@ export class AdminBooksService {
     return this.bookRepo.save(book);
   }
 
-  async getBookAdmin(bookId: number, includeDownloads = true) {
-    // const book = await this.bookRepo.findOne({ where: { id: bookId } });
-    // if (!book) throw new NotFoundException('Book not found');
-    // if (!includeDownloads) return book;
-    // const downloads = await this.downloadRepo.find({
-    //   where: { bookId },
-    //   relations: { user: true },
-    //   order: { downloadedAt: 'DESC' },
-    // });
-    // return {
-    //   ...book,
-    //   downloads: downloads.map((d) => ({
-    //     id: d.id,
-    //     userId: d.userId,
-    //     userEmail: d.user?.email_address ?? null,
-    //     status: d.status,
-    //     isActive: d.isActive,
-    //     paymentRef: d.paymentRef ?? null,
-    //     downloadedAt: d.downloadedAt,
-    //   })),
-    //   downloadStats: {
-    //     total: downloads.length,
-    //     active: downloads.filter((d) => d.isActive).length,
-    //   },
-    // };
+  async getBookAdmin(bookId: number) {
+    return this.bookRepo.findAdminBookWithDownloadsOrFail(bookId);
+  }
+
+  async listBooksAdminPaginated(query: AdminBooksQueryDto = {}) {
+    return this.bookRepo.searchAdminPaginated(query);
+  }
+
+  async archiveBook(bookId: number) {
+    return this.bookRepo.archiveBook(bookId);
   }
 
   async listBooksAdmin(options?: { q?: string; publishedOnly?: boolean }) {
+    const books = await this.bookRepo.findAll({
+      where: {},
+    });
     // const qb = this.bookRepo.createQueryBuilder('b');
     // if (options?.publishedOnly) qb.andWhere('b.isPublished = true');
     // if (options?.q) {

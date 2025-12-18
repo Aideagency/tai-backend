@@ -23,6 +23,8 @@ import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.
 import { CounsellingService } from 'src/counselling/counselling.service';
 import { GetCounsellingsFilterDto } from 'src/counselling/dtos/get-counselling-filter.dto';
 import { GetCounsellingBookingsFilterDto } from 'src/counselling/dtos/get-counselling-booking-filter.dto';
+import { AdminBooksService } from 'src/books/books.admin.service';
+import { AdminBooksQueryDto } from 'src/books/dtos/admin-books-query.dto';
 
 @Injectable()
 export class AdminViewsService {
@@ -39,6 +41,7 @@ export class AdminViewsService {
     private readonly eventService: EventService,
     private readonly challengeService: ChallengesService,
     private readonly counsellingService: CounsellingService,
+    private readonly bookService: AdminBooksService,
   ) {}
 
   async listUsers(params: UserSearchParams) {
@@ -61,6 +64,13 @@ export class AdminViewsService {
     counsellingId: number,
     params: GetCounsellingBookingsFilterDto,
   ) {
-    return this.counsellingService.getCounsellingBookingsPaginated(counsellingId,  params);
+    return this.counsellingService.getCounsellingBookingsPaginated(
+      counsellingId,
+      params,
+    );
+  }
+
+  async listBooks(params: AdminBooksQueryDto) {
+    return this.bookService.listBooksAdminPaginated(params);
   }
 }
