@@ -372,24 +372,24 @@ export class BookRepository extends BaseRepository<
   }
 
   async archiveBook(bookId: number, revokeActiveDownloads = false) {
-    const book = await this.repository.findOne({ where: { id: bookId } });
-    if (!book) throw new NotFoundException('Book not found');
+  const book = await this.repository.findOne({ where: { id: bookId } });
+  if (!book) throw new NotFoundException('Book not found');
 
-    // unpublish so it disappears from user list
-    book.isPublished = false;
-    await this.repository.save(book);
+  // unpublish so it disappears from user list
+  book.isPublished = false;
+  await this.repository.save(book);
 
-    // optional: revoke active downloads (policy decision)
-    if (revokeActiveDownloads) {
-      await this.downloadRepo.update(
-        { bookId, isActive: true },
-        { isActive: false },
-      );
-    }
-
-    // soft-delete the book row (keeps data + relations)
-    await this.repository.softDelete({ id: bookId });
-
-    return { ok: true };
+  // optional: revoke active downloads (policy decision)
+  if (revokeActiveDownloads) {
+    await this.downloadRepo.update(
+      { bookId, isActive: true },
+      { isActive: false },
+    );
   }
+
+  // soft-delete the book row (keeps data + relations)
+  await this.repository.softDelete({ id: bookId });
+
+  return { ok: true };
+}
 }
