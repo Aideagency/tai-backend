@@ -14,8 +14,8 @@ import {
 import { TracerLogger } from 'src/logger/logger.service';
 import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
 import * as crypto from 'crypto';
-import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
-import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
+// import { EventRegistrationRepository } from 'src/repository/event/event-registration.repository';
+// import { RegistrationStatus } from 'src/database/entities/event-registration.entity';
 import { EventService } from 'src/event/event.service';
 import { CounsellingService } from 'src/counselling/counselling.service';
 import { BooksService } from 'src/books/books.service';
@@ -32,7 +32,7 @@ export class PaymentService {
     private readonly eventService: EventService,
     @Inject(forwardRef(() => CounsellingService))
     private readonly counsellingService: CounsellingService,
-    @Inject(forwardRef(() => CounsellingService))
+    @Inject(forwardRef(() => BooksService))
     private readonly bookService: BooksService,
   ) {}
 

@@ -15,6 +15,6 @@ import { AdminBooksService } from './books.admin.service';
     InfrastructureModule,
     forwardRef(() => PaymentModule),
   ],
-  exports: [AdminBooksService],
+  exports: [AdminBooksService, BooksService],
 })
 export class BooksModule {}
