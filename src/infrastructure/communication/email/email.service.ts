@@ -8,7 +8,6 @@ import * as ejs from 'ejs';
 import * as html_to_pdf from 'html-pdf-node';
 import * as nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
-import { SendGridClient } from './sendgrid-mail.service';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { TracerLogger } from 'src/logger/logger.service';
 
@@ -39,7 +38,6 @@ export class EmailService {
   private templateCache: Map<string, string> = new Map();
 
   constructor(
-    private readonly sendGridClient: SendGridClient,
     private readonly logger: TracerLogger,
   ) {}
 
