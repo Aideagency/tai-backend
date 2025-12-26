@@ -57,6 +57,9 @@ export class EventEntity extends CustomEntity {
   @Column({ nullable: true })
   coverImageUrl: string | null; // URL for the event cover image
 
+  @Column({ nullable: true })
+  coverUrlPublicId: string | null;
+
   @Column({ type: 'timestamp' })
   startsAt: Date;
 

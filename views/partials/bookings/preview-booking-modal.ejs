@@ -240,7 +240,6 @@
       }
 
       const data = await res.json();
-      console.log({ data });
       const booking = data.booking || data; // handle { booking: {...} } or plain object
       const user = booking.user || {};
       const counselling = booking.counselling || {};

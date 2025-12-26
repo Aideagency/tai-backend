@@ -175,7 +175,7 @@ export class AdminViewsController {
 
     return {
       admin: req.user,
-      counselling: response.items, // the counselling offer
+      counselling: response.counselling, // the counselling offer
       items: response.items, // bookings array
       meta: response.meta, // pagination
       filters: query, // for keeping filter state in the UI

@@ -1,14 +1,16 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CoursesController } from './courses.controller';
-import { ZohoService } from './zoho.service';
 import { CommonModule } from 'src/common/common.module';
 import { RepositoryModule } from 'src/repository/repository.module';
-import { ZohoSyncService } from './zoho-sync.service';
+import { AdminCoursesController } from './admin-courses.controller';
+import { AdminCoursesService } from './admin-courses.service';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
-  providers: [CoursesService, ZohoService, ZohoSyncService],
-  controllers: [CoursesController],
-  imports: [CommonModule, RepositoryModule],
+  providers: [CoursesService, AdminCoursesService],
+  controllers: [CoursesController, AdminCoursesController],
+  imports: [CommonModule, RepositoryModule, forwardRef(() => PaymentModule)],
+  exports: [CoursesService],
 })
 export class CoursesModule {}

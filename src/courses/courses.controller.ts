@@ -1,209 +1,158 @@
-// src/courses/courses.controller.ts
-import { Controller, Get, Param, Post, Body, Query, Req } from '@nestjs/common';
+// src/modules/courses/courses.controller.ts
 import {
-  ApiExcludeController,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-
 import { CoursesService } from './courses.service';
-import { LessonProgressStatus } from 'src/database/entities/user-lesson-progress.entity';
-import { ZohoSyncService } from './zoho-sync.service';
-import { ZohoService } from './zoho.service';
+import { JwtGuards } from 'src/auth/jwt.guards';
+import { ListCoursesQueryDto as CoursesQueryDto } from './dtos/list-courses.query.dto';
 
 @ApiTags('Courses')
+@ApiBearerAuth()
+@UseGuards(JwtGuards) // remove this if courses should be public
 @Controller('courses')
-@ApiExcludeController()
 export class CoursesController {
-  constructor(
-    private readonly coursesService: CoursesService,
-    private readonly zohoSyncService: ZohoSyncService,
-    private readonly zoho: ZohoService,
-  ) {}
-
-  @Get('zoho')
-  @ApiOperation({
-    summary: 'List all available courses',
-    description:
-      'Returns all published courses synced from Zoho Learn. Supports filtering and pagination.',
-  })
-  async listZohoCourses(@Query() query: any) {
-    const data = await this.zoho.listCourses({ view: 'all' });
-    return { status: 200, data, message: 'Courses fetched successfully' };
-  }
-
-  @Get('zoho-course/:url')
-  @ApiOperation({
-    summary: 'List all available courses',
-    description:
-      'Returns all published courses synced from Zoho Learn. Supports filtering and pagination.',
-  })
-  async listZohoCoursesLessons(@Param('url') url: string) {
-    const data = await this.zoho.listCourses({ view: 'all' });
-    return { status: 200, data, message: 'Courses fetched successfully' };
-  }
-
-  @Get('zoho-course-resources/:courseId')
-  @ApiOperation({
-    summary: 'List all available course resources',
-    description:
-      'Returns all published courses synced from Zoho Learn. Supports filtering and pagination.',
-  })
-  async listZohoCourseResources(@Param('courseId') courseId: string) {
-    const data = await this.zoho.getCourseResources(courseId);
-    return { status: 200, data, message: 'Courses resources successfully' };
-  }
+  constructor(private readonly coursesService: CoursesService) {}
 
   /**
-   * Fetches a list of available courses.
-   * - Returns locally stored courses synced from Zoho Learn
-   * - Supports filtering, pagination, and search via query params
-   * - Does NOT require user enrollment
+   * LIST COURSES
+   * Returns a paginated list of courses.
+   * Supports:
+   * - search by title (q)
+   * - filter by status
+   * - pagination (page, pageSize)
+   * Response: { items, meta }
    */
   @Get()
   @ApiOperation({
-    summary: 'List all available courses',
+    summary: 'List courses',
     description:
-      'Returns all published courses synced from Zoho Learn. Supports filtering and pagination.',
+      'Returns a paginated list of courses. Supports optional search by title, status filter, and pagination.',
   })
-  async list(@Query() query: any) {
-    const data = await this.coursesService.listCourses(query);
-    return { status: 200, data, message: 'Courses fetched successfully' };
+  @ApiOkResponse({ description: 'List courses (paginated)' })
+  async listCourses(@Query() query: CoursesQueryDto, req: any) {
+    return this.coursesService.list(req.user.id, query);
   }
 
   /**
-   * Triggers a manual sync of courses and lessons from Zoho Learn.
-   * - Pulls latest courses, lessons, articles, and metadata
-   * - Upserts data into the local database
-   * - Intended for admin / cron usage
+   * GET COURSE (BASIC)
+   * Returns the basic details of a single course by ID.
+   * Does NOT include lessons/attachments (use /content for full course info).
    */
-  @Get('sync-courses')
+  @Get(':courseId')
   @ApiOperation({
-    summary: 'Manually sync courses from Zoho Learn',
+    summary: 'Get course by ID',
     description:
-      'Triggers a full synchronization of courses and lessons from Zoho Learn into the local database.',
+      'Returns basic course information by courseId. Does not include lessons or course stats. Use /courses/:courseId/content for full content.',
   })
-  async sync() {
-    await this.zohoSyncService.syncDaily();
-    return { status: 200, message: 'Courses synced successfully' };
+  @ApiParam({
+    name: 'courseId',
+    type: Number,
+    description: 'The numeric ID of the course',
+    example: 12,
+  })
+  @ApiOkResponse({ description: 'Get course by id' })
+  async getCourse(@Param('courseId', ParseIntPipe) courseId: number) {
+    return this.coursesService.findOne(courseId);
   }
 
   /**
-   * Fetches the course outline (lesson structure).
-   * - Includes chapters, lessons, articles, videos, etc.
-   * - Does NOT include user-specific progress
+   * LIST COURSE LESSONS
+   * Returns the ordered lessons for a course.
+   * Useful for:
+   * - building a lesson sidebar
+   * - rendering lesson list pages
    */
-  @Get(':courseId/outline')
+  @Get(':courseId/lessons')
   @ApiOperation({
-    summary: 'Get course outline',
+    summary: 'List lessons for a course',
     description:
-      'Returns the full lesson structure for a course including chapters and lessons.',
+      'Returns ordered lessons for the specified course. This is typically used for displaying a lesson list/outline for a course.',
   })
-  @ApiParam({ name: 'courseId', description: 'Local course ID' })
-  async outline(@Param('courseId') courseId: string) {
-    const data = await this.coursesService.getCourseOutline(Number(courseId));
-    return {
-      status: 200,
-      data,
-      message: 'Course outline fetched successfully',
-    };
+  @ApiParam({
+    name: 'courseId',
+    type: Number,
+    description: 'The numeric ID of the course',
+    example: 12,
+  })
+  @ApiOkResponse({ description: 'List course lessons (ordered)' })
+  async listCourseLessons(@Param('courseId', ParseIntPipe) courseId: number) {
+    return this.coursesService.listCourseLessons(courseId);
   }
 
   /**
-   * Enrolls the authenticated user into a course.
-   * - Creates a UserCourseProgress record
-   * - Initializes lesson progress tracking
-   * - Validates course access (FREE / PAID)
+   * GET COURSE CONTENT (FULL)
+   * Returns a full course view including:
+   * - course info
+   * - ordered lessons
+   * - lesson attachments (if included by service)
+   * - course stats (lesson count, attachments count, etc.)
+   *
+   * Use this endpoint to render a full course page or learning dashboard.
    */
+  @Get(':courseId/content')
+  @ApiOperation({
+    summary: 'Get full course content (course + lessons + stats)',
+    description:
+      'Returns a full course payload including course information, ordered lessons, and course stats. This is best for rendering a complete course view.',
+  })
+  @ApiParam({
+    name: 'courseId',
+    type: Number,
+    description: 'The numeric ID of the course',
+    example: 12,
+  })
+  @ApiOkResponse({
+    description: 'Get full course content (course + lessons + stats)',
+  })
+  async getCourseContent(@Param('courseId', ParseIntPipe) courseId: number) {
+    return this.coursesService.getCourseContent(courseId);
+  }
+
   @Post(':courseId/enroll')
   @ApiOperation({
     summary: 'Enroll in a course',
     description:
-      'Enrolls the authenticated user into the specified course and initializes progress tracking.',
+      'Enrolls the authenticated user into a course. ' +
+      'If the course is free, enrollment is completed immediately. ' +
+      'If the course is paid, a payment initialization response is returned for completion.',
   })
-  @ApiParam({ name: 'courseId', description: 'Local course ID' })
-  async enroll(@Req() req: any, @Param('courseId') courseId: string) {
-    const userId = Number(req.user.id);
-    const data = await this.coursesService.enroll(userId, Number(courseId));
-    return { status: 200, data, message: 'Enrolled successfully' };
-  }
-
-  /**
-   * Fetches the authenticated user’s progress for a course.
-   * - Includes overall progress percentage
-   * - Includes per-lesson completion status
-   */
-  @Get(':courseId/progress')
-  @ApiOperation({
-    summary: 'Get my course progress',
-    description:
-      'Returns the authenticated user’s progress for a specific course.',
+  @ApiParam({
+    name: 'courseId',
+    type: Number,
+    description: 'The numeric ID of the course to enroll in',
+    example: 12,
   })
-  @ApiParam({ name: 'courseId', description: 'Local course ID' })
-  async myProgress(@Req() req: any, @Param('courseId') courseId: string) {
-    const userId = Number(req.user.id);
-    const data = await this.coursesService.getMyCourseProgress(
-      userId,
-      Number(courseId),
-    );
-    return { status: 200, data, message: 'Progress fetched successfully' };
-  }
-
-  /**
-   * Marks a lesson as opened by the user.
-   * - Used for analytics and "last accessed" tracking
-   * - Does NOT mark the lesson as completed
-   */
-  @Post(':courseId/lessons/:lessonId/open')
-  @ApiOperation({
-    summary: 'Open a lesson',
-    description:
-      'Marks a lesson as opened by the user for tracking and analytics purposes.',
+  @ApiOkResponse({
+    description: 'Enrollment successful or payment initiated',
+    schema: {
+      example: {
+        message: 'Enrollment successful',
+        data: {
+          courseId: 12,
+          isFree: true,
+          accessStatus: 'ACTIVE',
+        },
+      },
+    },
   })
-  @ApiParam({ name: 'courseId', description: 'Local course ID' })
-  @ApiParam({ name: 'lessonId', description: 'Local lesson ID' })
-  async openLesson(
+  async enroll(
+    @Param('courseId', ParseIntPipe) courseId: number,
     @Req() req: any,
-    @Param('courseId') courseId: string,
-    @Param('lessonId') lessonId: string,
   ) {
-    const userId = Number(req.user.id);
-    const data = await this.coursesService.openLesson(
-      userId,
-      Number(courseId),
-      Number(lessonId),
-    );
-    return { status: 200, data, message: 'Lesson opened' };
-  }
-
-  /**
-   * Updates lesson progress for the authenticated user.
-   * - Can mark lesson as IN_PROGRESS or COMPLETED
-   * - Updates progress percentage
-   * - Triggers course-level progress recalculation
-   */
-  @Post(':courseId/lessons/:lessonId/progress')
-  @ApiOperation({
-    summary: 'Update lesson progress',
-    description:
-      'Updates the user’s progress for a lesson, including completion status and progress percentage.',
-  })
-  @ApiParam({ name: 'courseId', description: 'Local course ID' })
-  @ApiParam({ name: 'lessonId', description: 'Local lesson ID' })
-  async updateLessonProgress(
-    @Req() req: any,
-    @Param('courseId') courseId: string,
-    @Param('lessonId') lessonId: string,
-    @Body() body: { status?: LessonProgressStatus; progressPercent?: number },
-  ) {
-    const userId = Number(req.user.id);
-    const data = await this.coursesService.updateLessonProgress(
-      userId,
-      Number(courseId),
-      Number(lessonId),
-      body,
-    );
-    return { status: 200, data, message: 'Lesson progress updated' };
+    return this.coursesService.enroll(req, courseId);
   }
 }

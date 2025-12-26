@@ -16,7 +16,7 @@
     </div>
 
     <div id="previewBookContent" class="space-y-3">
-      <!-- Header: Cover + Basic info -->
+      <!-- Header -->
       <div class="flex gap-3">
         <img
           id="previewBookCover"
@@ -26,11 +26,19 @@
         />
 
         <div class="min-w-0">
-          <p class="font-semibold text-gray-800 text-sm" id="previewBookTitle"></p>
+          <p
+            class="font-semibold text-gray-800 text-sm"
+            id="previewBookTitle"
+          ></p>
           <p class="text-[11px] text-gray-600">
             By <span id="previewBookAuthor" class="font-medium"></span>
           </p>
-          <p class="text-[11px] text-gray-600 mt-1" id="previewBookDescription"></p>
+
+          <!-- HTML-rendered description -->
+          <div
+            id="previewBookDescription"
+            class="mt-1 text-[11px] text-gray-600 leading-relaxed max-w-none space-y-1 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-1 [&_li]:my-0 [&_a]:text-[var(--color-primary-dark)] [&_a]:underline [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_blockquote]:border-l-2 [&_blockquote]:pl-2 [&_blockquote]:text-gray-500"
+          ></div>
         </div>
       </div>
 
@@ -92,15 +100,17 @@
         </div>
       </div>
 
-      <!-- Download summary -->
+      <!-- Downloads -->
       <div class="border-t pt-3 mt-2">
         <span class="text-[10px] text-gray-500 block mb-1">Downloads</span>
         <div class="grid grid-cols-2 gap-2">
           <p class="text-[11px]">
-            Total: <span id="previewBookTotalDownloads" class="font-medium"></span>
+            Total:
+            <span id="previewBookTotalDownloads" class="font-medium"></span>
           </p>
           <p class="text-[11px]">
-            Active: <span id="previewBookActiveDownloads" class="font-medium"></span>
+            Active:
+            <span id="previewBookActiveDownloads" class="font-medium"></span>
           </p>
         </div>
       </div>
@@ -118,7 +128,7 @@
       </div>
     </div>
 
-    <!-- Loading state -->
+    <!-- Loading -->
     <div
       id="previewBookLoading"
       class="hidden text-[11px] text-gray-500 text-center py-4"
@@ -139,147 +149,190 @@
 </div>
 
 <script>
-  function setPreviewBookLoading(isLoading) {
-    const content = document.getElementById("previewBookContent");
-    const loading = document.getElementById("previewBookLoading");
-    if (!content || !loading) return;
+  /* ---------- SAFE HTML SANITIZER ---------- */
+  function sanitizeHtml(inputHtml = '') {
+    const ALLOWED_TAGS = new Set([
+      'B',
+      'STRONG',
+      'I',
+      'EM',
+      'U',
+      'BR',
+      'P',
+      'DIV',
+      'SPAN',
+      'UL',
+      'OL',
+      'LI',
+      'H1',
+      'H2',
+      'H3',
+      'H4',
+      'H5',
+      'H6',
+      'BLOCKQUOTE',
+      'CODE',
+      'PRE',
+      'A',
+    ]);
 
-    if (isLoading) {
-      content.classList.add("hidden");
-      loading.classList.remove("hidden");
-    } else {
-      content.classList.remove("hidden");
-      loading.classList.add("hidden");
-    }
+    const ALLOWED_ATTR = {
+      A: new Set(['href', 'target', 'rel']),
+    };
+
+    const template = document.createElement('template');
+    template.innerHTML = String(inputHtml || '');
+
+    const walk = (node) => {
+      if (node.nodeType === Node.COMMENT_NODE) {
+        node.remove();
+        return;
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = node.tagName;
+
+        if (!ALLOWED_TAGS.has(tag)) {
+          node.replaceWith(document.createTextNode(node.textContent || ''));
+          return;
+        }
+
+        [...node.attributes].forEach((attr) => {
+          const name = attr.name.toLowerCase();
+          const value = attr.value;
+
+          if (name.startsWith('on')) node.removeAttribute(attr.name);
+
+          const allowed = ALLOWED_ATTR[tag];
+          if (!allowed || !allowed.has(attr.name))
+            node.removeAttribute(attr.name);
+
+          if (
+            tag === 'A' &&
+            name === 'href' &&
+            /^(javascript|data):/i.test(value)
+          ) {
+            node.removeAttribute('href');
+          }
+        });
+
+        if (tag === 'A') {
+          node.setAttribute('target', '_blank');
+          node.setAttribute('rel', 'noopener noreferrer');
+        }
+      }
+
+      [...node.childNodes].forEach(walk);
+    };
+
+    walk(template.content);
+    return template.innerHTML;
+  }
+
+  function renderHtml(el, html) {
+    if (!el) return;
+    const hasHtml = /<\/?[a-z][\s\S]*>/i.test(html || '');
+    const content = hasHtml
+      ? html
+      : String(html || '').replace(/\n/g, '<br />');
+    el.innerHTML = sanitizeHtml(content) || '-';
+  }
+
+  /* ---------- UTILITIES ---------- */
+  function setPreviewBookLoading(isLoading) {
+    const content = document.getElementById('previewBookContent');
+    const loading = document.getElementById('previewBookLoading');
+    if (!content || !loading) return;
+    content.classList.toggle('hidden', isLoading);
+    loading.classList.toggle('hidden', !isLoading);
   }
 
   function formatDateTime(value) {
-    if (!value) return "-";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-
-    return date.toLocaleString("en-US", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+    if (!value) return '-';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleString('en-US', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
       hour12: true,
     });
   }
 
   function money(value, currency) {
-    if (value === null || value === undefined || value === "") return "-";
-    const n = Number(value);
-    if (Number.isNaN(n)) return String(value);
-
-    // simple formatting; you can switch to Intl.NumberFormat if you want
-    return `${currency || ""} ${n.toLocaleString()}`.trim();
+    if (value == null) return '-';
+    return `${currency || ''} ${Number(value).toLocaleString()}`.trim();
   }
 
+  /* ---------- MAIN ---------- */
   async function openPreviewBookModal(btn) {
-    const modal = document.getElementById("previewBookModal");
-    if (!modal) return;
-
-    const id = btn.dataset.bookId;
-    if (!id) {
-      console.error("Missing data-book-id on preview button");
-      return;
-    }
-
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
+    const modal = document.getElementById('previewBookModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     setPreviewBookLoading(true);
 
-    try {
-      const res = await fetch(`/admin/books/${id}`, {
-        method: "GET",
-        credentials: "include",
-      });
+    const res = await fetch(`/admin/books/${btn.dataset.bookId}`, {
+      credentials: 'include',
+    });
 
-      if (!res.ok) {
-        setPreviewBookLoading(false);
-        document.getElementById("previewBookTitle").textContent =
-          "Error loading book";
-        return;
-      }
+    const json = await res.json();
+    const book = json?.data?.book || {};
+    const stats = json?.data?.downloadStats || {};
 
-      const json = await res.json();
-      const payload = json?.data || {};
-      const book = payload?.book || {};
-      const stats = payload?.downloadStats || {};
+    setPreviewBookLoading(false);
 
-      setPreviewBookLoading(false);
-
-      // Cover
-      const coverEl = document.getElementById("previewBookCover");
-      coverEl.src =
-        book.coverImageUrl ||
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='14'%3ENo%20Cover%3C/text%3E%3C/svg%3E";
-      coverEl.alt = book.title ? `${book.title} cover` : "Book cover";
-
-      // Basic info
-      document.getElementById("previewBookTitle").textContent = book.title || "-";
-      document.getElementById("previewBookAuthor").textContent = book.author || "-";
-      document.getElementById("previewBookDescription").textContent =
-        book.description || "-";
-
-      // Meta
-      document.getElementById("previewBookOwnershipType").textContent =
-        book.ownershipType || "-";
-      document.getElementById("previewBookAccessType").textContent =
-        book.accessType || "-";
-      document.getElementById("previewBookPublished").textContent =
-        book.isPublished ? "Yes" : "No";
-      document.getElementById("previewBookCurrency").textContent =
-        book.currency || "-";
-
-      // Price rules
-      const priceEl = document.getElementById("previewBookPrice");
-      if (book.ownershipType === "EXTERNAL") {
-        priceEl.textContent = "-";
-      } else if (book.accessType === "FREE") {
-        priceEl.textContent = "Free";
-      } else if (book.accessType === "PAID") {
-        priceEl.textContent = money(book.price, book.currency || "NGN");
-      } else {
-        priceEl.textContent = "-";
-      }
-
-      // Links
-      const extEl = document.getElementById("previewBookExternalUrl");
-      const externalUrl = book.externalUrl || "";
-      extEl.href = externalUrl || "#";
-      extEl.textContent = externalUrl ? externalUrl : "N/A";
-
-      const pdfEl = document.getElementById("previewBookPdfUrl");
-      const pdfUrl = book.pdfUrl || "";
-      pdfEl.href = pdfUrl || "#";
-      pdfEl.textContent = pdfUrl ? "Open PDF" : "N/A";
-
-      // Downloads
-      document.getElementById("previewBookTotalDownloads").textContent =
-        stats.total ?? 0;
-      document.getElementById("previewBookActiveDownloads").textContent =
-        stats.active ?? 0;
-
-      // Dates
-      document.getElementById("previewBookCreatedAt").textContent =
-        formatDateTime(book.createdAt);
-      document.getElementById("previewBookUpdatedAt").textContent =
-        formatDateTime(book.updatedAt);
-    } catch (err) {
-      console.error(err);
-      setPreviewBookLoading(false);
-      document.getElementById("previewBookTitle").textContent =
-        "Error loading book";
+    const img = document.getElementById('previewBookCover');
+    if (img && book?.coverImageUrl) {
+      img.src = book.coverImageUrl;
     }
+
+    document.getElementById('previewBookTitle').textContent = book.title || '-';
+    document.getElementById('previewBookAuthor').textContent =
+      book.author || '-';
+
+    renderHtml(
+      document.getElementById('previewBookDescription'),
+      book.description,
+    );
+
+    document.getElementById('previewBookOwnershipType').textContent =
+      book.ownershipType || '-';
+    document.getElementById('previewBookAccessType').textContent =
+      book.accessType || '-';
+    document.getElementById('previewBookPublished').textContent =
+      book.isPublished ? 'Yes' : 'No';
+    document.getElementById('previewBookCurrency').textContent =
+      book.currency || '-';
+
+    document.getElementById('previewBookPrice').textContent =
+      book.accessType === 'FREE' ? 'Free' : money(book.price, book.currency);
+
+    document.getElementById('previewBookExternalUrl').textContent =
+      book.externalUrl || 'N/A';
+    document.getElementById('previewBookExternalUrl').href =
+      book.externalUrl || '#';
+
+    document.getElementById('previewBookPdfUrl').textContent = book.pdfUrl
+      ? 'Open PDF'
+      : 'N/A';
+    document.getElementById('previewBookPdfUrl').href = book.pdfUrl || '#';
+
+    document.getElementById('previewBookTotalDownloads').textContent =
+      stats.total ?? 0;
+    document.getElementById('previewBookActiveDownloads').textContent =
+      stats.active ?? 0;
+
+    document.getElementById('previewBookCreatedAt').textContent =
+      formatDateTime(book.createdAt);
+    document.getElementById('previewBookUpdatedAt').textContent =
+      formatDateTime(book.updatedAt);
   }
 
   function closePreviewBookModal() {
-    const modal = document.getElementById("previewBookModal");
-    if (!modal) return;
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
+    const modal = document.getElementById('previewBookModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 </script>

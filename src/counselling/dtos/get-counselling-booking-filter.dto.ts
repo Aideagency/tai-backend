@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsOptional,
   IsString,
@@ -7,8 +7,56 @@ import {
   IsDate,
   IsInt,
   Min,
+  IsBoolean,
 } from 'class-validator';
 import { CounsellingBookingStatus } from 'src/database/entities/counselling-booking.entity';
+
+// ✅ Converts undefined-ish query values to real undefined
+const toUndefined = ({ value }: { value: any }) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    value === 'undefined' ||
+    value === 'null'
+  ) {
+    return undefined;
+  }
+  return value;
+};
+
+// ✅ Parses "true"/"false" → boolean, else undefined
+const toBooleanOrUndefined = ({ value }: { value: any }) => {
+  const v = toUndefined({ value });
+  if (v === undefined) return undefined;
+  if (v === true || v === 'true') return true;
+  if (v === false || v === 'false') return false;
+  return undefined;
+};
+
+// ✅ Parses number safely, else undefined
+const toNumberOrUndefined = ({ value }: { value: any }) => {
+  const v = toUndefined({ value });
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+// ✅ Handles ISO dates + "YYYY-MM-DD" from <input type="date">
+const toDateOrUndefined = ({ value }: { value: any }) => {
+  const v = toUndefined({ value });
+  if (v === undefined) return undefined;
+
+  // If it’s "YYYY-MM-DD", treat as local date start
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const [y, m, d] = v.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return isNaN(dt.getTime()) ? undefined : dt;
+  }
+
+  const dt = new Date(v);
+  return isNaN(dt.getTime()) ? undefined : dt;
+};
 
 export class GetCounsellingBookingsFilterDto {
   @ApiPropertyOptional({
@@ -17,6 +65,7 @@ export class GetCounsellingBookingsFilterDto {
   })
   @IsOptional()
   @IsString()
+  @Transform(toUndefined)
   q?: string;
 
   @ApiPropertyOptional({
@@ -29,23 +78,24 @@ export class GetCounsellingBookingsFilterDto {
     message:
       'status must be one of PENDING_PAYMENT, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW, REFUNDED',
   })
+  @Transform(toUndefined)
   status?: CounsellingBookingStatus;
 
   @ApiPropertyOptional({
-    description: 'Filter bookings created from this date (ISO)',
-    example: '2025-01-01T00:00:00.000Z',
+    description: 'Filter bookings created from this date (ISO or YYYY-MM-DD)',
+    example: '2025-01-01',
   })
   @IsOptional()
-  @Type(() => Date)
+  @Transform(toDateOrUndefined)
   @IsDate()
   from?: Date;
 
   @ApiPropertyOptional({
-    description: 'Filter bookings created up to this date (ISO)',
-    example: '2025-01-31T23:59:59.999Z',
+    description: 'Filter bookings created up to this date (ISO or YYYY-MM-DD)',
+    example: '2025-01-31',
   })
   @IsOptional()
-  @Type(() => Date)
+  @Transform(toDateOrUndefined)
   @IsDate()
   to?: Date;
 
@@ -54,7 +104,7 @@ export class GetCounsellingBookingsFilterDto {
     example: 7,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(toNumberOrUndefined)
   @IsInt()
   @Min(1)
   counsellorId?: number;
@@ -64,41 +114,65 @@ export class GetCounsellingBookingsFilterDto {
     example: 22,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(toNumberOrUndefined)
   @IsInt()
   @Min(1)
   userId?: number;
 
+  @ApiPropertyOptional({
+    description: 'Filter by attendance',
+    example: true,
+    enum: ['true', 'false'],
+  })
+  @IsOptional()
+  @Transform(toBooleanOrUndefined)
+  @IsBoolean()
+  attended?: boolean;
+
+  // -------------------
   // Pagination
+  // -------------------
+
   @ApiPropertyOptional({
     description: 'Page number for pagination',
     example: 1,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 1 ? n : 1;
+  })
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page: number = 1;
 
   @ApiPropertyOptional({
     description: 'Number of results per page',
     example: 20,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(({ value }) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 1 ? n : 20;
+  })
   @IsInt()
   @Min(1)
-  pageSize?: number = 20;
+  pageSize: number = 20;
 
+  // -------------------
   // Sorting
+  // -------------------
+
   @ApiPropertyOptional({
     description: 'Field to sort by',
     example: 'createdAt',
     enum: ['createdAt', 'startsAt', 'id'],
   })
   @IsOptional()
-  @IsString()
-  orderBy?: 'createdAt' | 'startsAt' | 'id' = 'createdAt';
+  @Transform(({ value }) =>
+    ['createdAt', 'startsAt', 'id'].includes(value) ? value : 'createdAt',
+  )
+  orderBy: 'createdAt' | 'startsAt' | 'id' = 'createdAt';
 
   @ApiPropertyOptional({
     description: 'Sort direction',
@@ -106,6 +180,8 @@ export class GetCounsellingBookingsFilterDto {
     enum: ['ASC', 'DESC'],
   })
   @IsOptional()
-  @IsString()
-  orderDir?: 'ASC' | 'DESC' = 'DESC';
+  @Transform(({ value }) =>
+    value === 'ASC' || value === 'DESC' ? value : 'DESC',
+  )
+  orderDir: 'ASC' | 'DESC' = 'DESC';
 }

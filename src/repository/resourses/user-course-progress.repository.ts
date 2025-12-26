@@ -7,7 +7,10 @@ import {
   UserCourseProgressEntity,
   CourseStatus,
 } from 'src/database/entities/user-course-progress.entity';
-import { CourseEntity } from 'src/database/entities/course.entity';
+import {
+  CourseEntity,
+  PublishStatus,
+} from 'src/database/entities/course.entity';
 
 @Injectable()
 export class UserCourseProgressRepository extends BaseRepository<
@@ -29,7 +32,7 @@ export class UserCourseProgressRepository extends BaseRepository<
   async getForUserCourse(userId: number, courseId: number) {
     return this.repository.findOne({
       where: { userId, courseId },
-      relations: ['course', 'lessonProgress'],
+      relations: ['course'], // no more lessonProgress relation
     });
   }
 
@@ -37,12 +40,19 @@ export class UserCourseProgressRepository extends BaseRepository<
     const course = await this.courseRepo.findOne({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
 
+    // optional: only allow enroll if published
+    if (course.status !== PublishStatus.PUBLISHED) {
+      throw new NotFoundException('Course not available');
+    }
+
     const existing = await this.repository.findOne({
       where: { userId, courseId },
     });
     if (existing) return existing;
 
     return this.dataSource.transaction(async (manager) => {
+      const now = new Date();
+
       const row = manager.create(UserCourseProgressEntity, {
         user: { id: userId } as any,
         userId,
@@ -50,8 +60,8 @@ export class UserCourseProgressRepository extends BaseRepository<
         courseId,
         status: CourseStatus.IN_PROGRESS,
         progressPercent: 0,
-        startedAt: new Date(),
-        lastAccessedAt: new Date(),
+        startedAt: now,
+        lastAccessedAt: now,
       });
 
       return manager.save(UserCourseProgressEntity, row);

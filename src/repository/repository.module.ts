@@ -44,17 +44,23 @@ import { RefundRequestRepository } from './refund/refund-request.repository';
 import { RefundRequestEntity } from 'src/database/entities/refund-request.entity';
 import { CourseEntity } from 'src/database/entities/course.entity';
 import { UserLessonProgressEntity } from 'src/database/entities/user-lesson-progress.entity';
-import { UserCourseProgressEntity } from 'src/database/entities/user-course-progress.entity';
+// import { UserCourseProgressEntity } from 'src/database/entities/user-course-progress.entity';
 import { LessonEntity } from 'src/database/entities/lesson.entity';
-import { UserSubscriptionEntity } from 'src/database/entities/user-subscription.entity';
 import { CourseRepository } from './resourses/course.repository';
 import { UserCourseProgressRepository } from './resourses/user-course-progress.repository';
 import { UserLessonProgressRepository } from './resourses/user-lesson-progress.repository';
 import { LessonRepository } from './resourses/lesson.repository';
-import { UserSubscriptionRepository } from './resourses/user-subscription.repository';
 import { BookRepository } from './book/book.repository';
 import { BookEntity } from 'src/database/entities/book.entity';
 import { UserBookDownloadEntity } from 'src/database/entities/user-book-download.entity';
+// import { UserSectionProgressRepository } from './resourses/user-section-progress.repository';
+import { UserSectionProgressEntity } from 'src/database/entities/user-section-progress.entity';
+import { CourseAccessRepository } from './resourses/course-access.repository';
+import { CourseAccessEntity } from 'src/database/entities/course-access.entity';
+import { LessonSectionRepository } from './resourses/lesson-section.repository';
+import { SectionAttachmentRepository } from './resourses/section-attachment.repository';
+import { SectionAttachmentEntity } from 'src/database/entities/section-attachment.entity';
+import { LessonAttachmentEntity } from 'src/database/entities/lesson-attachment.entity';
 
 @Module({
   imports: [
@@ -86,13 +92,16 @@ import { UserBookDownloadEntity } from 'src/database/entities/user-book-download
       CounsellingBookingEntity,
       RefundRequestEntity,
       CourseEntity,
-      UserLessonProgressEntity,
-      UserCourseProgressEntity,
+      // UserLessonProgressEntity,
+      // UserCourseProgressEntity,
       LessonEntity,
-      UserSubscriptionEntity,
-      UserLessonProgressRepository,
+      LessonAttachmentEntity,
       BookEntity,
       UserBookDownloadEntity,
+      // UserSectionProgressEntity,
+      // LessonSectionEntity,
+      CourseAccessEntity,
+      // SectionAttachmentEntity,
     ]),
   ],
   providers: [
@@ -112,12 +121,15 @@ import { UserBookDownloadEntity } from 'src/database/entities/user-book-download
     CounsellingRepository,
     CounsellingBookingRepository,
     RefundRequestRepository,
-    UserSubscriptionRepository,
     LessonRepository,
-    UserCourseProgressRepository,
     CourseRepository,
-    UserLessonProgressRepository,
     BookRepository,
+    // UserCourseProgressRepository,
+    // UserLessonProgressRepository,
+    // UserSectionProgressRepository,
+    CourseAccessRepository,
+    // LessonSectionRepository,
+    // SectionAttachmentRepository,
   ],
   exports: [
     UserRepository,
@@ -136,12 +148,15 @@ import { UserBookDownloadEntity } from 'src/database/entities/user-book-download
     CounsellingRepository,
     CounsellingBookingRepository,
     RefundRequestRepository,
-    UserSubscriptionRepository,
     LessonRepository,
-    UserLessonProgressRepository,
-    UserCourseProgressRepository,
+    // UserLessonProgressRepository,
+    // UserCourseProgressRepository,
     CourseRepository,
     BookRepository,
+    // UserSectionProgressRepository,
+    CourseAccessRepository,
+    // LessonSectionRepository,
+    // SectionAttachmentRepository,
   ],
 })
 export class RepositoryModule {}

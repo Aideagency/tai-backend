@@ -26,6 +26,7 @@ import {
   ApiConsumes,
   ApiResponse,
   ApiOperation,
+  ApiExcludeEndpoint,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { UseGuards } from '@nestjs/common';
@@ -40,13 +41,14 @@ import { ChangePasswordDto } from './dtos/change-password.dto';
 import { JwtGuards } from './jwt.guards';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import * as path from 'path';
 import { CommunityTag, UserGender } from 'src/database/entities/user.entity';
 import { VerifyAccountDto } from './dtos/verify-account.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { Response } from 'express';
 import axios from 'axios';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
 // import { SupabaseAuthGuard } from './supabase.guards';
 
 @Controller('auth')
@@ -279,13 +281,7 @@ export class AuthController {
   })
   @UseInterceptors(
     FileInterceptor('profilePicture', {
-      storage: diskStorage({
-        destination: './uploads/profile-pictures',
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-          cb(null, `profile-${uniqueSuffix}${path.extname(file.originalname)}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         // Allow jpg/jpeg/png/gif
         if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
@@ -342,6 +338,7 @@ export class AuthController {
     return 'Email sent';
   }
 
+  @ApiExcludeEndpoint()
   @Get('callback')
   async handleCallback(@Query('code') code: string, @Res() res: Response) {
     if (!code) {
@@ -381,11 +378,39 @@ export class AuthController {
     }
   }
 
+  @ApiExcludeEndpoint()
   @Get('success')
   @Redirect('http://localhost:3000/dashboard', 302)
   successPage() {
     return {
       message: 'OAuth flow completed successfully!',
+    };
+  }
+
+  @Post('refresh-token')
+  @HttpCode(200)
+  @ApiOkResponse({
+    schema: {
+      example: {
+        user: {
+          id: 1,
+          email_address: 'john@doe.com',
+          first_name: 'John',
+          last_name: 'Doe',
+          is_email_verified: true,
+        },
+        token: 'new_access_token',
+        refresh_token: 'new_refresh_token',
+      },
+    },
+  })
+  async generateRefreshToken(@Body(new ValidationPipe()) dto: RefreshTokenDto) {
+    const data = await this.authService.refreshTokens(dto.refresh_token);
+
+    return {
+      statusCode: 200,
+      message: 'Token refreshed successfully',
+      data,
     };
   }
 }

@@ -29,6 +29,7 @@ import {
 } from 'src/database/entities/refund-request.entity';
 import { RefundRequestRepository } from 'src/repository/refund/refund-request.repository';
 import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
+import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
 // import { GetCounsellingsFilterDto } from './dtos/get-counselling-query.dto';
 
 @Injectable()
@@ -42,6 +43,7 @@ export class CounsellingService {
     private readonly emailService: EmailService,
     private readonly logger: TracerLogger,
     private readonly refundRequestRepo: RefundRequestRepository,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   /** ---------- Counselling CRUD ---------- */
@@ -49,7 +51,17 @@ export class CounsellingService {
   // Create a counselling offer
   async createCounselling(
     data: Partial<CounsellingEntity>,
+    file?: Express.Multer.File,
   ): Promise<CounsellingEntity> {
+    if (file) {
+      const uploadRes = await this.cloudinary.uploadFile(file, {
+        folder: 'counselling/profile-pictures',
+        resourceType: 'image',
+      });
+
+      data.coverUrl = uploadRes.url;
+      data.coverUrlPublicId = uploadRes.publicId;
+    }
     return this.counsellingRepository.createCounselling(data);
   }
 
@@ -57,7 +69,26 @@ export class CounsellingService {
   async updateCounselling(
     id: number,
     data: Partial<CounsellingEntity>,
+    file?: Express.Multer.File,
   ): Promise<CounsellingEntity> {
+    const counselling = await this.counsellingRepository.findOne({ id });
+    if (!counselling) {
+      throw new NotFoundException(
+        'This counselling information does not exist',
+      );
+    }
+    if (file) {
+      if (counselling.coverUrlPublicId) {
+        await this.cloudinary.deleteFile(counselling.coverUrlPublicId, 'image');
+      }
+      const uploadRes = await this.cloudinary.uploadFile(file, {
+        folder: 'counselling/profile-pictures',
+        resourceType: 'image',
+      });
+
+      data.coverUrl = uploadRes.url;
+      data.coverUrlPublicId = uploadRes.publicId;
+    }
     // If you want to block *all* updates when bookings exist, uncomment:
     // const bookings = await this.counsellingBookingRepository.findAll({
     //   counselling: { id },

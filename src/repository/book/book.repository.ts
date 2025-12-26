@@ -349,7 +349,7 @@ export class BookRepository extends BaseRepository<
       bookId: d.bookId,
       userId: d.userId,
       userEmail: d.user?.email_address ?? null,
-      userName: d.user?.userName ?? null,
+      user_name: d.user?.user_name ?? null,
       status: d.status,
       isActive: d.isActive,
       paymentRef: d.paymentRef ?? null,

@@ -16,7 +16,6 @@ export class PaymentController {
   @Post('initialize')
   @ApiOperation({ summary: 'Initialize a new transaction' })
   create(@Body() dto: InitializePaymentDto, @Req() req: any) {
-    console.log(dto);
     return this.paymentService.initializePayment({
       email: dto.email,
       amount: String(dto.amount * 100),

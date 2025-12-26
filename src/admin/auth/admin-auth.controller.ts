@@ -12,7 +12,7 @@ import { AdminLoginDto } from './dtos/admin-login.dto';
 
 @ApiTags('Admin auth')
 @Controller('admin/auth')
-@ApiExcludeController()
+// @ApiExcludeController()
 export class AdminAuthController {
   constructor(private readonly svc: AdminAuthService) {}
 
