@@ -1,50 +1,47 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, Index, ManyToOne } from 'typeorm';
 import { CustomEntity } from './custom.entity';
 import { LessonEntity } from './lesson.entity';
-import { UserCourseProgressEntity } from './user-course-progress.entity';
-import { UserSubscriptionEntity } from './user-subscription.entity'; // Add this import
+// import { UserCourseProgressEntity } from './user-course-progress.entity';
 
-export enum CourseAccessType {
-  FREE = 'FREE',
-  PAID = 'PAID',
+export enum PublishStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED',
 }
 
-@Entity({ name: 'Courses' })
+@Entity({ name: 'courses' })
 export class CourseEntity extends CustomEntity {
-  @Column({ unique: true })
-  zoho_course_id: string; // Zoho’s course ID
-
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', length: 180 })
   title: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  descriptionHtml: string | null;
 
-  @Column({ nullable: true })
-  thumbnailUrl: string;
+  @Column({ type: 'varchar', nullable: true })
+  thumbnailUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  thumbnailPublicId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  thumbnailResourceType: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  isFree: boolean;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  price: number | null;
+
+  @Column({ type: 'varchar', length: 8, default: 'NGN' })
+  currency: string;
 
   @Column({
     type: 'enum',
-    enum: CourseAccessType,
-    default: CourseAccessType.FREE,
+    enum: PublishStatus,
+    default: PublishStatus.DRAFT,
   })
-  accessType: CourseAccessType; // Tracks whether the course is free or paid
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  price: number | null; // Only relevant for PAID courses
-
-  @Column({ default: true })
-  isPublished: boolean; // Indicates if the course is published or not
+  status: PublishStatus;
 
   @OneToMany(() => LessonEntity, (lesson) => lesson.course)
   lessons: LessonEntity[];
-
-  @OneToMany(() => UserCourseProgressEntity, (progress) => progress.course)
-  progressRecords: UserCourseProgressEntity[];
-
-  @OneToMany(
-    () => UserSubscriptionEntity,
-    (subscription) => subscription.course,
-  )
-  subscriptions: UserSubscriptionEntity[]; // Add this line to track subscriptions
 }

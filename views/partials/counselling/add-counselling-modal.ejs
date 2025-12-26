@@ -1,315 +1,285 @@
+<!-- Add Counselling Modal -->
 <div
   id="addCounsellingModal"
-  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+  class="fixed inset-0 z-50 hidden bg-black/50 p-3 sm:p-6"
 >
-  <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-semibold text-gray-800">
-        Add Counselling Session
-      </h3>
-      <button
-        type="button"
-        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
-        onclick="closeAddCounsellingModal()"
-      >
-        ×
-      </button>
-    </div>
-
-    <form
-      id="addCounsellingForm"
-      action="/counselling/create"
-      method="POST"
-      enctype="multipart/form-data"
-      class="space-y-3 text-xs"
+  <!-- Backdrop click area + center wrapper -->
+  <div class="flex h-full w-full items-center justify-center">
+    <!-- Modal panel -->
+    <div
+      class="w-full max-w-2xl lg:max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addCounsellingTitle"
     >
-      <!-- Title -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">Title</label>
-        <input
-          type="text"
-          name="title"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-          placeholder="e.g. Anxiety Management Session"
-          required
-        />
-      </div>
+      <!-- ✅ Sticky header -->
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"
+      >
+        <h3
+          id="addCounsellingTitle"
+          class="text-base font-semibold text-gray-800"
+        >
+          Add Counselling Session
+        </h3>
 
-      <!-- Description -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          name="description"
-          rows="3"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-          placeholder="Short overview of what this session covers..."
-        ></textarea>
-      </div>
-
-      <!-- Cover Image (Optional) -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">
-          Cover Image (optional)
-        </label>
-        <input
-          type="file"
-          name="coverUrl"
-          accept="image/*"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-        />
-      </div>
-
-      <!-- Type + Mode -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Type -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Type</label>
-          <select
-            name="type"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-          >
-            <option value="INDIVIDUAL">Individual</option>
-            <option value="COUPLES">Couples</option>
-            <option value="FAMILY">Family</option>
-            <option value="GROUP">Group</option>
-          </select>
-        </div>
-
-        <!-- Mode -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Mode</label>
-          <select
-            name="mode"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-          >
-            <option value="ONLINE">Online</option>
-            <option value="OFFLINE">Offline (In-person)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Status + Duration -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Status -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Status</label>
-          <select
-            name="status"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
-        </div>
-
-        <!-- Duration -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">
-            Duration (minutes)
-          </label>
-          <input
-            type="number"
-            name="durationMinutes"
-            min="1"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-            placeholder="e.g. 45"
-            required
-          />
-        </div>
-      </div>
-
-      <!-- Price + Max Clients -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Price -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">
-            Price (optional, ₦)
-          </label>
-          <input
-            type="number"
-            name="price"
-            step="0.01"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-            placeholder="Leave empty for free"
-          />
-        </div>
-
-        <!-- Max Clients Per Session -->
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">
-            Max clients per session (optional)
-          </label>
-          <input
-            type="number"
-            name="maxClientsPerSession"
-            min="1"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                   focus:border-[var(--color-primary)]"
-            placeholder="e.g. 1 for 1-on-1, 5 for group"
-          />
-        </div>
-      </div>
-
-      <!-- What you get -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">
-          What clients get (optional)
-        </label>
-        <textarea
-          name="whatYouGet"
-          rows="2"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-          placeholder="e.g. Personalized coping strategies, worksheets, follow-up resources..."
-        ></textarea>
-      </div>
-
-      <!-- Who it's for -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">
-          Who this is for (optional)
-        </label>
-        <textarea
-          name="whoItsFor"
-          rows="2"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-          placeholder="e.g. Young adults, working professionals, students..."
-        ></textarea>
-      </div>
-
-      <!-- How it works -->
-      <div>
-        <label class="block font-medium text-gray-700 mb-1">
-          How it works (optional)
-        </label>
-        <textarea
-          name="howItWorks"
-          rows="2"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
-                 focus:border-[var(--color-primary)]"
-          placeholder="e.g. 10-min check-in → exploration → action plan → Q&A..."
-        ></textarea>
-      </div>
-
-      <!-- Active / Featured toggles -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div class="flex items-center gap-2">
-          <input
-            id="addCounsellingIsActive"
-            type="checkbox"
-            name="isActive"
-            value="true"
-            class="rounded border-gray-300 text-[var(--color-primary)]
-                   focus:ring-[var(--color-primary)]"
-            checked
-          />
-          <label
-            for="addCounsellingIsActive"
-            class="text-[11px] text-gray-700 font-medium"
-          >
-            Mark as active
-          </label>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <input
-            id="addCounsellingIsFeatured"
-            type="checkbox"
-            name="isFeatured"
-            value="true"
-            class="rounded border-gray-300 text-[var(--color-primary)]
-                   focus:ring-[var(--color-primary)]"
-          />
-          <label
-            for="addCounsellingIsFeatured"
-            class="text-[11px] text-gray-700 font-medium"
-          >
-            Mark as featured
-          </label>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="mt-4 flex justify-end gap-2">
         <button
           type="button"
-          class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
           onclick="closeAddCounsellingModal()"
+          aria-label="Close modal"
         >
-          Cancel
-        </button>
-
-        <button
-          id="addCounsellingSubmitBtn"
-          type="submit"
-          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <span id="addCounsellingSubmitText">Save counselling</span>
-
-          <svg
-            id="addCounsellingSubmitSpinner"
-            class="hidden animate-spin h-4 w-4 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
-            ></path>
-          </svg>
+          ×
         </button>
       </div>
-    </form>
+
+      <!-- ✅ Scrollable content -->
+      <div class="max-h-[80vh] overflow-y-auto px-5 py-4">
+        <form
+          id="addCounsellingForm"
+          action="/counselling/create"
+          method="POST"
+          enctype="multipart/form-data"
+          class="space-y-3 text-xs"
+        >
+          <!-- Title -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Anxiety Management Session"
+              required
+            />
+          </div>
+
+          <!-- ✅ Description (Rich Text - Quill, same approach as create-book modal) -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Description</label
+            >
+
+            <!-- Quill editor container -->
+            <div
+              id="counsellingDescriptionEditor"
+              class="bg-white border border-gray-300 rounded-lg"
+              style="min-height: 140px"
+            ></div>
+
+            <!-- Hidden textarea that gets submitted -->
+            <textarea
+              id="counsellingDescription"
+              name="description"
+              class="hidden"
+            ></textarea>
+
+            <p class="text-[11px] text-gray-500 mt-1">
+              Supports formatting, lists, and links.
+            </p>
+          </div>
+
+          <!-- Cover Image (Optional) -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              Cover Image (optional)
+            </label>
+            <input
+              type="file"
+              name="coverUrl"
+              accept="image/*"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            />
+          </div>
+
+          <!-- Type + Mode -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">Type</label>
+              <select
+                name="type"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="INDIVIDUAL">Individual</option>
+                <option value="COUPLES">Couples</option>
+                <option value="FAMILY">Family</option>
+                <option value="GROUP">Group</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">Mode</label>
+              <select
+                name="mode"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="ONLINE">Online</option>
+                <option value="OFFLINE">Offline (In-person)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Status + Duration -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">
+                Duration (minutes)
+              </label>
+              <input
+                type="number"
+                name="durationMinutes"
+                min="1"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                placeholder="e.g. 45"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Price + Max Clients -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">
+                Price (optional, ₦)
+              </label>
+              <input
+                type="number"
+                name="price"
+                step="0.01"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                placeholder="Leave empty for free"
+              />
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">
+                Max clients per session (optional)
+              </label>
+              <input
+                type="number"
+                name="maxClientsPerSession"
+                min="1"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                placeholder="e.g. 1 for 1-on-1, 5 for group"
+              />
+            </div>
+          </div>
+
+          <!-- What you get -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              What clients get (optional)
+            </label>
+            <textarea
+              name="whatYouGet"
+              rows="2"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Personalized coping strategies, worksheets, follow-up resources..."
+            ></textarea>
+          </div>
+
+          <!-- Who it's for -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              Who this is for (optional)
+            </label>
+            <textarea
+              name="whoItsFor"
+              rows="2"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Young adults, working professionals, students..."
+            ></textarea>
+          </div>
+
+          <!-- How it works -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              How it works (optional)
+            </label>
+            <textarea
+              name="howItWorks"
+              rows="2"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. 10-min check-in → exploration → action plan → Q&A..."
+            ></textarea>
+          </div>
+
+          <!-- ✅ Sticky footer actions -->
+          <div
+            class="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-gray-100 bg-white px-5 py-3"
+          >
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                class="w-full sm:w-auto px-3 py-2 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onclick="closeAddCounsellingModal()"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="addCounsellingSubmitBtn"
+                type="submit"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span id="addCounsellingSubmitText">Save counselling</span>
+
+                <svg
+                  id="addCounsellingSubmitSpinner"
+                  class="hidden animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
+  /* ✅ Quill instance for counselling description */
+  let counsellingDescriptionQuill;
+
   function openAddCounsellingModal() {
     const modal = document.getElementById('addCounsellingModal');
     modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    modal.classList.add('block');
+
+    // Ensure Quill is created when modal opens (in case DOM wasn't ready earlier)
+    ensureCounsellingQuill();
   }
 
   function closeAddCounsellingModal() {
     const modal = document.getElementById('addCounsellingModal');
     modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    modal.classList.remove('block');
 
     // Reset form & button after closing
     const form = document.getElementById('addCounsellingForm');
     if (form) form.reset();
+
+    // Clear editor content
+    if (counsellingDescriptionQuill) {
+      counsellingDescriptionQuill.setContents([]);
+    }
 
     const btn = document.getElementById('addCounsellingSubmitBtn');
     const text = document.getElementById('addCounsellingSubmitText');
@@ -322,16 +292,53 @@
     }
   }
 
+  function ensureCounsellingQuill() {
+    if (counsellingDescriptionQuill) return;
+
+    const editorEl = document.getElementById('counsellingDescriptionEditor');
+    if (!editorEl) return;
+
+    counsellingDescriptionQuill = new Quill('#counsellingDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Write a short description of the counselling session...',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
+    // Init Quill once DOM is ready
+    ensureCounsellingQuill();
+
     const form = document.getElementById('addCounsellingForm');
     const submitBtn = document.getElementById('addCounsellingSubmitBtn');
     const submitText = document.getElementById('addCounsellingSubmitText');
-    const submitSpinner = document.getElementById('addCounsellingSubmitSpinner');
+    const submitSpinner = document.getElementById(
+      'addCounsellingSubmitSpinner',
+    );
 
     if (!form) return;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      // ✅ Sync Quill → hidden textarea BEFORE creating FormData
+      const descriptionEl = document.getElementById('counsellingDescription');
+      if (counsellingDescriptionQuill && descriptionEl) {
+        let html = counsellingDescriptionQuill.root.innerHTML;
+
+        // Treat Quill empty as ""
+        if (html === '<p><br></p>' || html.trim() === '') {
+          html = '';
+        }
+        descriptionEl.value = html;
+      }
 
       // Loading state
       submitBtn.disabled = true;
@@ -342,20 +349,15 @@
         const formData = new FormData(form);
 
         // Remove empty optional numeric fields
-        ['price', 'maxClientsPerSession', 'durationMinutes'].forEach((field) => {
-          if (formData.get(field) === '') {
-            formData.delete(field);
-          }
-        });
-
-        // Handle booleans for checkboxes explicitly (if unchecked, they won't be sent at all)
-        // No special handling needed here unless you want to force "false"
+        ['price', 'maxClientsPerSession', 'durationMinutes'].forEach(
+          (field) => {
+            if (formData.get(field) === '') formData.delete(field);
+          },
+        );
 
         // If no file selected, remove so multer doesn't complain
         const file = formData.get('coverUrl');
-        if (!file || !file.name) {
-          formData.delete('coverUrl');
-        }
+        if (!file || !file.name) formData.delete('coverUrl');
 
         const res = await fetch(form.action, {
           method: 'POST',
@@ -371,6 +373,7 @@
               ? data.message.join(', ')
               : data.message || msg;
           } catch (_) {}
+
           alert(msg);
 
           submitBtn.disabled = false;

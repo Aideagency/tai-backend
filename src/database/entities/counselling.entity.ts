@@ -57,6 +57,9 @@ export class CounsellingEntity extends CustomEntity {
   @Column({ nullable: true })
   coverUrl: string | null;
 
+  @Column({ nullable: true })
+  coverUrlPublicId: string | null;
+
   // Price per session (null or 0 for free)
   @Column({ type: 'decimal', nullable: true })
   price: number | null;

@@ -3,7 +3,7 @@ import { CustomEntity } from './custom.entity';
 import { TransactionEntity } from './transaction.entity';
 import { PrayerWallEntity } from './prayer-wall.entity';
 import { UserCourseProgressEntity } from './user-course-progress.entity';
-import { UserSubscriptionEntity } from './user-subscription.entity';
+import { CourseAccessEntity } from './course-access.entity';
 
 export enum UserGender {
   MALE = 'MALE',
@@ -74,10 +74,13 @@ export class UserEntity extends CustomEntity {
   lastLogonDate: Date | null;
 
   @Column({ nullable: true, unique: true })
-  userName: string;
+  user_name: string;
 
-  @Column({ type: 'text', nullable: true })
-  profilePicture: string;
+  @Column({ nullable: true })
+  profilePictureUrl?: string;
+
+  @Column({ nullable: true })
+  profilePicturePublicId?: string;
 
   @Column({ nullable: true })
   rejectedBy: string;
@@ -97,6 +100,6 @@ export class UserEntity extends CustomEntity {
   @OneToMany(() => UserCourseProgressEntity, (progress) => progress.user)
   courseProgress: UserCourseProgressEntity[];
 
-  @OneToMany(() => UserSubscriptionEntity, (subscription) => subscription.user)
-  subscriptions: UserSubscriptionEntity[];
+  @OneToMany(() => CourseAccessEntity, (courseAccess) => courseAccess.user)
+  courseAccess: CourseAccessEntity[];
 }

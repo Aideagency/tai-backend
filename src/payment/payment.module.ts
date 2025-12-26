@@ -6,6 +6,7 @@ import { CommonModule } from 'src/common/common.module';
 import { EventModule } from 'src/event/event.module';
 import { CounsellingModule } from 'src/counselling/counselling.module';
 import { BooksModule } from 'src/books/books.module';
+import { CoursesModule } from 'src/courses/courses.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { BooksModule } from 'src/books/books.module';
     forwardRef(() => EventModule),
     forwardRef(() => CounsellingModule),
     forwardRef(() => BooksModule),
+    forwardRef(() => CoursesModule),
   ],
   controllers: [PaymentController],
   providers: [PaymentService],

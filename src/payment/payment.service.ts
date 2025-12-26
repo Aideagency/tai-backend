@@ -19,6 +19,7 @@ import * as crypto from 'crypto';
 import { EventService } from 'src/event/event.service';
 import { CounsellingService } from 'src/counselling/counselling.service';
 import { BooksService } from 'src/books/books.service';
+import { CoursesService } from 'src/courses/courses.service';
 
 @Injectable()
 export class PaymentService {
@@ -34,6 +35,8 @@ export class PaymentService {
     private readonly counsellingService: CounsellingService,
     @Inject(forwardRef(() => BooksService))
     private readonly bookService: BooksService,
+    @Inject(forwardRef(() => CoursesService))
+    private readonly courseService: CoursesService,
   ) {}
 
   // Initialize Payment
@@ -167,7 +170,6 @@ export class PaymentService {
 
         const transaction =
           await this.transactionRepository.findOneByReference(txRef);
-        console.log(transaction);
         if (
           transaction &&
           req.body.data?.requested_amount === transaction.actualAmount * 100
@@ -187,12 +189,16 @@ export class PaymentService {
               txRef,
               transaction.email_address,
             );
+          } else if (transaction.paid_for === PaidFor.COURSE) {
+            await this.courseService.handlePaymentConfirmation(
+              txRef,
+              transaction.email_address,
+            );
           }
           await this.updatePaymentStatus(txRef, TransactionStatus.Success);
           return { isVerified: true, txRef };
         }
 
-        console.log({ txRef, transaction });
         await this.updatePaymentStatus(txRef, TransactionStatus.Failure);
         return { isVerified: false, txRef: '' };
       }

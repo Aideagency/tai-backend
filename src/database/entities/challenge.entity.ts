@@ -49,6 +49,9 @@ export class ChallengeEntity extends CustomEntity {
   @Column({ nullable: true })
   coverImageUrl: string;
 
+  @Column({ nullable: true })
+  coverUrlPublicId: string | null;
+
   @Column({ type: 'text', nullable: true })
   description: string;
 

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   UserEntity,
@@ -21,6 +22,9 @@ import { EmailService } from 'src/infrastructure/communication/email/email.servi
 import { UpdateProfileDto } from './dtos/update-profile.dto';
 import { VerifyAccountDto } from './dtos/verify-account.dto';
 import { VerifyEmailDto } from './dtos/verify-email.dto';
+import { LessonRepository } from 'src/repository/resourses/lesson.repository';
+import { CourseRepository } from 'src/repository/resourses/course.repository';
+import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +39,9 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
+    // private readonly lessonRepo: LessonRepository,
+    private readonly courseRepo: CourseRepository,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   toSubmissionResponse(user: UserEntity) {
@@ -142,11 +149,47 @@ export class AuthService {
     };
   }
 
+  async refreshTokens(refreshToken: string) {
+    try {
+      // 1) verify refresh token
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.JWT_REFRESH_SECRET,
+      });
+
+      const userId = payload?.sub ?? payload?.id;
+      if (!userId) throw new ForbiddenException('Invalid refresh token');
+
+      // 2) find user
+      const user = await this.userRepository.findByUserId(Number(userId));
+      if (!user) throw new ForbiddenException('User not found');
+
+      // 3) ensure user has stored refresh token hash
+      if (!user.refresh_token) {
+        throw new ForbiddenException('Refresh token not recognized');
+      }
+
+      // 4) compare refresh token with stored hash
+      const rtMatches = await bcrypt.compare(refreshToken, user.refresh_token);
+      if (!rtMatches) throw new ForbiddenException('Invalid refresh token');
+
+      // 5) issue new tokens
+      const tokens = await this.getJwtTokens(user);
+
+      // 6) rotate refresh token (store new hash)
+      await this.updateRtHash(user, tokens.refresh_token);
+
+      return tokens;
+    } catch (err) {
+      this.logger.error(err?.stack || err);
+      throw new ForbiddenException('Refresh token is invalid or expired');
+    }
+  }
+
+  // ✅ Fix your updateRtHash
   async updateRtHash(user: any, refreshToken: string): Promise<void> {
     try {
-      const hash = await bcrypt.hash(refreshToken);
+      const hash = await bcrypt.hash(refreshToken, 10); // <-- IMPORTANT
       user.refresh_token = hash;
-
       await this.userRepository.save(user);
     } catch (err) {
       this.logger.error(err.stack);
@@ -226,7 +269,7 @@ export class AuthService {
   async getUserInformation(id: number) {
     try {
       const user = await this.userRepository.findByUserId(id);
-      
+
       // if (!user) throw new NotFoundException('User not found');
       return this.toSubmissionResponse(user);
     } catch (error) {
@@ -551,12 +594,25 @@ export class AuthService {
       }
 
       if (file) {
-        // Choose a storage strategy; two common options:
-        // (A) Store a relative path (frontend prefixes with your static base)
-        // user.profilePicture = `profile-pictures/${file.filename}`;
-        // or (B) Store an absolute URL if you know it here (requires base URL or CDN)
-        // const baseUrl = this.configService.get<string>('FILES_BASE_URL'); // e.g. https://cdn.example.com/uploads
-        // user.profile_picture_url = `${baseUrl}/profile-pictures/${file.filename}`;
+        if (user.profilePicturePublicId) {
+          try {
+            await this.cloudinary.deleteFile(
+              user.profilePicturePublicId,
+              'image',
+            );
+          } catch (e) {
+            // don't fail profile update because delete failed
+            this.logger.error(e?.stack || e);
+          }
+        }
+
+        const uploadRes = await this.cloudinary.uploadFile(file, {
+          folder: 'users/profile-pictures',
+          resourceType: 'image',
+        });
+
+        user.profilePictureUrl = uploadRes.url;
+        user.profilePicturePublicId = uploadRes.publicId;
       }
 
       const saved = await this.userRepository.save(user);
@@ -578,7 +634,7 @@ export class AuthService {
       newUser.email_address = googleUser.email_address;
       newUser.first_name = googleUser.first_name;
       newUser.last_name = googleUser.last_name;
-      newUser.profilePicture = googleUser.profilePicture;
+      newUser.profilePictureUrl = googleUser.profilePicture;
       newUser.is_email_verified = true; // Google verifies emails
       newUser.password = ''; // no password needed for Google users
 
@@ -604,8 +660,6 @@ export class AuthService {
         user.resetTokenExpiration = tokenExpiration;
 
         await this.userRepository.save(user);
-
-        // console.log(user);
 
         const data = {
           first_name: user.first_name,

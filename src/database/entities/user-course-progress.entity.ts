@@ -15,8 +15,8 @@ export class UserCourseProgressEntity extends CustomEntity {
   @ManyToOne(() => UserEntity, (user) => user.courseProgress)
   user: UserEntity;
 
-  @ManyToOne(() => CourseEntity, (course) => course.progressRecords)
-  course: CourseEntity;
+  // @ManyToOne(() => CourseEntity, (course) => course.progressRecords)
+  // course: CourseEntity;
 
   @Column()
   userId: number;

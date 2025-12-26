@@ -64,10 +64,17 @@ export class AdminViewsService {
     counsellingId: number,
     params: GetCounsellingBookingsFilterDto,
   ) {
-    return this.counsellingService.getCounsellingBookingsPaginated(
-      counsellingId,
-      params,
-    );
+    const counselling =
+      await this.counsellingService.getCounsellingById(counsellingId);
+    const response =
+      await this.counsellingService.getCounsellingBookingsPaginated(
+        counsellingId,
+        params,
+      );
+    return {
+      counselling,
+      ...response,
+    };
   }
 
   async listBooks(params: AdminBooksQueryDto) {

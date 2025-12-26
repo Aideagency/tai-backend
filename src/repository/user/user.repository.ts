@@ -188,7 +188,7 @@ export class UserRepository extends BaseRepository<
       gender,
       birth_date,
       phone_no,
-      profilePicture,
+      profilePictureUrl,
       id,
     } = user;
 
@@ -213,7 +213,7 @@ export class UserRepository extends BaseRepository<
       gender,
       birth_date,
       phone_no,
-      profilePicture,
+      profilePictureUrl,
       community,
       id,
     };

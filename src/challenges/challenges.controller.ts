@@ -190,7 +190,6 @@ export class ChallengesController {
     @Req() req: any,
     @Query() query: ListAvailableChallengesQueryDto,
   ) {
-    console.log('query', query);
     const user = this.authService.toSubmissionResponse(
       await this.userRepo.findByEmail(req.user.email),
     );

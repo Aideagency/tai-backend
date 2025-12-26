@@ -34,6 +34,7 @@ import { UpdateCounsellingDto } from './dtos/update-counselling.dto';
 import { CreateCounsellingDto } from './dtos/create-counselling.dto';
 import { CancelBookingDto } from './dtos/cancel-booking.dto';
 import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
+import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
 
 @ApiTags('counselling')
 @Controller('counselling')
@@ -55,12 +56,9 @@ export class CounsellingController {
     @Body() dto: CreateCounsellingDto,
     @UploadedFile() coverUrl: Express.Multer.File,
   ) {
-    if (coverUrl) {
-      dto.coverUrl = coverUrl.path; // or your storage URL
-    }
-
     const counselling = await this.counsellingService.createCounselling(
       dto as any,
+      coverUrl,
     );
     return counselling;
   }
@@ -79,10 +77,7 @@ export class CounsellingController {
     @Body() dto: UpdateCounsellingDto,
     @UploadedFile() coverUrl: Express.Multer.File,
   ) {
-    if (coverUrl) {
-      dto.coverUrl = coverUrl.path;
-    }
-    return this.counsellingService.updateCounselling(id, dto as any);
+    return this.counsellingService.updateCounselling(id, dto as any, coverUrl);
   }
 
   @Delete('delete/:id')
@@ -120,6 +115,14 @@ export class CounsellingController {
     @Req() req: any,
   ) {
     return this.counsellingService.getUserBookings(req.user.id, counsellingId);
+  }
+
+  @UseGuards(AdminJwtGuard)
+  @Get('admin/:counsellingId')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get counselling information' })
+  async fetchCounsellingAdmin(@Param('counsellingId') counsellingId: number) {
+    return this.counsellingService.getCounsellingById(counsellingId);
   }
 
   @UseGuards(JwtGuards)
