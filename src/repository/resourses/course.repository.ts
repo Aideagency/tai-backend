@@ -211,13 +211,13 @@ export class CourseRepository extends BaseRepository<
     // ✅ isActive = ACTIVE access and not expired
     qb.addSelect(
       `EXISTS(
-        SELECT 1
-        FROM course_access ca2
-        WHERE ca2.course_id = c.id
-          AND ca2.user_id = :userId
-          AND ca2.status = 'ACTIVE'
-          AND (ca2.endsAt IS NULL OR ca2.endsAt >= :now)
-      )`,
+    SELECT 1
+    FROM course_access ca2
+    WHERE ca2.course_id = c.id
+      AND ca2.user_id = :userId
+      AND ca2.status = 'ACTIVE'
+      AND (ca2."endsAt" IS NULL OR ca2."endsAt" >= :now)
+  )`,
       'isActive',
     );
 

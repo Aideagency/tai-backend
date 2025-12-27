@@ -1,0 +1,259 @@
+<!-- views/partials/courses/attachments/add-attachment-modal.ejs -->
+<div
+  id="addAttachmentModal"
+  class="fixed inset-0 z-50 hidden bg-black/50 p-3 sm:p-6"
+  data-lesson-id=""
+  data-lesson-title=""
+>
+  <div class="flex h-full w-full items-center justify-center">
+    <div
+      class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"
+      >
+        <div>
+          <h3 class="text-base font-semibold text-gray-800">Add Attachment</h3>
+          <p
+            id="addAttachmentLessonLabel"
+            class="text-[11px] text-gray-500 mt-0.5"
+          ></p>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          onclick="closeAddAttachmentModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="max-h-[80vh] overflow-y-auto px-5 py-4">
+        <!-- ✅ no hidden lessonId field -->
+        <form
+          id="addAttachmentForm"
+          class="space-y-3 text-xs"
+          enctype="multipart/form-data"
+        >
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              required
+              maxlength="150"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Sample Attachment"
+            />
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Type (optional)</label
+            >
+            <select
+              name="type"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            >
+              <option value="">AUTO / OTHER</option>
+              <option value="PDF">PDF</option>
+              <option value="IMAGE">IMAGE</option>
+              <option value="VIDEO">VIDEO</option>
+              <option value="AUDIO">AUDIO</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">File</label>
+            <input
+              type="file"
+              name="file"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            />
+            <p class="text-[11px] text-gray-500 mt-1">
+              Uploads and links the file to this lesson.
+            </p>
+          </div>
+
+          <div
+            class="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-gray-100 bg-white px-5 py-3"
+          >
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                class="w-full sm:w-auto px-3 py-2 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onclick="closeAddAttachmentModal()"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="addAttachmentSubmitBtn"
+                type="submit"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span id="addAttachmentSubmitText">Upload</span>
+                <svg
+                  id="addAttachmentSubmitSpinner"
+                  class="hidden animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    window.openAddAttachmentModal = function (btn) {
+      const modal = document.getElementById('addAttachmentModal');
+      if (!modal) return;
+
+      const lessonId = btn.dataset.lessonId;
+      const lessonTitle = btn.dataset.lessonTitle || '';
+
+      // ✅ store in modal dataset (NOT in form)
+      modal.dataset.lessonId = lessonId;
+      modal.dataset.lessonTitle = lessonTitle;
+
+      document.getElementById('addAttachmentLessonLabel').textContent =
+        `Lesson: ${lessonTitle} (ID: ${lessonId})`;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('block');
+    };
+
+    window.closeAddAttachmentModal = function () {
+      const modal = document.getElementById('addAttachmentModal');
+      if (!modal) return;
+
+      modal.classList.add('hidden');
+      modal.classList.remove('block');
+
+      // reset stored lesson context
+      modal.dataset.lessonId = '';
+      modal.dataset.lessonTitle = '';
+
+      const form = document.getElementById('addAttachmentForm');
+      if (form) form.reset();
+
+      const btn = document.getElementById('addAttachmentSubmitBtn');
+      const text = document.getElementById('addAttachmentSubmitText');
+      const spinner = document.getElementById('addAttachmentSubmitSpinner');
+
+      if (btn && text && spinner) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Upload';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('addAttachmentForm');
+      if (!form) return;
+
+      const btn = document.getElementById('addAttachmentSubmitBtn');
+      const text = document.getElementById('addAttachmentSubmitText');
+      const spinner = document.getElementById('addAttachmentSubmitSpinner');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = 'Uploading...';
+
+        try {
+          const modal = document.getElementById('addAttachmentModal');
+          const courseId = window.CourseDetailsState?.courseId;
+
+          // ✅ lessonId comes from modal dataset, not form
+          const lessonId = modal?.dataset?.lessonId;
+
+          if (!courseId || !lessonId) {
+            alert('Missing course/lesson context. Please re-open the modal.');
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Upload';
+            return;
+          }
+
+          const formData = new FormData(form);
+
+          // ✅ ensure lessonId is NOT sent
+          formData.delete('lessonId');
+
+          // optional type
+          if (formData.get('type') === '') formData.delete('type');
+
+          const file = formData.get('file');
+          if (!file || !file.name) {
+            alert('Please choose a file.');
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Upload';
+            return;
+          }
+
+          const res = await fetch(
+            `/admin/courses/${courseId}/lessons/${lessonId}/attachments`,
+            {
+              method: 'POST',
+              body: formData,
+              credentials: 'include',
+            },
+          );
+
+          if (!res.ok) {
+            let msg = 'Failed to upload attachment.';
+            try {
+              const data = await res.json();
+              msg = Array.isArray(data.message)
+                ? data.message.join(', ')
+                : data.message || msg;
+            } catch (_) {}
+            alert(msg);
+
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Upload';
+            return;
+          }
+
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          alert('Something went wrong.');
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Upload';
+        }
+      });
+    });
+  })();
+</script>

@@ -7,6 +7,7 @@ import { EventModule } from 'src/event/event.module';
 import { ChallengesModule } from 'src/challenges/challenges.module';
 import { CounsellingModule } from 'src/counselling/counselling.module';
 import { BooksModule } from 'src/books/books.module';
+import { CoursesModule } from 'src/courses/courses.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { BooksModule } from 'src/books/books.module';
     ChallengesModule,
     CounsellingModule,
     BooksModule,
+    CoursesModule
   ],
   controllers: [AdminViewsController],
   providers: [AdminViewsService],

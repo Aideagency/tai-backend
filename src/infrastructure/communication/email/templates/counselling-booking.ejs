@@ -1,196 +1,210 @@
 <!DOCTYPE html>
 <html lang="en" style="margin:0;padding:0;">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="x-apple-disable-message-reformatting" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Counselling Booking Confirmation</title>
-  </head>
-  <body style="margin:0;padding:0;background:#ffffff;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-      <tr>
-        <td align="center">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
-            
-            <!-- Header -->
-            <tr>
-              <td style="background:#DDF6E1;padding:14px 18px;">
-                <table role="presentation" width="100%">
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#1a2155;">
-                      The Aguda Institute
-                    </td>
-                    <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a2155;">
-                      Counselling Booking Confirmed
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
 
-            <!-- Greeting -->
-            <tr>
-              <td style="padding:20px 18px 6px 18px;">
-                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
-                  Dear <span style="font-weight:600;"><%= username || "Client" %></span>,
-                </p>
-              </td>
-            </tr>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Counselling Booking Confirmation</title>
+</head>
 
-            <!-- Intro Message -->
-            <tr>
-              <td style="padding:18px;">
-                <p style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
-                  Your counselling booking has been successfully confirmed. Below are the details for your session:
-                </p>
+<body style="margin:0;padding:0;background:#ffffff;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;">
+          <tr>
+            <td style="background:#DDF6E1;padding:14px 18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
 
-                <!-- Counselling Details Block -->
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" 
-                       style="margin-top:14px;background:#DDF6E1;border-radius:8px;padding:14px 18px;border:1px solid #1a2155;">
-                  
-                  <!-- Title -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#1a2155;padding-bottom:10px;">
-                      <%= counselling_title %>
-                    </td>
-                  </tr>
+                  <!-- Logo + Brand -->
+                  <td style="font-family:Arial,Helvetica,sans-serif;color:#1a2155;white-space:nowrap;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="vertical-align:middle;padding-right:8px;">
+                          <img src="https://tai-backend-v1.onrender.com/images/logo.png" alt="The Aguda Institute" width="36" height="36" style="display:block;border:0;outline:none;text-decoration:none;line-height:100%;-ms-interpolation-mode:bicubic;" />
+                        </td>
+                        <td style="vertical-align:middle;font-size:16px;font-weight:700;color:#1a2155;">
+                          The Aguda Institute
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
 
-                  <!-- Booking Reference -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Booking Reference:</strong> <%= booking_reference %>
-                    </td>
-                  </tr>
+                  <!-- Email type -->
+                  <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a2155;white-space:nowrap;">
+                    Counselling Booking Confirmed
+                  </td>
 
-                  <!-- Status -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Status:</strong> <%= booking_status %>
-                    </td>
-                  </tr>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-                  <!-- Mode -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Mode:</strong> <%= counselling_mode %>
-                    </td>
-                  </tr>
+          <!-- Greeting -->
+          <tr>
+            <td style="padding:20px 18px 6px 18px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
+                Dear <span style="font-weight:600;"><%= username || "Client" %></span>,
+              </p>
+            </td>
+          </tr>
 
-                  <!-- Location -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Location:</strong> <%= location_text || "N/A" %>
-                    </td>
-                  </tr>
+          <!-- Intro Message -->
+          <tr>
+            <td style="padding:18px;">
+              <p style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111111;">
+                Your counselling booking has been successfully confirmed. Below are the details for your session:
+              </p>
 
-                  <!-- Meeting Link -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Meeting Link:</strong>
-                      <% if (meeting_link) { %>
-                        <a href="<%= meeting_link %>" style="color:#1a2155;text-decoration:underline;">Join Session</a>
-                      <% } else { %>
-                        N/A
-                      <% } %>
-                    </td>
-                  </tr>
+              <!-- Counselling Details Block -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:14px;background:#DDF6E1;border-radius:8px;padding:14px 18px;border:1px solid #1a2155;">
 
-                  <!-- Price -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Price:</strong> 
-                      <%= price > 0 ? ("₦" + price) : "Free" %>
-                    </td>
-                  </tr>
+                <!-- Title -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;color:#1a2155;padding-bottom:10px;">
+                    <%= counselling_title %>
+                  </td>
+                </tr>
 
-                  <!-- Dates -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
-                      <strong>Starts:</strong> <%= start_date %>
-                    </td>
-                  </tr>
+                <!-- Booking Reference -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Booking Reference:</strong> <%= booking_reference %>
+                  </td>
+                </tr>
 
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;">
-                      <strong>Ends:</strong> <%= end_date %>
-                    </td>
-                  </tr>
+                <!-- Status -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Status:</strong> <%= booking_status %>
+                  </td>
+                </tr>
 
-                  <!-- Duration -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                      <strong>Duration:</strong> <%= duration_minutes %> minutes
-                    </td>
-                  </tr>
+                <!-- Mode -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Mode:</strong> <%= counselling_mode %>
+                  </td>
+                </tr>
 
-                  <!-- Counsellor -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                      <strong>Counsellor:</strong> <%= counsellor_name || "Not Assigned" %>
-                    </td>
-                  </tr>
+                <!-- Location -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Location:</strong> <%= location_text || "N/A" %>
+                  </td>
+                </tr>
 
-                  <!-- Attendance -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                      <strong>Attendance:</strong> <%= attended ? "Yes" : "No" %>
-                    </td>
-                  </tr>
+                <!-- Meeting Link -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Meeting Link:</strong>
+                    <% if (meeting_link) { %>
+                    <a href="<%= meeting_link %>" style="color:#1a2155;text-decoration:underline;">Join Session</a>
+                    <% } else { %>
+                    N/A
+                    <% } %>
+                  </td>
+                </tr>
 
-                  <!-- Transaction Reference -->
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                      <strong>Transaction Ref:</strong> <%= transaction_ref || "N/A" %>
-                    </td>
-                  </tr>
+                <!-- Price -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Price:</strong>
+                    <%= price > 0 ? ("₦" + price) : "Free" %>
+                  </td>
+                </tr>
 
-                  <!-- Client Notes -->
-                  <% if (client_notes) { %>
-                    <tr>
-                      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                        <strong>Your Notes:</strong><br />
-                        <span style="font-size:13px;color:#222;"><%= client_notes %></span>
-                      </td>
-                    </tr>
-                  <% } %>
+                <!-- Dates -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-bottom:6px;">
+                    <strong>Starts:</strong> <%= start_date %>
+                  </td>
+                </tr>
 
-                  <!-- Counsellor Notes -->
-                  <% if (counsellor_notes) { %>
-                    <tr>
-                      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
-                        <strong>Counsellor Notes:</strong><br />
-                        <span style="font-size:13px;color:#222;"><%= counsellor_notes %></span>
-                      </td>
-                    </tr>
-                  <% } %>
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;">
+                    <strong>Ends:</strong> <%= end_date %>
+                  </td>
+                </tr>
 
-                </table>
+                <!-- Duration -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Duration:</strong> <%= duration_minutes %> minutes
+                  </td>
+                </tr>
 
-                <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#555;">
-                  You will receive reminders or updates as your session date approaches.
-                </p>
-              </td>
-            </tr>
+                <!-- Counsellor -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Counsellor:</strong> <%= counsellor_name || "Not Assigned" %>
+                  </td>
+                </tr>
 
-            <!-- Footer -->
-            <tr>
-              <td style="padding:12px 18px 24px 18px;background:#DDF6E1;">
-                <table role="presentation" width="100%">
-                  <tr>
-                    <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
-                      Need help? <a href="mailto:hello@theagudahinstitute.com" style="color:#1a2155;text-decoration:underline;">hello@theagudahinstitute.com</a>
-                    </td>
-                    <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
-                      © <%= new Date().getFullYear() %> The Aguda Institute
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+                <!-- Attendance -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Attendance:</strong> <%= attended ? "Yes" : "No" %>
+                  </td>
+                </tr>
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+                <!-- Transaction Reference -->
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Transaction Ref:</strong> <%= transaction_ref || "N/A" %>
+                  </td>
+                </tr>
+
+                <!-- Client Notes -->
+                <% if (client_notes) { %>
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Your Notes:</strong><br />
+                    <span style="font-size:13px;color:#222;"><%= client_notes %></span>
+                  </td>
+                </tr>
+                <% } %>
+
+                <!-- Counsellor Notes -->
+                <% if (counsellor_notes) { %>
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;padding-top:6px;">
+                    <strong>Counsellor Notes:</strong><br />
+                    <span style="font-size:13px;color:#222;"><%= counsellor_notes %></span>
+                  </td>
+                </tr>
+                <% } %>
+
+              </table>
+
+              <p style="margin:12px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#555;">
+                You will receive reminders or updates as your session date approaches.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:12px 18px 24px 18px;background:#DDF6E1;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
+                    Need help? <a href="mailto:hello@theagudahinstitute.com" style="color:#1a2155;text-decoration:underline;">hello@theagudahinstitute.com</a>
+                  </td>
+                  <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#1a2155;">
+                    © <%= new Date().getFullYear() %> The Aguda Institute
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
 </html>

@@ -1,0 +1,377 @@
+<!-- Add Course Modal -->
+<div
+  id="addCourseModal"
+  class="fixed inset-0 z-50 hidden bg-black/50 p-3 sm:p-6"
+>
+  <div class="flex h-full w-full items-center justify-center">
+    <div
+      class="w-full max-w-2xl lg:max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addCourseTitle"
+    >
+      <!-- ✅ Sticky header -->
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"
+      >
+        <h3 id="addCourseTitle" class="text-base font-semibold text-gray-800">
+          Add Course
+        </h3>
+
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          onclick="closeAddCourseModal()"
+          aria-label="Close modal"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- ✅ Scrollable content -->
+      <div class="max-h-[80vh] overflow-y-auto px-5 py-4">
+        <form
+          id="addCourseForm"
+          action="/admin/courses"
+          method="POST"
+          enctype="multipart/form-data"
+          class="space-y-3 text-xs"
+        >
+          <!-- Title -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Introduction to Prayer"
+              required
+            />
+          </div>
+
+          <!-- ✅ Description (Rich Text - Quill) -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Description</label
+            >
+
+            <div
+              id="courseDescriptionEditor"
+              class="bg-white border border-gray-300 rounded-lg"
+              style="min-height: 160px"
+            ></div>
+
+            <!-- Hidden textarea that gets submitted -->
+            <textarea
+              id="courseDescriptionHtml"
+              name="descriptionHtml"
+              class="hidden"
+            ></textarea>
+
+            <p class="text-[11px] text-gray-500 mt-1">
+              Supports formatting, lists, and links.
+            </p>
+          </div>
+
+          <!-- Thumbnail (optional) -->
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">
+              Thumbnail (optional)
+            </label>
+            <input
+              type="file"
+              name="thumbnail"
+              accept="image/*"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+            />
+          </div>
+
+          <!-- isFree + price -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">Access</label>
+              <select
+                id="courseIsFree"
+                name="isFree"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="true" selected>Free</option>
+                <option value="false">Paid</option>
+              </select>
+              <p class="text-[11px] text-gray-500 mt-1">
+                If Paid, price becomes required.
+              </p>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">
+                Price (₦)
+              </label>
+              <input
+                id="coursePrice"
+                type="number"
+                name="price"
+                step="0.01"
+                min="0"
+                disabled
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] disabled:bg-gray-50 disabled:text-gray-400"
+                placeholder="e.g. 5000"
+              />
+            </div>
+          </div>
+
+          <!-- currency + status -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">Currency</label>
+              <input
+                type="text"
+                name="currency"
+                value="NGN"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                placeholder="NGN"
+              />
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-700 mb-1">Status</label>
+              <select
+                name="status"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              >
+                <option value="DRAFT" selected>DRAFT</option>
+                <option value="PUBLISHED">PUBLISHED</option>
+                <option value="ARCHIVED">ARCHIVED</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ✅ Sticky footer actions -->
+          <div
+            class="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-gray-100 bg-white px-5 py-3"
+          >
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                class="w-full sm:w-auto px-3 py-2 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onclick="closeAddCourseModal()"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="addCourseSubmitBtn"
+                type="submit"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span id="addCourseSubmitText">Save course</span>
+
+                <svg
+                  id="addCourseSubmitSpinner"
+                  class="hidden animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ✅ Quill instance for course description */
+  let courseDescriptionQuill;
+
+  function openAddCourseModal() {
+    const modal = document.getElementById('addCourseModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('block');
+
+    ensureCourseQuill();
+    setupCourseAccessToggle();
+  }
+
+  function closeAddCourseModal() {
+    const modal = document.getElementById('addCourseModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('block');
+
+    const form = document.getElementById('addCourseForm');
+    if (form) form.reset();
+
+    if (courseDescriptionQuill) {
+      courseDescriptionQuill.setContents([]);
+    }
+
+    // reset paid/free UI
+    const isFreeEl = document.getElementById('courseIsFree');
+    const priceEl = document.getElementById('coursePrice');
+    if (isFreeEl && priceEl) {
+      isFreeEl.value = 'true';
+      priceEl.value = '';
+      priceEl.disabled = true;
+      priceEl.removeAttribute('required');
+    }
+
+    const btn = document.getElementById('addCourseSubmitBtn');
+    const text = document.getElementById('addCourseSubmitText');
+    const spinner = document.getElementById('addCourseSubmitSpinner');
+
+    if (btn && text && spinner) {
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      text.textContent = 'Save course';
+    }
+  }
+
+  function ensureCourseQuill() {
+    if (courseDescriptionQuill) return;
+
+    const editorEl = document.getElementById('courseDescriptionEditor');
+    if (!editorEl) return;
+
+    courseDescriptionQuill = new Quill('#courseDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Write a short description of the course...',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+  }
+
+  function setupCourseAccessToggle() {
+    const isFreeEl = document.getElementById('courseIsFree');
+    const priceEl = document.getElementById('coursePrice');
+    if (!isFreeEl || !priceEl) return;
+
+    const apply = () => {
+      const isFree = String(isFreeEl.value).toLowerCase() === 'true';
+      if (isFree) {
+        priceEl.value = '';
+        priceEl.disabled = true;
+        priceEl.removeAttribute('required');
+      } else {
+        priceEl.disabled = false;
+        priceEl.setAttribute('required', 'required');
+      }
+    };
+
+    // avoid double-binding
+    if (!isFreeEl.dataset.bound) {
+      isFreeEl.addEventListener('change', apply);
+      isFreeEl.dataset.bound = '1';
+    }
+
+    apply();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    ensureCourseQuill();
+    setupCourseAccessToggle();
+
+    const form = document.getElementById('addCourseForm');
+    const submitBtn = document.getElementById('addCourseSubmitBtn');
+    const submitText = document.getElementById('addCourseSubmitText');
+    const submitSpinner = document.getElementById('addCourseSubmitSpinner');
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // ✅ Sync Quill → hidden textarea BEFORE FormData
+      const descriptionEl = document.getElementById('courseDescriptionHtml');
+      if (courseDescriptionQuill && descriptionEl) {
+        let html = courseDescriptionQuill.root.innerHTML;
+        if (html === '<p><br></p>' || html.trim() === '') html = '';
+        descriptionEl.value = html;
+      }
+
+      // ✅ Ensure price behavior matches DTO
+      const isFreeEl = document.getElementById('courseIsFree');
+      const priceEl = document.getElementById('coursePrice');
+
+      // Loading state
+      submitBtn.disabled = true;
+      submitSpinner.classList.remove('hidden');
+      submitText.textContent = 'Saving...';
+
+      try {
+        const formData = new FormData(form);
+
+        // Remove empty optional fields so your Transform(emptyToUndefined) behaves cleanly
+        ['descriptionHtml', 'currency', 'status', 'price', 'isFree'].forEach(
+          (field) => {
+            if (formData.get(field) === '') formData.delete(field);
+          },
+        );
+
+        // If isFree is true => remove price
+        const isFreeVal = String(formData.get('isFree') ?? '').toLowerCase();
+        if (isFreeVal === 'true') {
+          formData.delete('price');
+        }
+
+        // If no file selected, remove so multer doesn't complain
+        const file = formData.get('thumbnail');
+        if (!file || !file.name) formData.delete('thumbnail');
+
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          let msg = 'Error creating course.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+
+          alert(msg);
+
+          submitBtn.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitText.textContent = 'Save course';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        submitBtn.disabled = false;
+        submitSpinner.classList.add('hidden');
+        submitText.textContent = 'Save course';
+      }
+    });
+  });
+</script>
