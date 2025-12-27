@@ -1,0 +1,159 @@
+<!-- views/partials/courses/attachments/delete-attachment-modal.ejs -->
+<div
+  id="deleteAttachmentModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6">
+    <h3 class="text-sm font-semibold text-gray-800 mb-2">Confirm Delete</h3>
+
+    <p class="text-xs text-gray-600 mb-4">
+      Are you sure you want to delete
+      <span id="deleteAttachmentTitle" class="font-semibold text-red-600"></span>?
+      This action cannot be undone.
+    </p>
+
+    <div class="flex justify-end gap-2 mt-4">
+      <button
+        type="button"
+        class="px-3 py-1.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+        onclick="closeDeleteAttachmentModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        id="confirmDeleteAttachmentBtn"
+        type="button"
+        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <span id="confirmDeleteAttachmentText">Delete</span>
+
+        <svg
+          id="confirmDeleteAttachmentSpinner"
+          class="hidden animate-spin h-4 w-4 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    let selectedAttachmentId = null;
+    let selectedLessonId = null;
+
+    window.openDeleteAttachmentModal = function (btn) {
+      const modal = document.getElementById('deleteAttachmentModal');
+      if (!modal) return;
+
+      // ✅ capture from the row button you clicked
+      selectedAttachmentId = btn.dataset.attachmentId || null;
+      selectedLessonId = btn.dataset.lessonId || null;
+
+      const title = btn.dataset.attachmentTitle || '';
+      const titleEl = document.getElementById('deleteAttachmentTitle');
+      if (titleEl) titleEl.textContent = title;
+
+      // ✅ quick sanity check (optional but recommended)
+      if (!selectedAttachmentId || !selectedLessonId) {
+        console.warn('Missing attachmentId or lessonId:', {
+          selectedAttachmentId,
+          selectedLessonId,
+        });
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.closeDeleteAttachmentModal = function () {
+      const modal = document.getElementById('deleteAttachmentModal');
+      if (!modal) return;
+
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+
+      selectedAttachmentId = null;
+      selectedLessonId = null;
+
+      const btn = document.getElementById('confirmDeleteAttachmentBtn');
+      const text = document.getElementById('confirmDeleteAttachmentText');
+      const spinner = document.getElementById('confirmDeleteAttachmentSpinner');
+
+      if (btn && text && spinner) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Delete';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('confirmDeleteAttachmentBtn');
+      if (!btn) return;
+
+      const text = document.getElementById('confirmDeleteAttachmentText');
+      const spinner = document.getElementById('confirmDeleteAttachmentSpinner');
+
+      btn.addEventListener('click', async () => {
+        if (!selectedAttachmentId || !selectedLessonId) {
+          alert('Missing lesson or attachment ID. Please try again.');
+          return;
+        }
+
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = 'Deleting...';
+
+        try {
+          const courseId = window.CourseDetailsState?.courseId;
+
+          const res = await fetch(
+            `/admin/courses/${courseId}/lessons/${selectedLessonId}/attachments/${selectedAttachmentId}`,
+            { method: 'DELETE', credentials: 'include' },
+          );
+
+          if (!res.ok) {
+            let msg = 'Error deleting attachment.';
+            try {
+              const data = await res.json();
+              msg = Array.isArray(data.message)
+                ? data.message.join(', ')
+                : data.message || msg;
+            } catch (_) {}
+
+            alert(msg);
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Delete';
+            return;
+          }
+
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          alert('Something went wrong.');
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Delete';
+        }
+      });
+    });
+  })();
+</script>

@@ -92,7 +92,7 @@ export class LessonRepository {
         .createQueryBuilder()
         .update(LessonEntity)
         .set({ sortOrder: () => `"sortOrder" - 1` })
-        .where(`"courseId" = :courseId`, { courseId })
+        .where({ courseId }) 
         .andWhere(`"sortOrder" > :fromOrder`, { fromOrder })
         .andWhere(`"sortOrder" <= :toOrder`, { toOrder })
         .execute();
@@ -102,7 +102,7 @@ export class LessonRepository {
         .createQueryBuilder()
         .update(LessonEntity)
         .set({ sortOrder: () => `"sortOrder" + 1` })
-        .where(`"courseId" = :courseId`, { courseId })
+        .where({ courseId }) 
         .andWhere(`"sortOrder" >= :toOrder`, { toOrder })
         .andWhere(`"sortOrder" < :fromOrder`, { fromOrder })
         .execute();

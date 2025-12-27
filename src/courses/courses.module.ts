@@ -11,6 +11,6 @@ import { PaymentModule } from 'src/payment/payment.module';
   providers: [CoursesService, AdminCoursesService],
   controllers: [CoursesController, AdminCoursesController],
   imports: [CommonModule, RepositoryModule, forwardRef(() => PaymentModule)],
-  exports: [CoursesService],
+  exports: [CoursesService, AdminCoursesService],
 })
 export class CoursesModule {}

@@ -22,6 +22,7 @@ import { GetChallengesQueryDto } from 'src/challenges/dtos/get-challenges-query.
 import { GetCounsellingsFilterDto } from 'src/counselling/dtos/get-counselling-filter.dto';
 import { GetCounsellingBookingsFilterDto } from 'src/counselling/dtos/get-counselling-booking-filter.dto';
 import { AdminBooksQueryDto } from 'src/books/dtos/admin-books-query.dto';
+import { AdminListCoursesQueryDto } from 'src/courses/dtos/admin-list-courses.query.dto';
 
 @Controller('admin-views')
 @ApiExcludeController()
@@ -221,6 +222,74 @@ export class AdminViewsController {
       },
 
       q: query.q || '',
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('courses')
+  @UseGuards(AdminJwtGuard)
+  @Render('courses')
+  async getCourses(@Req() req: any, @Query() query: AdminListCoursesQueryDto) {
+    const response = await this.viewsService.listCourses(query);
+
+    // supports either wrapped or raw, just like books
+    const data = response;
+
+    const page = Number((data as any)?.page ?? query.page ?? 1);
+    const pageSize = Number((data as any)?.pageSize ?? query.pageSize ?? 20);
+
+    const items = (data as any)?.items ?? [];
+    const totalItems = Number(
+      (data as any)?.totalItems ?? (data as any)?.meta?.totalItems ?? 0,
+    );
+    const totalPages = Number(
+      (data as any)?.totalPages ??
+        (data as any)?.meta?.totalPages ??
+        Math.max(1, Math.ceil(totalItems / pageSize)),
+    );
+
+    return {
+      admin: req.user,
+      items,
+
+      // match your EJS pagination structure
+      meta: {
+        currentPage: page,
+        itemsPerPage: pageSize,
+        totalItems,
+        totalPages,
+      },
+
+      // keep filter state for the UI
+      filters: {
+        q: query.q || '',
+        status: query.status || '',
+        includeCounts: query.includeCounts ? true : false,
+        orderBy: query.orderBy || 'createdAt',
+        orderDir: query.orderDir || 'DESC',
+      },
+
+      q: query.q || '',
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Get('course/:courseId')
+  @UseGuards(AdminJwtGuard)
+  @Render('course-details')
+  async getCourseDetails(
+    @Req() req: any,
+    @Param('courseId', ParseIntPipe) courseId: number,
+  ) {
+    const response = await this.viewsService.getCourseDetails(courseId);
+
+    return {
+      admin: req.user,
+      course: response.course,
+      lessons: (response.lessons || []).sort(
+        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+      ),
+      stats: response.stats,
       currentPath: req.originalUrl,
     };
   }

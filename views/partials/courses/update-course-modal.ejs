@@ -1,0 +1,430 @@
+<!-- Update Course Modal -->
+<div
+  id="updateCourseModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div
+    class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 mx-auto my-8 max-h-[calc(100vh-4rem)] overflow-y-auto"
+  >
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-gray-800">Update Course</h3>
+
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-lg leading-none"
+        onclick="closeUpdateCourseModal()"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      id="updateCourseForm"
+      enctype="multipart/form-data"
+      class="space-y-3 text-xs"
+    >
+      <!-- Title -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">Title</label>
+        <input
+          type="text"
+          id="updateCourseTitle"
+          name="title"
+          maxlength="200"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+          placeholder="Course title..."
+        />
+      </div>
+
+      <!-- Description (Rich Text) -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Description (optional)
+        </label>
+
+        <div
+          id="updateCourseDescriptionEditor"
+          class="bg-white border border-gray-300 rounded-lg"
+          style="min-height: 140px"
+        ></div>
+
+        <textarea
+          id="updateCourseDescriptionHtml"
+          name="descriptionHtml"
+          class="hidden"
+        ></textarea>
+
+        <p class="text-[11px] text-gray-500 mt-1">
+          Supports formatting, lists, and links.
+        </p>
+      </div>
+
+      <!-- Current thumbnail preview -->
+      <div class="rounded-lg border border-gray-200 p-2">
+        <p class="text-[11px] font-semibold text-gray-700 mb-1">
+          Current Thumbnail
+        </p>
+        <div id="updateCourseThumbnailPreview" class="text-[11px] text-gray-500">
+          No thumbnail uploaded.
+        </div>
+      </div>
+
+      <!-- Replace thumbnail -->
+      <div>
+        <label class="block font-medium text-gray-700 mb-1">
+          Replace Thumbnail (optional)
+        </label>
+        <input
+          type="file"
+          name="thumbnail"
+          accept="image/*"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+        />
+        <p class="text-[11px] text-gray-500 mt-1">
+          Leave empty to keep the current thumbnail.
+        </p>
+      </div>
+
+      <!-- Access (isFree) + Price -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Access</label>
+          <select
+            id="updateCourseIsFree"
+            name="isFree"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="">-- no change --</option>
+            <option value="true">Free</option>
+            <option value="false">Paid</option>
+          </select>
+          <p class="text-[11px] text-gray-500 mt-1">
+            Choose “Paid” to update the price.
+          </p>
+        </div>
+
+        <div id="updateCoursePriceWrap" class="hidden">
+          <label class="block font-medium text-gray-700 mb-1">
+            Price (₦) <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="updateCoursePrice"
+            type="number"
+            name="price"
+            step="0.01"
+            min="0"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            placeholder="e.g. 5000"
+          />
+        </div>
+      </div>
+
+      <!-- Currency + Status -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Currency</label>
+          <input
+            id="updateCourseCurrency"
+            type="text"
+            name="currency"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+            placeholder="NGN"
+          />
+          <p class="text-[11px] text-gray-500 mt-1">
+            Leave empty to keep current currency.
+          </p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1">Status</label>
+          <select
+            id="updateCourseStatus"
+            name="status"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="">-- no change --</option>
+            <option value="DRAFT">DRAFT</option>
+            <option value="PUBLISHED">PUBLISHED</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 text-xs rounded-md border border-gray-300"
+          onclick="closeUpdateCourseModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="updateCourseSubmitBtn"
+          type="submit"
+          class="inline-flex items-center gap-2 px-4 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold"
+        >
+          <span id="updateCourseSubmitText">Update course</span>
+
+          <svg
+            id="updateCourseSubmitSpinner"
+            class="hidden animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let updateCourseDescriptionQuill;
+
+  async function openUpdateCourseModal(btn) {
+    const modal = document.getElementById('updateCourseModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    ensureUpdateCourseQuill();
+
+    // You said: call /admin/courses/:id to get details
+    const id = btn.dataset.courseId;
+    if (!id) {
+      alert('Missing course id');
+      return;
+    }
+
+    // Set form action (adjust to your real update endpoint)
+    const form = document.getElementById('updateCourseForm');
+    form.action = `/admin/courses/${id}`; // PATCH this endpoint
+
+    // Reset UI state each time we open
+    form.reset();
+    document.getElementById('updateCourseThumbnailPreview').textContent =
+      'Loading...';
+    if (updateCourseDescriptionQuill) updateCourseDescriptionQuill.setContents(
+      [],
+    );
+
+    // Default: no change on update for isFree/status so you can send only what changed
+    document.getElementById('updateCourseIsFree').value = '';
+    document.getElementById('updateCourseStatus').value = '';
+    syncUpdateCoursePriceField(); // hides price
+
+    try {
+      const res = await fetch(`/admin/courses/${id}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error('Failed to load course');
+
+      const payload = await res.json();
+      const course = payload?.data;
+
+      // Fill fields from API (you provided sample response)
+      document.getElementById('updateCourseTitle').value = course?.title || '';
+      document.getElementById('updateCourseCurrency').value =
+        course?.currency || '';
+
+      // Quill content (keep as-is)
+      const descriptionHtml = course?.descriptionHtml || '';
+      if (!descriptionHtml || descriptionHtml.trim() === '') {
+        updateCourseDescriptionQuill.setContents([]);
+      } else {
+        updateCourseDescriptionQuill.root.innerHTML = descriptionHtml;
+      }
+
+      // Thumbnail preview
+      const thumbUrl = course?.thumbnailUrl || '';
+      const previewEl = document.getElementById('updateCourseThumbnailPreview');
+
+      previewEl.innerHTML = thumbUrl
+        ? `<a href="${thumbUrl}" target="_blank" class="text-[var(--color-primary-dark)] underline">View thumbnail</a>`
+        : `No thumbnail uploaded.`;
+
+      // Store current paid/free and price so we can behave nicely when user changes access
+      // (we don't force change; dropdown stays "-- no change --")
+      form.dataset.currentIsFree = String(course?.isFree ?? '');
+      form.dataset.currentPrice = String(course?.price ?? '');
+      form.dataset.currentStatus = String(course?.status ?? '');
+    } catch (err) {
+      console.error(err);
+      document.getElementById('updateCourseThumbnailPreview').textContent =
+        'Failed to load thumbnail.';
+      alert('Failed to load course details.');
+    }
+  }
+
+  function closeUpdateCourseModal() {
+    const modal = document.getElementById('updateCourseModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    const form = document.getElementById('updateCourseForm');
+    form.reset();
+
+    if (updateCourseDescriptionQuill) updateCourseDescriptionQuill.setContents(
+      [],
+    );
+
+    document.getElementById('updateCourseThumbnailPreview').textContent =
+      'No thumbnail uploaded.';
+
+    // Reset price UI
+    document.getElementById('updateCourseIsFree').value = '';
+    document.getElementById('updateCoursePrice').value = '';
+    syncUpdateCoursePriceField();
+
+    const btn = document.getElementById('updateCourseSubmitBtn');
+    const text = document.getElementById('updateCourseSubmitText');
+    const spinner = document.getElementById('updateCourseSubmitSpinner');
+
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    text.textContent = 'Update course';
+  }
+
+  function ensureUpdateCourseQuill() {
+    if (updateCourseDescriptionQuill) return;
+
+    const el = document.getElementById('updateCourseDescriptionEditor');
+    if (!el) return;
+
+    updateCourseDescriptionQuill = new Quill('#updateCourseDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Update the course description...',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+  }
+
+  function syncUpdateCoursePriceField() {
+    const isFree = document.getElementById('updateCourseIsFree')?.value; // '', 'true', 'false'
+    const wrap = document.getElementById('updateCoursePriceWrap');
+    const price = document.getElementById('updateCoursePrice');
+
+    // Only show price when user explicitly chooses "Paid"
+    if (isFree === 'false') {
+      wrap.classList.remove('hidden');
+      price.setAttribute('required', 'required');
+    } else {
+      wrap.classList.add('hidden');
+      price.removeAttribute('required');
+      price.value = '';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    ensureUpdateCourseQuill();
+
+    const isFreeEl = document.getElementById('updateCourseIsFree');
+    if (isFreeEl) {
+      isFreeEl.addEventListener('change', syncUpdateCoursePriceField);
+    }
+
+    const form = document.getElementById('updateCourseForm');
+    const submitBtn = document.getElementById('updateCourseSubmitBtn');
+    const submitText = document.getElementById('updateCourseSubmitText');
+    const spinner = document.getElementById('updateCourseSubmitSpinner');
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Sync Quill → textarea
+      const descriptionEl = document.getElementById(
+        'updateCourseDescriptionHtml',
+      );
+      if (updateCourseDescriptionQuill && descriptionEl) {
+        let html = updateCourseDescriptionQuill.root.innerHTML;
+        if (html === '<p><br></p>' || html.trim() === '') html = '';
+        descriptionEl.value = html;
+      }
+
+      // Loading state
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+      submitText.textContent = 'Updating...';
+
+      try {
+        const formData = new FormData(form);
+
+        // ✅ Delete empty fields so UpdateCourseDto transforms behave properly
+        // (empty string => undefined)
+        ['title', 'descriptionHtml', 'currency', 'status', 'isFree', 'price'].forEach(
+          (f) => {
+            if (formData.get(f) === '') formData.delete(f);
+          },
+        );
+
+        // ✅ If user sets isFree=true => delete price
+        const isFreeVal = String(formData.get('isFree') ?? '').toLowerCase();
+        if (isFreeVal === 'true') {
+          formData.delete('price');
+        }
+
+        // ✅ If no file selected, remove
+        const file = formData.get('thumbnail');
+        if (!file || !file.name) formData.delete('thumbnail');
+
+        const res = await fetch(form.action, {
+          method: 'PUT',
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          let msg = 'Failed to update course.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+
+          alert(msg);
+
+          submitBtn.disabled = false;
+          spinner.classList.add('hidden');
+          submitText.textContent = 'Update course';
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong.');
+
+        submitBtn.disabled = false;
+        spinner.classList.add('hidden');
+        submitText.textContent = 'Update course';
+      }
+    });
+  });
+</script>

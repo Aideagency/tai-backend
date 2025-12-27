@@ -43,7 +43,7 @@ export class CoursesController {
       'Returns a paginated list of courses. Supports optional search by title, status filter, and pagination.',
   })
   @ApiOkResponse({ description: 'List courses (paginated)' })
-  async listCourses(@Query() query: CoursesQueryDto, req: any) {
+  async listCourses(@Query() query: CoursesQueryDto, @Req() req: any) {
     return this.coursesService.list(req.user.id, query);
   }
 

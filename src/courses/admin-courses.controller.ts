@@ -77,7 +77,7 @@ class DeleteLessonResponse extends ApiMessageResponse {}
 class AddLessonAttachmentResponse extends ApiMessageDataResponse<LessonAttachmentEntity> {}
 class RemoveLessonAttachmentResponse extends ApiMessageResponse {}
 
-@ApiExcludeController()
+// @ApiExcludeController()
 @ApiTags('Admin Courses')
 @Controller('admin/courses')
 export class AdminCoursesController {

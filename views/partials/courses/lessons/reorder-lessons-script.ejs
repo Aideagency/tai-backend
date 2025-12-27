@@ -1,0 +1,69 @@
+<!-- views/partials/courses/lessons/reorder-lessons-script.ejs -->
+<script>
+  (function () {
+    let reorderMode = false;
+
+    window.toggleReorderMode = function (force) {
+      reorderMode = typeof force === 'boolean' ? force : !reorderMode;
+
+      const bar = document.getElementById('reorderBar');
+      const controls = document.querySelectorAll('.reorderControls');
+
+      if (!bar) return;
+
+      if (reorderMode) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        controls.forEach((el) => el.classList.remove('hidden'));
+      } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+        controls.forEach((el) => el.classList.add('hidden'));
+      }
+    };
+
+    window.moveLessonUp = function (lessonId) {
+      const container = document.getElementById('lessonsContainer');
+      const el = container?.querySelector(`[data-lesson-id="${lessonId}"]`);
+      if (!container || !el) return;
+      const prev = el.previousElementSibling;
+      if (prev) container.insertBefore(el, prev);
+    };
+
+    window.moveLessonDown = function (lessonId) {
+      const container = document.getElementById('lessonsContainer');
+      const el = container?.querySelector(`[data-lesson-id="${lessonId}"]`);
+      if (!container || !el) return;
+      const next = el.nextElementSibling;
+      if (next) container.insertBefore(next, el);
+    };
+
+    window.saveLessonOrder = async function () {
+      const container = document.getElementById('lessonsContainer');
+      const rows = Array.from(container?.querySelectorAll('[data-lesson-id]') || []);
+      const lessonIds = rows.map((r) => Number(r.getAttribute('data-lesson-id')));
+
+      try {
+        const courseId = window.CourseDetailsState?.courseId;
+
+        // ✅ TODO: replace with your reorder endpoint
+        const res = await fetch(`/admin/courses/${courseId}/lessons/reorder`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ lessonIds }),
+        });
+
+        if (!res.ok) {
+          alert('Failed to save lesson order. Update the reorder endpoint.');
+          return;
+        }
+
+        window.location.reload();
+      } catch (e) {
+        console.error(e);
+        alert('Something went wrong saving order.');
+      }
+    };
+  })();
+</script>

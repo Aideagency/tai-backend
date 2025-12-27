@@ -1,0 +1,291 @@
+<!-- views/partials/courses/lessons/add-lesson-modal.ejs -->
+<div
+  id="addLessonModal"
+  class="fixed inset-0 z-50 hidden bg-black/50 p-3 sm:p-6"
+>
+  <div class="flex h-full w-full items-center justify-center">
+    <div
+      class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"
+      >
+        <h3 class="text-base font-semibold text-gray-800">Add Lesson</h3>
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          onclick="closeAddLessonModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="max-h-[80vh] overflow-y-auto px-5 py-4">
+        <form id="addLessonForm" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-medium text-gray-700 mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              required
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="e.g. Lesson 1: Introductions"
+            />
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >YouTube URL (optional)</label
+            >
+            <input
+              type="url"
+              name="youtubeUrl"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Sort Order (optional)</label
+            >
+            <input
+              type="number"
+              name="sortOrder"
+              min="1"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              placeholder="Leave empty to append to the end"
+            />
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Description</label
+            >
+            <div
+              id="addLessonDescriptionEditor"
+              class="bg-white border border-gray-300 rounded-lg"
+              style="min-height: 140px"
+            ></div>
+            <textarea
+              id="addLessonDescriptionHtml"
+              name="descriptionHtml"
+              class="hidden"
+            ></textarea>
+            <p class="text-[11px] text-gray-500 mt-1">
+              Supports formatting, lists, and links.
+            </p>
+          </div>
+
+          <div
+            class="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-gray-100 bg-white px-5 py-3"
+          >
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button
+                type="button"
+                class="w-full sm:w-auto px-3 py-2 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
+                onclick="closeAddLessonModal()"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="addLessonSubmitBtn"
+                type="submit"
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs rounded-md bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-dark)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span id="addLessonSubmitText">Save lesson</span>
+                <svg
+                  id="addLessonSubmitSpinner"
+                  class="hidden animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    let addLessonQuill;
+
+    function ensureAddLessonQuill() {
+      if (addLessonQuill) return;
+      const editorEl = document.getElementById('addLessonDescriptionEditor');
+      if (!editorEl) return;
+
+      addLessonQuill = new Quill('#addLessonDescriptionEditor', {
+        theme: 'snow',
+        placeholder: 'Write a short lesson description...',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean'],
+          ],
+        },
+      });
+    }
+
+    window.openAddLessonModal = function () {
+      const modal = document.getElementById('addLessonModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('block');
+      ensureAddLessonQuill();
+    };
+
+    window.closeAddLessonModal = function () {
+      const modal = document.getElementById('addLessonModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('block');
+
+      const form = document.getElementById('addLessonForm');
+      if (form) form.reset();
+
+      if (addLessonQuill) addLessonQuill.setContents([]);
+
+      const btn = document.getElementById('addLessonSubmitBtn');
+      const text = document.getElementById('addLessonSubmitText');
+      const spinner = document.getElementById('addLessonSubmitSpinner');
+      if (btn && text && spinner) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Save lesson';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ensureAddLessonQuill();
+
+      const form = document.getElementById('addLessonForm');
+      if (!form) return;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // sync quill -> textarea
+        const descEl = document.getElementById('addLessonDescriptionHtml');
+        if (addLessonQuill && descEl) {
+          let html = addLessonQuill.root.innerHTML;
+          if (html === '<p><br></p>' || html.trim() === '') html = '';
+          descEl.value = html;
+        }
+
+        const btn = document.getElementById('addLessonSubmitBtn');
+        const text = document.getElementById('addLessonSubmitText');
+        const spinner = document.getElementById('addLessonSubmitSpinner');
+
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = 'Saving...';
+
+        try {
+          const courseId = window.CourseDetailsState?.courseId;
+
+          // ✅ Build JSON body from form fields
+          const payload = {
+            title: (form.querySelector('[name="title"]')?.value || '').trim(),
+            youtubeUrl: (
+              form.querySelector('[name="youtubeUrl"]')?.value || ''
+            ).trim(),
+            descriptionHtml: (
+              form.querySelector('[name="descriptionHtml"]')?.value || ''
+            ).trim(),
+            sortOrder: form.querySelector('[name="sortOrder"]')?.value,
+          };
+
+          // ✅ Remove empty optionals (and convert sortOrder)
+          if (!payload.youtubeUrl) delete payload.youtubeUrl;
+          if (!payload.descriptionHtml) delete payload.descriptionHtml;
+
+          // sortOrder: optional number
+          if (
+            payload.sortOrder === '' ||
+            payload.sortOrder === undefined ||
+            payload.sortOrder === null
+          ) {
+            delete payload.sortOrder;
+          } else {
+            const n = Number(payload.sortOrder);
+            if (Number.isNaN(n)) {
+              // let backend validation catch it, but keep it as-is if you want
+              // or throw here with a nicer message
+              // throw new Error('Sort order must be a number');
+              payload.sortOrder = payload.sortOrder;
+            } else {
+              payload.sortOrder = n;
+            }
+          }
+
+          // Basic required field guard (optional)
+          if (!payload.title) {
+            alert('Title is required.');
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Save lesson';
+            return;
+          }
+
+          const res = await fetch(`/admin/courses/${courseId}/lessons`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(payload),
+            credentials: 'include',
+          });
+
+          if (!res.ok) {
+            let msg = 'Failed to add lesson.';
+            try {
+              const data = await res.json();
+              msg = Array.isArray(data.message)
+                ? data.message.join(', ')
+                : data.message || msg;
+            } catch (_) {}
+            alert(msg);
+
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            text.textContent = 'Save lesson';
+            return;
+          }
+
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          alert('Something went wrong.');
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Save lesson';
+        }
+      });
+    });
+  })();
+</script>
