@@ -9,7 +9,9 @@ import { RepositoryModule } from 'src/repository/repository.module';
 
 @Module({
   imports: [
-    JwtModule.register({}), // strategy reads secret from env
+    JwtModule.register({
+      signOptions: { expiresIn: '1h' },
+    }), // strategy reads secret from env
     RepositoryModule,
   ],
   controllers: [AdminAuthController],

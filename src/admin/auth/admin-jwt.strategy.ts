@@ -11,6 +11,7 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.ADMIN_JWT_SECRET, // set in env
+
       // audience: 'admin-api',
       // issuer: 'your-app',
     });

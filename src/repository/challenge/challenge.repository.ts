@@ -163,7 +163,7 @@ export class ChallengeRepository extends BaseRepository<
   async getDetailForUser(challengeId: number, withTasks = false) {
     const qb = this.query('c')
       .where('c.id = :id', { id: challengeId })
-      .loadRelationCountAndMap('c.tasksCount', 'c.tasks');
+      .loadRelationCountAndMap('c.tasksCount', 'c.tasks')
 
     if (withTasks) {
       qb.leftJoinAndSelect('c.tasks', 't')

@@ -5,22 +5,50 @@ import {
   Min,
   Max,
   IsArray,
-  ArrayNotEmpty,
   IsOptional,
   IsString,
   Length,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CreateChallengeTaskDto } from './create-challenge-task.dto'; // Assuming task DTO is separate
+import { CreateChallengeTaskDto } from './create-challenge-task.dto';
 import { CommunityTag as CommunityType } from 'src/database/entities/user.entity';
 import {
   ChallengeFrequency,
   ChallengeStatus,
   Visibility,
 } from 'src/database/entities/challenge.entity';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { sanitizeString } from 'src/nuggets/dtos/create-nugget.dto';
+
+/** ---- helpers for multipart/form-data ---- */
+function toNumber(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isNaN(n) ? v : n;
+}
+
+function toBoolean(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  if (typeof v === 'boolean') return v;
+
+  const s = String(v).trim().toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(s)) return true;
+  if (['false', '0', 'no', 'off'].includes(s)) return false;
+
+  return v;
+}
+
+function toJson(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  if (typeof v === 'object') return v;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return v;
+  }
+}
 
 export class UpdateChallengeDto {
   @ApiProperty({
@@ -33,7 +61,7 @@ export class UpdateChallengeDto {
   @IsString()
   @Length(3, 100)
   @sanitizeString()
-  title: string;
+  title?: string;
 
   @ApiProperty({
     description:
@@ -44,7 +72,7 @@ export class UpdateChallengeDto {
   })
   @IsOptional()
   @IsEnum(CommunityType)
-  community: CommunityType;
+  community?: CommunityType;
 
   @ApiProperty({
     description: 'The duration of the challenge in days (e.g., 7, 14, 42)',
@@ -53,10 +81,11 @@ export class UpdateChallengeDto {
     maximum: 365,
   })
   @IsOptional()
+  @Transform(({ value }) => toNumber(value))
   @IsInt()
   @Min(1)
   @Max(365)
-  durationDays: number;
+  durationDays?: number;
 
   @ApiProperty({
     description:
@@ -67,7 +96,7 @@ export class UpdateChallengeDto {
   })
   @IsOptional()
   @IsEnum(ChallengeFrequency)
-  frequency: ChallengeFrequency;
+  frequency?: ChallengeFrequency;
 
   @ApiProperty({
     description: 'Visibility of the challenge. Options: PUBLIC, COMMUNITY_ONLY',
@@ -76,18 +105,14 @@ export class UpdateChallengeDto {
   })
   @IsOptional()
   @IsEnum(Visibility)
-  visibility: Visibility;
+  visibility?: Visibility;
 
-  //   @ApiPropertyOptional({
-  //     description:
-  //       'Optional URL for the cover image of the challenge (e.g., an image/banner).',
-  //     example: 'https://example.com/challenge-cover.jpg',
-  //     type: String,
-  //     nullable: true,
-  //   })
-  //   @IsOptional()
-  //   @IsUrl({ message: 'Cover image URL must be a valid URL.' })
-  //   coverImageUrl?: string;
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Cover image upload (jpg/png/webp).',
+  })
+  coverUrl?: Express.Multer.File;
 
   @ApiPropertyOptional({
     description:
@@ -110,6 +135,7 @@ export class UpdateChallengeDto {
     maxLength: 200,
     nullable: true,
   })
+  @IsOptional()
   @IsString({ message: 'Book title must be a string.' })
   @Length(1, 200, {
     message: 'Book title should be between 1 and 200 characters.',
@@ -142,7 +168,7 @@ export class UpdateChallengeDto {
   @IsEnum(ChallengeStatus, {
     message: 'Status must be one of: DRAFT, ACTIVE, ARCHIVED.',
   })
-  status: ChallengeStatus;
+  status?: ChallengeStatus;
 
   @ApiPropertyOptional({
     description:
@@ -151,6 +177,7 @@ export class UpdateChallengeDto {
     nullable: true,
   })
   @IsOptional()
+  @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: 'Require dual confirmation must be a boolean value.' })
   requireDualConfirmation?: boolean;
 
@@ -173,7 +200,9 @@ export class UpdateChallengeDto {
     type: [CreateChallengeTaskDto],
   })
   @IsOptional()
+  @Transform(({ value }) => toJson(value)) // ✅ if tasks arrives as JSON string in FormData
   @IsArray({ message: 'Tasks must be an array.' })
+  @ValidateNested({ each: true })
   @Type(() => CreateChallengeTaskDto)
-  tasks: CreateChallengeTaskDto[];
+  tasks?: CreateChallengeTaskDto[];
 }

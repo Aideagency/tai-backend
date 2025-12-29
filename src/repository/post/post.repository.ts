@@ -386,7 +386,7 @@ export class PostRepository extends BaseRepository<
         'c.id AS id',
         'c.body AS comment',
         'c.createdAt AS "createdAt"',
-        `COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u."userName") AS "displayName"`,
+        `COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u."user_name") AS "displayName"`,
         'u.profilePicture AS "profile_picture"',
         'u.id AS "userId"'
       ])

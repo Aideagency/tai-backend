@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import { NuggetEntity, NuggetType } from 'src/database/entities/nugget.entity';
 import { CreateNuggetDto } from './dtos/create-nugget.dto';
-import { NuggetRepository } from 'src/repository/nuggets/nugget.repository';
+import {
+  NuggetRepository,
+  NuggetSearchParams,
+} from 'src/repository/nuggets/nugget.repository';
+import { NuggetSearchQueryDto } from './dtos/nugget-search-query.dto';
+import { UpdateNuggetDto } from './dtos/update-nugget.dto';
 
 @Injectable()
 export class NuggetService {
@@ -23,6 +28,40 @@ export class NuggetService {
       adminId: adminId ?? null,
       title: dto.title ?? null,
     });
+  }
+
+  async updateNugget(
+    nuggetId: number,
+    dto: UpdateNuggetDto,
+    adminId?: number | null,
+  ): Promise<NuggetEntity> {
+    const nugget = await this.nuggetRepository.findOne({ id: nuggetId });
+    if (!nugget) throw new NotFoundException('Nugget not found');
+
+    // Optional: if you want only the creator admin to update, enforce here.
+    // If your NuggetEntity has admin relation loaded differently, adjust accordingly.
+    if (
+      adminId &&
+      (nugget as any)?.admin?.id &&
+      (nugget as any).admin.id !== adminId
+    ) {
+      throw new BadRequestException(
+        'You are not allowed to update this nugget',
+      );
+    }
+
+    // Only patch provided fields
+    if (dto.title !== undefined) nugget.title = dto.title ?? null;
+    if (dto.body !== undefined) nugget.body = dto.body; // rich text html string
+    if (dto.nuggetType !== undefined) nugget.nuggetType = dto.nuggetType;
+    if (dto.publishAt !== undefined) nugget.publishAt = dto.publishAt ?? null;
+
+    const saved = await this.nuggetRepository.save(nugget);
+    return saved;
+  }
+
+  async getNuggets(params: NuggetSearchQueryDto) {
+    return this.nuggetRepository.searchPaginated(params);
   }
 
   // ---------- Daily (or latest fallback) ----------
@@ -67,6 +106,10 @@ export class NuggetService {
     return { nugget, engagement };
   }
 
+  async getNuggetWithEngagementStats(nuggetId: number) {
+    return this.nuggetRepository.getNuggetWithEngagementStats(nuggetId);
+  }
+
   // ---------- Likes ----------
   async likeNugget(nuggetId: number, userId: number) {
     const exists = await this.nuggetRepository.likeExists(nuggetId, userId);
@@ -108,6 +151,12 @@ export class NuggetService {
   ) {
     const ok = await this.nuggetRepository.deleteComment(commentId, options);
     if (!ok) throw new NotFoundException('Comment not found');
+    return { success: true };
+  }
+
+  async deleteNugget(nuggetId: number) {
+    await this.nuggetRepository.softDelete(nuggetId);
+
     return { success: true };
   }
 

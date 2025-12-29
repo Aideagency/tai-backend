@@ -11,6 +11,7 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  Put,
 } from '@nestjs/common';
 import { NuggetService } from './nuggets.service';
 import { CreateNuggetDto } from './dtos/create-nugget.dto';
@@ -19,6 +20,8 @@ import { ListCommentsQuery } from './dtos/list-comments.query';
 import { NuggetType } from 'src/database/entities/nugget.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
+import { UpdateNuggetDto } from './dtos/update-nugget.dto';
 
 @Controller('nuggets')
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
@@ -26,20 +29,44 @@ export class NuggetController {
   constructor(private readonly nuggetService: NuggetService) {}
 
   @Post()
+  @UseGuards(AdminJwtGuard)
   create(@Body() dto: CreateNuggetDto, @Req() req: any) {
     const adminId = req.user?.id ?? undefined;
     return this.nuggetService.createNugget(dto, adminId);
   }
 
-  // @Get('all-nuggets-json')
-  // async addAllNuggetsFromJson() {
-  //   console.log('Adding nuggets from JSON file...');
-  //   await this.nuggetService.addNuggetsFromJson();
-  //   return {
-  //     status: 200,
-  //     message: 'Nuggets added successfully from JSON file',
-  //   };
-  // }
+  @Put(':id')
+  @UseGuards(AdminJwtGuard)
+  update(
+    @Body() dto: UpdateNuggetDto,
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const adminId = req.user?.id ?? undefined;
+    return this.nuggetService.updateNugget(id, dto, adminId);
+  }
+
+  @Get('all-nuggets-json')
+  async addAllNuggetsFromJson() {
+    // console.log('Adding nuggets from JSON file...');
+    const data = await this.nuggetService.getNuggetWithEngagementStats(3);
+    return {
+      status: 200,
+      message: 'Nuggets added successfully from JSON file',
+      data,
+    };
+  }
+
+  @Get('details/:id')
+  async nuggetInfo(@Param('id', ParseIntPipe) id: number) {
+
+    const data = await this.nuggetService.getNuggetWithEngagementStats(id);
+    return {
+      status: 200,
+      message: 'Nuggets added successfully from JSON file',
+      data,
+    };
+  }
 
   @UseGuards(JwtGuards)
   @ApiBearerAuth()
@@ -131,6 +158,12 @@ export class NuggetController {
   @Delete(':id/delete')
   delete(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.nuggetService.deleteComment(id, { userId: req.user.id });
+  }
+
+  @UseGuards(AdminJwtGuard)
+  @Delete(':id/delete-nugget')
+  deleteNugget(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.nuggetService.deleteNugget(id);
   }
 
   // @UseGuards(JwtGuards)

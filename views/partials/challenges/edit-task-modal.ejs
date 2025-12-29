@@ -38,19 +38,26 @@
           />
         </div>
 
+        <!-- ✅ Rich Text Instructions -->
         <div>
           <label class="block text-[11px] font-medium text-gray-700 mb-1">
-            Instructions
+            Instructions (Rich Text)
           </label>
+
+          <div class="border border-gray-300 rounded-lg bg-white overflow-hidden">
+            <div id="editTaskInstructionsEditor" style="min-height: 140px"></div>
+          </div>
+
+          <!-- Hidden field that holds HTML (sent to backend) -->
           <textarea
             name="instructions"
             id="editTaskInstructions"
-            rows="3"
-            required
-            minlength="10"
-            maxlength="1000"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            class="hidden"
           ></textarea>
+
+          <p class="text-[11px] text-gray-500 mt-1">
+            Supports formatting, lists and links.
+          </p>
         </div>
 
         <div class="grid grid-cols-3 gap-2">
@@ -99,9 +106,7 @@
         </div>
 
         <div>
-          <label
-            class="inline-flex items-center gap-2 text-[11px] text-gray-700"
-          >
+          <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
             <input
               type="checkbox"
               name="isMilestone"
@@ -135,103 +140,203 @@
   </div>
 </div>
 
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c6c6c6;
+    border-radius: 10px;
+  }
+
+  /* Quill tweaks to match your small admin UI */
+  .ql-toolbar.ql-snow {
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 6px;
+  }
+  .ql-container.ql-snow {
+    border: 0;
+    font-size: 12px;
+  }
+  .ql-editor {
+    min-height: 120px;
+    padding: 10px;
+  }
+</style>
+
 <script>
+  // ✅ This WILL work with your current settings:
+  // - still posts JSON to PATCH /challenges/:challengeId/tasks/:taskId
+  // - still uses name="instructions" in payload
+  // - only change: instructions now comes from Quill HTML
+
+  let editTaskQuill;
+
+  function ensureEditTaskQuill() {
+    if (editTaskQuill) return;
+
+    const editorEl = document.getElementById("editTaskInstructionsEditor");
+    if (!editorEl) return;
+
+    editTaskQuill = new Quill("#editTaskInstructionsEditor", {
+      theme: "snow",
+      placeholder: "Write task instructions…",
+      modules: {
+        toolbar: [
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link"],
+          ["clean"],
+        ],
+      },
+    });
+
+    // keep hidden textarea in sync
+    editTaskQuill.on("text-change", () => {
+      const hidden = document.getElementById("editTaskInstructions");
+      if (!hidden) return;
+
+      let html = editTaskQuill.root?.innerHTML || "";
+      html = html.trim();
+      if (html === "<p><br></p>" || html === "") html = "";
+      hidden.value = html;
+    });
+  }
+
   function openEditTaskModal(button) {
     const taskId = button.dataset.taskId;
     const challengeId = button.dataset.challengeId;
     if (!taskId || !challengeId) return;
 
-    document.getElementById('editTaskId').value = taskId;
-    document.getElementById('editTaskChallengeId').value = challengeId;
+    document.getElementById("editTaskId").value = taskId;
+    document.getElementById("editTaskChallengeId").value = challengeId;
 
-    document.getElementById('editTaskTitle').value =
-      button.dataset.taskTitle || '';
-    document.getElementById('editTaskInstructions').value =
-      button.dataset.taskInstructions || '';
-    document.getElementById('editTaskDayNumber').value =
-      button.dataset.taskDayNumber || '';
-    document.getElementById('editTaskWeekNumber').value =
-      button.dataset.taskWeekNumber || '';
-    document.getElementById('editTaskFrequency').value =
-      button.dataset.taskFrequency || 'DAILY';
+    document.getElementById("editTaskTitle").value = button.dataset.taskTitle || "";
 
-    document.getElementById('editTaskIsMilestone').checked =
-      button.dataset.taskIsMilestone === 'true';
+    // ✅ Instructions: support either plain text or HTML already stored
+    const rawInstructions = button.dataset.taskInstructions || "";
+    ensureEditTaskQuill();
 
-    const modal = document.getElementById('editTaskModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    // Put in Quill + hidden textarea
+    if (editTaskQuill) {
+      const html = rawInstructions.trim();
+      if (!html) {
+        editTaskQuill.setContents([]);
+      } else {
+        // If backend stored HTML, this renders it correctly.
+        // If backend stored plain text, it will show as text.
+        editTaskQuill.clipboard.dangerouslyPasteHTML(html);
+      }
+      // also update hidden
+      const hidden = document.getElementById("editTaskInstructions");
+      if (hidden) {
+        hidden.value = html === "<p><br></p>" ? "" : html;
+      }
+    } else {
+      // fallback: keep old textarea value (shouldn't happen if quill loads)
+      document.getElementById("editTaskInstructions").value = rawInstructions;
+    }
+
+    document.getElementById("editTaskDayNumber").value = button.dataset.taskDayNumber || "";
+    document.getElementById("editTaskWeekNumber").value = button.dataset.taskWeekNumber || "";
+    document.getElementById("editTaskFrequency").value = button.dataset.taskFrequency || "DAILY";
+
+    document.getElementById("editTaskIsMilestone").checked =
+      button.dataset.taskIsMilestone === "true";
+
+    const modal = document.getElementById("editTaskModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
   }
 
   function closeEditTaskModal() {
-    const modal = document.getElementById('editTaskModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    const modal = document.getElementById("editTaskModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+
+    // optional: clear editor on close
+    if (editTaskQuill) editTaskQuill.setContents([]);
+    const hidden = document.getElementById("editTaskInstructions");
+    if (hidden) hidden.value = "";
   }
 
   function serializeEditTaskForm() {
-    const form = document.getElementById('editTaskForm');
+    const form = document.getElementById("editTaskForm");
     const payload = {};
 
-    const get = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
+    const get = (name) => form.querySelector(`[name="${name}"]`)?.value || "";
 
-    payload.title = get('title');
-    payload.instructions = get('instructions');
+    payload.title = get("title");
 
-    const day = parseInt(get('dayNumber'));
-    const week = parseInt(get('weekNumber'));
+    // ✅ instructions now is HTML from Quill (stored in hidden textarea)
+    payload.instructions = get("instructions");
+
+    const day = parseInt(get("dayNumber"), 10);
+    const week = parseInt(get("weekNumber"), 10);
 
     if (!isNaN(day)) payload.dayNumber = day;
     if (!isNaN(week)) payload.weekNumber = week;
 
-    payload.frequency = get('frequency');
-    payload.isMilestone = document.getElementById(
-      'editTaskIsMilestone',
-    ).checked;
+    payload.frequency = get("frequency");
+    payload.isMilestone = document.getElementById("editTaskIsMilestone").checked;
 
     return payload;
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const editForm = document.getElementById('editTaskForm');
+  document.addEventListener("DOMContentLoaded", () => {
+    ensureEditTaskQuill();
+
+    const editForm = document.getElementById("editTaskForm");
     if (!editForm) return;
 
-    editForm.addEventListener('submit', async (e) => {
+    editForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const taskId = document.getElementById('editTaskId').value;
-      const challengeId = document.getElementById('editTaskChallengeId').value;
+      // ✅ Ensure Quill -> hidden textarea is up-to-date before serialize
+      const hidden = document.getElementById("editTaskInstructions");
+      if (hidden && editTaskQuill) {
+        let html = editTaskQuill.root?.innerHTML || "";
+        html = html.trim();
+        if (html === "<p><br></p>" || html === "") html = "";
+        hidden.value = html;
+      }
+
+      const taskId = document.getElementById("editTaskId").value;
+      const challengeId = document.getElementById("editTaskChallengeId").value;
 
       if (!taskId || !challengeId) {
-        alert('Missing required IDs.');
+        alert("Missing required IDs.");
         return;
       }
 
-      // 🔧 Button is OUTSIDE the form, so query from document:
       const submitBtn = document.querySelector(
-        'button[form="editTaskForm"][type="submit"]',
+        'button[form="editTaskForm"][type="submit"]'
       );
 
-      const originalText = submitBtn ? submitBtn.textContent : 'Save';
+      const originalText = submitBtn ? submitBtn.textContent : "Save";
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        submitBtn.textContent = "Saving...";
       }
 
       try {
         const payload = serializeEditTaskForm();
 
         const res = await fetch(`/challenges/${challengeId}/tasks/${taskId}`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          alert(err.message || 'Failed to update task.');
+          alert(err.message || "Failed to update task.");
           return;
         }
 
@@ -239,7 +344,7 @@
         window.location.reload();
       } catch (err) {
         console.error(err);
-        alert(err.message || 'Unexpected error.');
+        alert(err.message || "Unexpected error.");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

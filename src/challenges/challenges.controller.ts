@@ -15,6 +15,8 @@ import {
   BadRequestException,
   Delete,
   Put,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ListAvailableChallengesQueryDto,
@@ -26,7 +28,11 @@ import { JwtGuards } from 'src/auth/jwt.guards';
 import { ChallengesService } from './challenges.service';
 import { CreateChallengeDto } from './dtos/create-challenge.dto';
 import { EnrollmentSearchParams } from 'src/repository/challenge/user-challenge.repository';
-import { ApiBearerAuth, ApiExcludeEndpoint } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { UserRepository } from 'src/repository/user/user.repository';
 import { AuthService } from 'src/auth/auth.service';
 import { UpdateChallengeDto } from './dtos/update-challenge.dto';
@@ -36,6 +42,7 @@ import {
   RemoveTasksDto,
 } from './dtos/create-challenge-task.dto';
 import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 // import { ChallengeSearchParams } from 'src/repository/challenge/challenge.repository';
 
 // Import your services
@@ -49,25 +56,35 @@ export class ChallengesController {
     private userRepo: UserRepository,
     private authService: AuthService,
   ) {} // private readonly badgesService: BadgesService, // private readonly reflectionsService: ReflectionsService, // private readonly userChallengesService: UserChallengesService, // private readonly challengesService: ChallengesService,
+  @ApiExcludeEndpoint()
   @Post('create-challenge')
   @HttpCode(HttpStatus.CREATED)
-  @ApiExcludeEndpoint()
-  async createChallenge(@Body(new ValidationPipe()) dto: CreateChallengeDto) {
-    await this.challengeService.createChallenge(dto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('coverUrl'))
+  async createChallenge(
+    @Body(new ValidationPipe({ transform: true, whitelist: true }))
+    dto: CreateChallengeDto,
+    @UploadedFile() coverUrl?: Express.Multer.File,
+  ) {
+    await this.challengeService.createChallenge(dto, coverUrl);
+
     return {
       message: 'Challenge Created Successfully!',
       status: 201,
     };
   }
 
+  @ApiExcludeEndpoint()
   @Put('update-challenge/:id')
   @HttpCode(HttpStatus.CREATED)
-  @ApiExcludeEndpoint()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('coverUrl'))
   async updateChallenge(
     @Body(new ValidationPipe()) dto: UpdateChallengeDto,
     @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() coverUrl?: Express.Multer.File,
   ) {
-    await this.challengeService.updateChallenge(dto, id);
+    await this.challengeService.updateChallenge(dto, id, coverUrl);
     return {
       message: 'Challenge Update Successfully!',
       status: 200,

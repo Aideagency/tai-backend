@@ -1,0 +1,436 @@
+<!-- =========================
+     UPDATE NUGGET MODAL
+========================= -->
+<div
+  id="updateNuggetModal"
+  class="fixed inset-0 z-50 hidden bg-black/50 p-3 sm:p-6"
+>
+  <div class="flex h-full w-full items-center justify-center">
+    <div
+      class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="updateNuggetTitle"
+    >
+      <!-- Sticky header -->
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-5 py-4"
+      >
+        <h3 id="updateNuggetTitle" class="text-base font-semibold text-gray-800">
+          Update Nugget
+        </h3>
+
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          onclick="closeUpdateNuggetModal()"
+          aria-label="Close modal"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="max-h-[80vh] overflow-y-auto px-5 py-4">
+        <form
+          id="updateNuggetForm"
+          action="/nuggets"
+          method="POST"
+          class="space-y-3 text-xs"
+        >
+          <!-- Hidden id -->
+          <input id="updateNuggetId" type="hidden" value="" />
+
+          <!-- Optional Title -->
+          <div>
+            <label class="mb-1 block font-medium text-gray-700">
+              Title <span class="text-gray-400">(optional)</span>
+            </label>
+            <input
+              id="updateNuggetTitleInput"
+              type="text"
+              maxlength="80"
+              placeholder="e.g. Morning Focus"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              oninput="updateNuggetCount('updateNuggetTitleInput','updateTitleCount',80)"
+            />
+            <div class="mt-1 flex items-center justify-between">
+              <p class="text-[11px] text-gray-500">
+                3–80 characters (if provided).
+              </p>
+              <p class="text-[11px] text-gray-500">
+                <span id="updateTitleCount">0</span>/80
+              </p>
+            </div>
+          </div>
+
+          <!-- Body (Textarea only) -->
+          <div>
+            <label class="mb-1 block font-medium text-gray-700">
+              Body <span class="text-red-500">*</span>
+            </label>
+
+            <textarea
+              id="updateNuggetBody"
+              rows="6"
+              maxlength="280"
+              placeholder="Write a short nugget (10–280 characters)..."
+              class="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 leading-relaxed focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              oninput="updateNuggetCount('updateNuggetBody','updateBodyCount',280); hideUpdateBodyError();"
+              required
+            ></textarea>
+
+            <div class="mt-1 flex items-center justify-between">
+              <p class="text-[11px] text-gray-500">
+                10–280 characters. Plain text only.
+              </p>
+              <p class="text-[11px] text-gray-500">
+                <span id="updateBodyCount">0</span>/280
+              </p>
+            </div>
+
+            <p id="updateBodyError" class="mt-1 hidden text-[11px] text-red-600">
+              Body must be 10–280 characters.
+            </p>
+          </div>
+
+          <!-- Audience -->
+          <div>
+            <label class="mb-1 block font-medium text-gray-700">
+              Audience <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="updateNuggetType"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              required
+            >
+              <option value="" disabled>Select audience</option>
+              <option value="GENERAL">GENERAL (Everyone)</option>
+              <option value="SINGLE">SINGLE</option>
+              <option value="MARRIED">MARRIED</option>
+              <option value="PARENT">PARENT</option>
+            </select>
+            <p class="mt-1 text-[11px] text-gray-500">
+              Use <span class="font-semibold">GENERAL</span> to reach everyone.
+            </p>
+          </div>
+
+          <!-- Publish At (Optional) -->
+          <div>
+            <label class="mb-1 block font-medium text-gray-700">
+              Publish At <span class="text-gray-400">(optional)</span>
+            </label>
+
+            <input
+              id="updatePublishAtLocal"
+              type="datetime-local"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            />
+
+            <input id="updatePublishAt" type="hidden" value="" />
+
+            <div class="mt-1 flex items-center justify-between">
+              <p class="text-[11px] text-gray-500">
+                If set, we’ll schedule this nugget. If empty, it’s available
+                immediately.
+              </p>
+              <button
+                type="button"
+                class="text-[11px] font-semibold text-[var(--color-primary)] hover:opacity-90"
+                onclick="clearUpdatePublishAt()"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Sticky footer -->
+          <div
+            class="sticky bottom-0 z-10 -mx-5 mt-4 border-t border-gray-100 bg-white px-5 py-3"
+          >
+            <div
+              class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+            >
+              <button
+                type="button"
+                class="w-full rounded-md border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:w-auto"
+                onclick="closeUpdateNuggetModal()"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="updateNuggetSubmitBtn"
+                type="submit"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                <span id="updateNuggetSubmitText">Update nugget</span>
+
+                <svg
+                  id="updateNuggetSubmitSpinner"
+                  class="hidden h-4 w-4 animate-spin text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedNuggetIdForUpdate = null;
+
+  /**
+   * ✅ Use this on your "Update" button:
+   * <button
+   *  onclick="openUpdateNuggetModal(this)"
+   *  data-nugget-id="1"
+   *  data-nugget-title="Morning Focus"
+   *  data-nugget-body="Your body text..."
+   *  data-nugget-type="GENERAL"
+   *  data-nugget-publish-at="2025-12-29T10:30:00.000Z"  // optional
+   * >
+   *  Update
+   * </button>
+   */
+
+  function openUpdateNuggetModal(btn) {
+    const modal = document.getElementById("updateNuggetModal");
+    if (!modal || !btn) return;
+
+    // Grab values from dataset
+    selectedNuggetIdForUpdate = btn.dataset.nuggetId || null;
+
+    const title = btn.dataset.nuggetTitle || "";
+    const body = btn.dataset.nuggetBody || "";
+    const nuggetType = btn.dataset.nuggetType || "";
+    const publishAtIso = btn.dataset.nuggetPublishAt || "";
+
+    // Prefill fields
+    const idEl = document.getElementById("updateNuggetId");
+    const titleEl = document.getElementById("updateNuggetTitleInput");
+    const bodyEl = document.getElementById("updateNuggetBody");
+    const typeEl = document.getElementById("updateNuggetType");
+    const publishIsoEl = document.getElementById("updatePublishAt");
+    const publishLocalEl = document.getElementById("updatePublishAtLocal");
+
+    if (idEl) idEl.value = selectedNuggetIdForUpdate || "";
+    if (titleEl) titleEl.value = title;
+    if (bodyEl) bodyEl.value = body;
+    if (typeEl) typeEl.value = nuggetType || "";
+    if (publishIsoEl) publishIsoEl.value = publishAtIso || "";
+    if (publishLocalEl) publishLocalEl.value = isoToLocalInputValue(publishAtIso);
+
+    // Counters + errors
+    updateNuggetCount("updateNuggetTitleInput", "updateTitleCount", 80);
+    updateNuggetCount("updateNuggetBody", "updateBodyCount", 280);
+    hideUpdateBodyError();
+
+    // Show modal
+    modal.classList.remove("hidden");
+    modal.classList.add("block");
+
+    // Esc close
+    window.__updateNuggetEscHandler = (e) => {
+      if (e.key === "Escape") closeUpdateNuggetModal();
+    };
+    document.addEventListener("keydown", window.__updateNuggetEscHandler);
+  }
+
+  function closeUpdateNuggetModal() {
+    const modal = document.getElementById("updateNuggetModal");
+    if (!modal) return;
+
+    modal.classList.add("hidden");
+    modal.classList.remove("block");
+
+    const form = document.getElementById("updateNuggetForm");
+    if (form) form.reset();
+
+    selectedNuggetIdForUpdate = null;
+
+    // Reset counts/errors
+    const titleCount = document.getElementById("updateTitleCount");
+    const bodyCount = document.getElementById("updateBodyCount");
+    if (titleCount) titleCount.textContent = "0";
+    if (bodyCount) bodyCount.textContent = "0";
+    hideUpdateBodyError();
+
+    // Reset button state
+    const btn = document.getElementById("updateNuggetSubmitBtn");
+    const text = document.getElementById("updateNuggetSubmitText");
+    const spinner = document.getElementById("updateNuggetSubmitSpinner");
+    if (btn && text && spinner) {
+      btn.disabled = false;
+      spinner.classList.add("hidden");
+      text.textContent = "Update nugget";
+    }
+
+    if (window.__updateNuggetEscHandler) {
+      document.removeEventListener("keydown", window.__updateNuggetEscHandler);
+      window.__updateNuggetEscHandler = null;
+    }
+  }
+
+  // Backdrop click close
+  (function bindUpdateNuggetBackdropClose() {
+    const modal = document.getElementById("updateNuggetModal");
+    if (!modal) return;
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeUpdateNuggetModal();
+    });
+  })();
+
+  function showUpdateBodyError(msg) {
+    const el = document.getElementById("updateBodyError");
+    if (!el) return;
+    el.textContent = msg || "Body must be 10–280 characters.";
+    el.classList.remove("hidden");
+  }
+
+  function hideUpdateBodyError() {
+    const el = document.getElementById("updateBodyError");
+    if (!el) return;
+    el.classList.add("hidden");
+  }
+
+  function clearUpdatePublishAt() {
+    const local = document.getElementById("updatePublishAtLocal");
+    const iso = document.getElementById("updatePublishAt");
+    if (local) local.value = "";
+    if (iso) iso.value = "";
+  }
+
+  function sanitizeStringValue(v) {
+    return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : v;
+  }
+
+  function localToIsoString(localValue) {
+    if (!localValue) return "";
+    const d = new Date(localValue);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString();
+  }
+
+  function isoToLocalInputValue(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    // datetime-local expects "YYYY-MM-DDTHH:mm"
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("updateNuggetForm");
+    const submitBtn = document.getElementById("updateNuggetSubmitBtn");
+    const submitText = document.getElementById("updateNuggetSubmitText");
+    const submitSpinner = document.getElementById("updateNuggetSubmitSpinner");
+
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!selectedNuggetIdForUpdate) return;
+
+      const titleEl = document.getElementById("updateNuggetTitleInput");
+      const bodyEl = document.getElementById("updateNuggetBody");
+      const typeEl = document.getElementById("updateNuggetType");
+      const publishLocalEl = document.getElementById("updatePublishAtLocal");
+
+      const bodyPlain = (bodyEl?.value || "").replace(/\s+/g, " ").trim();
+      if (bodyPlain.length < 10 || bodyPlain.length > 280) {
+        showUpdateBodyError("Body must be between 10 and 280 characters.");
+        return;
+      }
+
+      const title = titleEl ? sanitizeStringValue(titleEl.value) : "";
+      const nuggetType = typeEl ? typeEl.value : "";
+      if (!nuggetType) {
+        alert("Please select an audience (nuggetType).");
+        return;
+      }
+
+      const isoPublishAt = localToIsoString(
+        publishLocalEl ? publishLocalEl.value : ""
+      );
+
+      const payload = {
+        ...(title ? { title } : {}),
+        body: bodyPlain,
+        nuggetType,
+        ...(isoPublishAt ? { publishAt: isoPublishAt } : {}),
+      };
+
+      // Loading state
+      submitBtn.disabled = true;
+      submitSpinner.classList.remove("hidden");
+      submitText.textContent = "Updating...";
+
+      try {
+        // ✅ update route - adjust if your backend uses PUT/PATCH
+        const res = await fetch(`/nuggets/${selectedNuggetIdForUpdate}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          let msg = "Error updating nugget.";
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(", ")
+              : data.message || msg;
+          } catch (_) {}
+          alert(msg);
+
+          submitBtn.disabled = false;
+          submitSpinner.classList.add("hidden");
+          submitText.textContent = "Update nugget";
+          return;
+        }
+
+        closeUpdateNuggetModal();
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong.");
+
+        submitBtn.disabled = false;
+        submitSpinner.classList.add("hidden");
+        submitText.textContent = "Update nugget";
+      }
+    });
+  });
+</script>

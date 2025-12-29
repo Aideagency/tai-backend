@@ -27,6 +27,9 @@ import { AdminBooksService } from 'src/books/books.admin.service';
 import { AdminBooksQueryDto } from 'src/books/dtos/admin-books-query.dto';
 import { AdminCoursesService } from 'src/courses/admin-courses.service';
 import { AdminListCoursesQueryDto } from 'src/courses/dtos/admin-list-courses.query.dto';
+import { NuggetService } from 'src/nuggets/nuggets.service';
+import { NuggetSearchParams } from 'src/repository/nuggets/nugget.repository';
+import { NuggetSearchQueryDto } from 'src/nuggets/dtos/nugget-search-query.dto';
 
 @Injectable()
 export class AdminViewsService {
@@ -45,6 +48,7 @@ export class AdminViewsService {
     private readonly counsellingService: CounsellingService,
     private readonly bookService: AdminBooksService,
     private readonly courseService: AdminCoursesService,
+    private readonly nuggetService: NuggetService,
   ) {}
 
   async listUsers(params: UserSearchParams) {
@@ -57,6 +61,10 @@ export class AdminViewsService {
 
   async listChallengess(params: GetChallengesQueryDto) {
     return this.challengeService.listEveryChallenge(params);
+  }
+
+  async getSingleChallenge(challengeId: number) {
+    return this.challengeService.getChallenge(challengeId);
   }
 
   async listCounselling(params: GetCounsellingsFilterDto) {
@@ -90,5 +98,13 @@ export class AdminViewsService {
 
   async getCourseDetails(courseId: number) {
     return this.courseService.getCourseFullAdmin(courseId);
+  }
+
+  async getNuggetInformation(nuggetId: number) {
+    return this.nuggetService.getNuggetWithEngagementStats(nuggetId);
+  }
+
+  async getAllNuggets(params: NuggetSearchQueryDto) {
+    return this.nuggetService.getNuggets(params);
   }
 }

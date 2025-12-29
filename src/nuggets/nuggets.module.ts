@@ -7,5 +7,6 @@ import { NuggetService } from './nuggets.service';
   imports: [RepositoryModule],
   providers: [NuggetService],
   controllers: [NuggetController],
+  exports: [NuggetService],
 })
 export class NuggetsModule {}
