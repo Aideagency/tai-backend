@@ -28,6 +28,7 @@ import {
 import { CommunityTag } from 'src/database/entities/user.entity';
 import { CreateChallengeTaskDto } from './dtos/create-challenge-task.dto';
 import { UpdateChallengeTaskDto } from './dtos/update-challenge-task.dto';
+import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ChallengesService {
@@ -39,9 +40,10 @@ export class ChallengesService {
     private readonly challengeRepo: ChallengeRepository,
     private readonly challengeTaskRepo: ChallengeTaskRepository,
     private readonly userChallengeRepo: UserChallengesRepository,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
-  async createChallenge(dto: CreateChallengeDto) {
+  async createChallenge(dto: CreateChallengeDto, file: Express.Multer.File) {
     try {
       // Create the main Challenge entity and assign properties
       const challenge = new ChallengeEntity();
@@ -65,25 +67,17 @@ export class ChallengesService {
       if (dto.requireDualConfirmation) {
         challenge.requireDualConfirmation = dto.requireDualConfirmation;
       }
+      if (file) {
+        const url = await this.cloudinary.uploadFile(file, {
+          folder: 'challenges/logo',
+          resourceType: 'image',
+        });
+        challenge.coverImageUrl = url.url;
+        challenge.coverUrlPublicId = url.publicId;
+      }
 
-      challenge.tasks = dto.tasks.map((taskDto) => {
-        const taskEntity = new ChallengeTaskEntity();
-        taskEntity.cadence = taskDto.frequency;
-        taskEntity.instructions = taskDto.instructions;
-        taskEntity.title = taskDto.title;
+      // x
 
-        if (taskDto.dayNumber) {
-          taskEntity.dayNumber = taskDto.dayNumber;
-        }
-        if (taskDto.weekNumber) {
-          taskEntity.weekNumber = taskDto.weekNumber;
-        }
-        if (taskDto.isMilestone) {
-          taskEntity.isMilestone = taskDto.isMilestone;
-        }
-        taskEntity.challenge = challenge;
-        return taskEntity;
-      });
       //   const saved =
       await this.challengeRepo.save(challenge);
       //   return plainToInstance(ChallengeEntity, saved, {
@@ -137,7 +131,11 @@ export class ChallengesService {
     return this.challengeTaskRepo.saveAll(newTasks);
   }
 
-  async updateChallenge(dto: UpdateChallengeDto, challengeId: number) {
+  async updateChallenge(
+    dto: UpdateChallengeDto,
+    challengeId: number,
+    file: Express.Multer.File,
+  ) {
     try {
       // Fetch the existing challenge from the database
       const challenge = await this.getChallenge(challengeId);
@@ -155,6 +153,20 @@ export class ChallengesService {
       if (dto.status) challenge.status = dto.status;
       if (dto.requireDualConfirmation !== undefined) {
         challenge.requireDualConfirmation = dto.requireDualConfirmation;
+      }
+
+      if (file) {
+        if (challenge.coverUrlPublicId) {
+          await this.cloudinary.deleteFile(challenge.coverUrlPublicId);
+        }
+
+        const newFile = await this.cloudinary.uploadFile(file, {
+          folder: 'challenges/logo',
+          resourceType: 'image',
+        });
+
+        challenge.coverImageUrl = newFile.url;
+        challenge.coverUrlPublicId = newFile.publicId;
       }
 
       // Step 1: Add new tasks to the challenge

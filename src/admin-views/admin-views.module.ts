@@ -8,6 +8,7 @@ import { ChallengesModule } from 'src/challenges/challenges.module';
 import { CounsellingModule } from 'src/counselling/counselling.module';
 import { BooksModule } from 'src/books/books.module';
 import { CoursesModule } from 'src/courses/courses.module';
+import { NuggetsModule } from 'src/nuggets/nuggets.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { CoursesModule } from 'src/courses/courses.module';
     ChallengesModule,
     CounsellingModule,
     BooksModule,
-    CoursesModule
+    CoursesModule,
+    NuggetsModule
   ],
   controllers: [AdminViewsController],
   providers: [AdminViewsService],

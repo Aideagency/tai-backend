@@ -1,0 +1,169 @@
+<!-- Delete Nugget Modal -->
+<div
+  id="deleteNuggetModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40"
+>
+  <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
+    <h3 class="mb-2 text-sm font-semibold text-gray-800">Confirm Delete</h3>
+
+    <p class="mb-4 text-xs text-gray-600">
+      Are you sure you want to delete
+      <span id="deleteNuggetTitle" class="font-semibold text-red-600"></span>?
+      This action cannot be undone.
+    </p>
+
+    <div class="mt-4 flex justify-end gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100"
+        onclick="closeDeleteNuggetModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        id="confirmDeleteNuggetBtn"
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span id="confirmDeleteNuggetText">Delete</span>
+
+        <!-- Spinner -->
+        <svg
+          id="confirmDeleteNuggetSpinner"
+          class="hidden h-4 w-4 animate-spin text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"
+          ></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedNuggetId = null;
+
+  // Call this from your table/button: onclick="openDeleteNuggetModal(this)"
+  // and set:
+  // data-nugget-id="123"
+  // data-nugget-title="Morning Focus"
+  function openDeleteNuggetModal(btn) {
+    const modal = document.getElementById('deleteNuggetModal');
+    if (!modal) return;
+
+    selectedNuggetId = btn.dataset.nuggetId;
+
+    const title = btn.dataset.nuggetTitle || '';
+    const nameSpan = document.getElementById('deleteNuggetTitle');
+    if (nameSpan) nameSpan.textContent = title ? `"${title}"` : 'this nugget';
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Esc close
+    window.__deleteNuggetEscHandler = (e) => {
+      if (e.key === 'Escape') closeDeleteNuggetModal();
+    };
+    document.addEventListener('keydown', window.__deleteNuggetEscHandler);
+  }
+
+  function closeDeleteNuggetModal() {
+    const modal = document.getElementById('deleteNuggetModal');
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    selectedNuggetId = null;
+
+    // Reset button state
+    const btn = document.getElementById('confirmDeleteNuggetBtn');
+    const text = document.getElementById('confirmDeleteNuggetText');
+    const spinner = document.getElementById('confirmDeleteNuggetSpinner');
+
+    if (btn && text && spinner) {
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      text.textContent = 'Delete';
+    }
+
+    if (window.__deleteNuggetEscHandler) {
+      document.removeEventListener('keydown', window.__deleteNuggetEscHandler);
+      window.__deleteNuggetEscHandler = null;
+    }
+  }
+
+  // Backdrop click close
+  (function bindDeleteNuggetBackdropClose() {
+    const modal = document.getElementById('deleteNuggetModal');
+    if (!modal) return;
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeDeleteNuggetModal();
+    });
+  })();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('confirmDeleteNuggetBtn');
+    const text = document.getElementById('confirmDeleteNuggetText');
+    const spinner = document.getElementById('confirmDeleteNuggetSpinner');
+
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+      if (!selectedNuggetId) return;
+
+      try {
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        text.textContent = 'Deleting...';
+
+        // ✅ adjust route if yours is different
+        const res = await fetch(`/nuggets/${selectedNuggetId}/delete-nugget`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+
+        if (!res.ok) {
+          let msg = 'Error deleting nugget.';
+          try {
+            const data = await res.json();
+            msg = Array.isArray(data.message)
+              ? data.message.join(', ')
+              : data.message || msg;
+          } catch (_) {}
+
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          text.textContent = 'Delete';
+          alert(msg);
+          return;
+        }
+
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'Delete';
+        alert('Something went wrong.');
+      }
+    });
+  });
+</script>

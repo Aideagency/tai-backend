@@ -364,7 +364,7 @@ export class PrayerWallRepository extends BaseRepository<
         'c.id AS id',
         'c.comment AS comment',
         'c.createdAt AS "createdAt"',
-        `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."userName", '') AS "displayName"`,
+        `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."user_name", '') AS "displayName"`,
         'u.id AS "userId"',
       ])
       // IMPORTANT: filter by prayer_id (bug fixed vs nugget version)

@@ -10,21 +10,46 @@ import {
   IsString,
   Length,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CreateChallengeTaskDto } from './create-challenge-task.dto'; // Assuming task DTO is separate
+import { CreateChallengeTaskDto } from './create-challenge-task.dto';
 import { CommunityTag as CommunityType } from 'src/database/entities/user.entity';
 import {
   ChallengeFrequency,
   ChallengeStatus,
   Visibility,
 } from 'src/database/entities/challenge.entity';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+function toNumber(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  return Number.isNaN(n) ? v : n;
+}
+
+function toBoolean(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  if (typeof v === 'boolean') return v;
+  const s = String(v).trim().toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(s)) return true;
+  if (['false', '0', 'no', 'off'].includes(s)) return false;
+  return v; // leave as-is so validation can fail if it's invalid
+}
+
+function toJson(v: any) {
+  if (v === undefined || v === null || v === '') return undefined;
+  if (typeof v === 'object') return v; // already parsed (e.g. JSON body)
+  try {
+    return JSON.parse(v);
+  } catch {
+    return v; // let validators complain if it's not valid JSON
+  }
+}
 
 export class CreateChallengeDto {
   @ApiProperty({
-    description:
-      'The title of the challenge (e.g., "Self-Discovery Reading Challenge")',
+    description: 'The title of the challenge',
     example: 'The Self-Discovery Reading Challenge',
     maxLength: 100,
   })
@@ -33,8 +58,7 @@ export class CreateChallengeDto {
   title: string;
 
   @ApiProperty({
-    description:
-      'The community this challenge is for (e.g., SINGLE, MARRIED, PARENT)',
+    description: 'The community this challenge is for',
     enum: CommunityType,
     enumName: 'CommunityType',
     example: CommunityType.SINGLE,
@@ -43,19 +67,19 @@ export class CreateChallengeDto {
   community: CommunityType;
 
   @ApiProperty({
-    description: 'The duration of the challenge in days (e.g., 7, 14, 42)',
+    description: 'The duration of the challenge in days',
     example: 42,
     minimum: 1,
     maximum: 365,
   })
+  @Transform(({ value }) => toNumber(value))
   @IsInt()
   @Min(1)
   @Max(365)
   durationDays: number;
 
   @ApiProperty({
-    description:
-      'The frequency of tasks within the challenge. Options: DAILY, WEEKLY, MIXED',
+    description: 'The frequency of tasks within the challenge',
     enum: ChallengeFrequency,
     enumName: 'ChallengeFrequency',
     example: ChallengeFrequency.DAILY,
@@ -64,27 +88,22 @@ export class CreateChallengeDto {
   frequency: ChallengeFrequency;
 
   @ApiProperty({
-    description: 'Visibility of the challenge. Options: PUBLIC, COMMUNITY_ONLY',
+    description: 'Visibility of the challenge',
     enum: Visibility,
     example: Visibility.COMMUNITY_ONLY,
   })
   @IsEnum(Visibility)
   visibility: Visibility;
 
-  //   @ApiPropertyOptional({
-  //     description:
-  //       'Optional URL for the cover image of the challenge (e.g., an image/banner).',
-  //     example: 'https://example.com/challenge-cover.jpg',
-  //     type: String,
-  //     nullable: true,
-  //   })
-  //   @IsOptional()
-  //   @IsUrl({ message: 'Cover image URL must be a valid URL.' })
-  //   coverImageUrl?: string;
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Cover image upload (jpg/png/webp).',
+  })
+  coverUrl?: Express.Multer.File;
 
   @ApiPropertyOptional({
-    description:
-      'Optional detailed description of the challenge. This explains the purpose and structure of the challenge.',
+    description: 'Optional detailed description of the challenge.',
     example: 'A 6-week journey for singles to dive into self-discovery.',
     maxLength: 5000,
     nullable: true,
@@ -97,34 +116,29 @@ export class CreateChallengeDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Optional book title (if applicable for reading challenges).',
+    description: 'Optional book title (if applicable).',
     example: 'Single, Married, Separated, and Life After',
     maxLength: 200,
     nullable: true,
   })
-  @IsString({ message: 'Book title must be a string.' })
-  @Length(1, 200, {
-    message: 'Book title should be between 1 and 200 characters.',
-  })
   @IsOptional()
+  @IsString({ message: 'Book title must be a string.' })
+  @Length(1, 200)
   bookTitle?: string;
 
   @ApiPropertyOptional({
-    description: 'Optional book author (if applicable for reading challenges).',
+    description: 'Optional book author (if applicable).',
     example: 'Myles Munroe',
     maxLength: 100,
     nullable: true,
   })
   @IsOptional()
   @IsString({ message: 'Book author must be a string.' })
-  @Length(1, 100, {
-    message: 'Book author should be between 1 and 100 characters.',
-  })
+  @Length(1, 100)
   bookAuthor?: string;
 
   @ApiProperty({
-    description:
-      'The status of the challenge. Options: "DRAFT", "ACTIVE", "ARCHIVED".',
+    description: 'The status of the challenge.',
     enum: ChallengeStatus,
     enumName: 'ChallengeStatus',
     example: ChallengeStatus.ACTIVE,
@@ -135,35 +149,35 @@ export class CreateChallengeDto {
   status: ChallengeStatus;
 
   @ApiPropertyOptional({
-    description:
-      'Indicates whether this challenge requires dual confirmation for married users.',
+    description: 'Whether this challenge requires dual confirmation.',
     example: false,
     nullable: true,
   })
+  @Transform(({ value }) => toBoolean(value))
   @IsOptional()
   @IsBoolean({ message: 'Require dual confirmation must be a boolean value.' })
   requireDualConfirmation?: boolean;
 
   @ApiPropertyOptional({
-    description:
-      'Completion badge code (optional). This code is awarded to participants who complete the challenge.',
+    description: 'Completion badge code (optional).',
     example: 'SELF_DISCOVERY_CHAMPION',
     maxLength: 50,
     nullable: true,
   })
   @IsOptional()
   @IsString({ message: 'Completion badge code must be a string.' })
-  @Length(1, 50, {
-    message: 'Completion badge code should be between 1 and 50 characters.',
-  })
+  @Length(1, 50)
   completionBadgeCode?: string;
 
-  @ApiProperty({
-    description: 'List of tasks that belong to the challenge.',
-    type: [CreateChallengeTaskDto],
-  })
-  @IsArray({ message: 'Tasks must be an array.' })
-  @ArrayNotEmpty({ message: 'At least one task must be provided.' })
-  @Type(() => CreateChallengeTaskDto)
-  tasks: CreateChallengeTaskDto[];
+  // @ApiProperty({
+  //   description: 'List of tasks that belong to the challenge.',
+  //   type: [CreateChallengeTaskDto],
+  // })
+  // // ✅ If sent as FormData, tasks will usually arrive as a JSON string.
+  // @Transform(({ value }) => toJson(value))
+  // @IsArray({ message: 'Tasks must be an array.' })
+  // @ArrayNotEmpty({ message: 'At least one task must be provided.' })
+  // @ValidateNested({ each: true })
+  // @Type(() => CreateChallengeTaskDto)
+  // tasks: CreateChallengeTaskDto[];
 }

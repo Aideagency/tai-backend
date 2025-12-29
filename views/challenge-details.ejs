@@ -1,0 +1,332 @@
+<!-- challenge-details.ejs (styled to match your Challenges page layout) -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Challenge Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c6c6c6;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <!-- Sidebar -->
+    <%- include('partials/sidebar', { admin, currentPath: "challenges" }) %>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-h-screen">
+      <!-- Header -->
+      <%- include('partials/header', { admin, pageTitle: 'Challenge Details' }) %>
+
+      <!-- Page content -->
+      <main class="p-6 space-y-6">
+        <!-- Top bar -->
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)]
+                   p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+              <%= challenge?.title || 'Challenge Details' %>
+            </h3>
+            <p class="text-xs text-gray-500">
+              ID:
+              <span class="font-semibold text-gray-700"><%= challenge?.id %></span>
+              <% if (challenge?.createdAt) { %>
+              · Created:
+              <span class="font-semibold text-gray-700">
+                <%= new Date(challenge.createdAt).toLocaleString() %>
+              </span>
+              <% } %>
+              <% if (challenge?.updatedAt) { %>
+              · Updated:
+              <span class="font-semibold text-gray-700">
+                <%= new Date(challenge.updatedAt).toLocaleString() %>
+              </span>
+              <% } %>
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="/admin-views/challenges" class="inline-flex items-center justify-center rounded-lg
+                       border border-gray-300 bg-white text-xs font-semibold px-4 py-2
+                       hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+              ← Back
+            </a>
+
+            <button type="button" class="inline-flex items-center justify-center rounded-lg
+                       bg-[var(--color-secondary-dark)] text-white text-xs font-semibold px-4 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]" data-challenge-id="<%= challenge?.id %>" onclick="openAddTasksModal('<%= challenge?.id %>')">
+              + Add Tasks
+            </button>
+
+            <button type="button" class="inline-flex items-center justify-center rounded-lg
+                       bg-[var(--color-primary)] text-white text-xs font-semibold px-4 py-2
+                       hover:bg-[var(--color-primary-dark)]
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]" data-challenge-id="<%= challenge?.id %>" onclick="openUpdateChallengeModal(this)">
+              Update
+            </button>
+          </div>
+        </section>
+
+        <!-- Challenge Summary -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Overview -->
+            <div class="lg:col-span-2">
+              <h4 class="text-[11px] font-semibold text-gray-800 mb-2">
+                Overview
+              </h4>
+
+              <div class="flex flex-wrap gap-2 mb-3">
+                <!-- Status -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                    <%= challenge?.status === 'ACTIVE'
+                      ? 'bg-green-50 text-green-700'
+                      : challenge?.status === 'DRAFT'
+                      ? 'bg-yellow-50 text-yellow-700'
+                      : challenge?.status === 'COMPLETED'
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'bg-gray-100 text-gray-700' %>">
+                  <%= challenge?.status || '—' %>
+                </span>
+
+                <!-- Visibility -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                  Visibility: <span class="font-semibold ml-1"><%= challenge?.visibility || '—' %></span>
+                </span>
+
+                <!-- Community -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                    bg-[var(--color-secondary-light)] text-[var(--color-secondary-dark)]">
+                  Community: <span class="font-semibold ml-1"><%= challenge?.community || '—' %></span>
+                </span>
+
+                <!-- Frequency -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                  Frequency: <span class="font-semibold ml-1"><%= challenge?.frequency || '—' %></span>
+                </span>
+
+                <!-- Duration -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                  Duration: <span class="font-semibold ml-1"><%= challenge?.durationDays || '—' %></span> days
+                </span>
+
+                <!-- Tasks count -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                  Tasks: <span class="font-semibold ml-1"><%= challenge?.tasksCount ?? (challenge?.tasks?.length || 0) %></span>
+                </span>
+
+                <!-- Dual confirm -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                    <%= challenge?.requireDualConfirmation
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-gray-100 text-gray-500' %>">
+                  Dual confirmation: <span class="font-semibold ml-1"><%= challenge?.requireDualConfirmation ? 'Yes' : 'No' %></span>
+                </span>
+
+                <!-- Suspended -->
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                    <%= challenge?.suspended
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-gray-100 text-gray-500' %>">
+                  Suspended: <span class="font-semibold ml-1"><%= challenge?.suspended ? 'Yes' : 'No' %></span>
+                </span>
+              </div>
+
+              <!-- Description -->
+              <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <h5 class="text-[11px] font-semibold text-gray-800 mb-2">
+                  Description
+                </h5>
+
+                <!-- If you store rich HTML, render unescaped -->
+                <% if (challenge?.description) { %>
+                <div class="prose prose-sm max-w-none text-xs text-gray-700 leading-relaxed">
+                  <%- challenge.description %>
+                </div>
+                <% } else { %>
+                <div class="text-xs text-gray-500">—</div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Cover -->
+            <div>
+              <h4 class="text-[11px] font-semibold text-gray-800 mb-2">
+                Cover
+              </h4>
+
+              <div class="rounded-2xl shadow-sm border border-gray-200 overflow-hidden bg-gray-100 aspect-[16/10]
+                         flex items-center justify-center">
+                <% const cover = challenge?.coverImageUrl || challenge?.coverUrl || challenge?.coverImage || ''; %>
+                <% if (cover) { %>
+                <img src="<%= cover %>" alt="Challenge cover" class="w-full h-full object-cover" />
+                <% } else { %>
+                <div class="text-xs text-gray-500">No cover image</div>
+                <% } %>
+              </div>
+
+              <% if (cover) { %>
+              <div class="mt-2 text-[11px] text-gray-500 break-all">
+                <span class="font-semibold text-gray-700">URL:</span> <%= cover %>
+              </div>
+              <% } %>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tasks table -->
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+            <div>
+              <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+                Tasks
+              </h3>
+              <p class="text-xs text-gray-500">
+                Add, edit or delete tasks for this challenge.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input id="taskSearch" type="text" placeholder="Search tasks..." class="w-56 rounded-lg border border-gray-300 px-3 py-2 text-xs
+                         focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]
+                         focus:border-[var(--color-primary)]" oninput="filterTasks()" />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Cadence</th>
+                  <th class="px-3 py-2 text-left font-medium">Day</th>
+                  <th class="px-3 py-2 text-left font-medium">Week</th>
+                  <th class="px-3 py-2 text-left font-medium">Title</th>
+                  <th class="px-3 py-2 text-left font-medium">Milestone</th>
+                  <th class="px-3 py-2 text-left font-medium">Instructions</th>
+                  <th class="px-3 py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody id="tasksTbody" class="divide-y divide-gray-100">
+                <% const tasks = (challenge?.tasks || []).slice().sort((a,b) => (a.dayNumber ?? 0) - (b.dayNumber ?? 0)); %>
+
+                <% if (!tasks.length) { %>
+                <tr>
+                  <td colspan="8" class="px-3 py-6 text-center text-gray-500 text-xs">
+                    No tasks yet. Click <span class="font-semibold text-gray-700">Add Task</span> to create one.
+                  </td>
+                </tr>
+                <% } %>
+
+                <% tasks.forEach((t, idx) => { %>
+                <tr class="hover:bg-gray-50 task-row" data-title="<%= (t.title || '').toLowerCase() %>" data-instructions="<%= (t.instructions || '').toLowerCase() %>">
+                  <td class="px-3 py-2 text-gray-500"><%= idx + 1 %></td>
+
+                  <td class="px-3 py-2">
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700">
+                      <%= t.cadence || t.frequency || '—' %>
+                    </span>
+                  </td>
+
+                  <td class="px-3 py-2 text-gray-700"><%= t.dayNumber ?? '—' %></td>
+                  <td class="px-3 py-2 text-gray-700"><%= t.weekNumber ?? '—' %></td>
+
+                  <td class="px-3 py-2">
+                    <span class="font-semibold text-gray-800"><%= t.title || '—' %></span>
+                  </td>
+
+                  <td class="px-3 py-2">
+                    <% if (t.isMilestone) { %>
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium">
+                      Yes
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[10px] font-medium">
+                      No
+                    </span>
+                    <% } %>
+                  </td>
+
+                  <td class="px-3 py-2 text-gray-700 max-w-xs">
+                    <div class="truncate" title="<%= t.instructions || '' %>">
+                      <%- t.instructions || '—' %>
+                    </div>
+                  </td>
+
+                  <td class="px-3 py-2 text-right space-x-1 whitespace-nowrap">
+                    <button type="button" class="inline-flex items-center rounded-md border border-gray-300 text-gray-700 px-2 py-1 text-[11px] font-semibold hover:bg-gray-50 transition" data-task-id="<%= t.id %>" data-challenge-id="<%= challenge.id %>" data-task-title="<%- (t.title || '').replace(/"/g,'&quot;') %>" data-task-instructions="<%- (t.instructions || '').replace(/"/g,'&quot;') %>" data-task-day-number="<%= t.dayNumber ?? '' %>" data-task-week-number="<%= t.weekNumber ?? '' %>" data-task-frequency="<%= t.cadence || t.frequency || 'DAILY' %>" data-task-is-milestone="<%= t.isMilestone ? 'true' : 'false' %>" onclick="openEditTaskModal(this)">
+                      Edit
+                    </button>
+
+                    <button type="button" class="inline-flex items-center px-2 py-1 text-[11px] rounded-md border border-red-500 text-red-600 hover:bg-red-50" data-task-id="<%= t.id %>" data-challenge-id="<%= challenge.id %>" data-task-title="<%- (t.title || '').replace(/"/g,'&quot;') %>" onclick="openDeleteTaskModal(this)">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-3 text-[11px] text-gray-500">
+            Tip: Search filters by title/instructions.
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <%- include('partials/challenges/update-challange-modal.ejs') %>
+  <%- include('partials/challenges/edit-task-modal', { challenge }) %>
+  <%- include('partials/challenges/delete-task-modal', { challenge }) %>
+  <%- include('partials/challenges/add-tasks-modal', { challenge }) %>
+
+  <!-- Page helper -->
+  <script>
+    function filterTasks() {
+      const q = (document.getElementById("taskSearch").value || "")
+        .trim()
+        .toLowerCase();
+
+      document.querySelectorAll("#tasksTbody .task-row").forEach((row) => {
+        const title = row.getAttribute("data-title") || "";
+        const instr = row.getAttribute("data-instructions") || "";
+        const match = !q || title.includes(q) || instr.includes(q);
+        row.style.display = match ? "" : "none";
+      });
+    }
+  </script>
+</body>
+
+</html>

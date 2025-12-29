@@ -1,0 +1,540 @@
+<!-- ✅ Add Tasks Modal (MULTI-TASK + Rich Text Instructions via Quill) -->
+<link
+  href="https://cdn.quilljs.com/1.3.7/quill.snow.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+<div
+  id="addTasksModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 text-xs overflow-hidden flex flex-col max-h-[90vh]"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="addTasksTitle"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4 flex-shrink-0">
+      <div>
+        <h3 id="addTasksTitle" class="text-base font-semibold text-gray-800">
+          Add Tasks
+        </h3>
+        <p class="text-[11px] text-gray-500 mt-1">
+          Add multiple tasks at once for this challenge.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+        onclick="closeAddTasksModal()"
+        aria-label="Close modal"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="overflow-y-auto pr-2 flex-1 custom-scrollbar space-y-4">
+      <form id="addTasksForm" class="space-y-4">
+        <!-- Challenge ID -->
+        <input type="hidden" id="addTasksChallengeId" name="challengeId" />
+
+        <!-- Top controls -->
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-[11px] text-gray-600">
+            Tasks: <span id="addTasksCount" class="font-semibold">1</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="text-[11px] px-3 py-2 rounded-lg border border-[var(--color-primary)]
+                     text-[var(--color-primary-dark)] hover:bg-[var(--color-secondary-light)]"
+              onclick="addTaskRow()"
+            >
+              + Add another task
+            </button>
+
+            <button
+              type="button"
+              class="text-[11px] px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+              onclick="resetTaskRows()"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Tasks Container -->
+        <div id="addTasksList" class="space-y-3"></div>
+
+        <!-- Small help -->
+        <div class="text-[11px] text-gray-500">
+          Tip: For <span class="font-semibold">DAILY</span> tasks, provide a
+          <span class="font-semibold">Day #</span>. For
+          <span class="font-semibold">WEEKLY</span> tasks, provide a
+          <span class="font-semibold">Week #</span>.
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-4 flex justify-end gap-2 flex-shrink-0">
+      <button
+        type="button"
+        class="px-3 py-2 rounded-lg border border-gray-300 text-[11px] text-gray-700 hover:bg-gray-50"
+        onclick="closeAddTasksModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        form="addTasksForm"
+        class="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-[11px] text-white font-semibold hover:bg-[var(--color-primary-dark)]"
+      >
+        Save tasks
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c6c6c6;
+    border-radius: 10px;
+  }
+
+  /* Quill tweaks to match your small admin UI */
+  .ql-toolbar.ql-snow {
+    border: 0;
+    border-bottom: 1px solid #e5e7eb; /* gray-200 */
+    padding: 6px;
+  }
+  .ql-container.ql-snow {
+    border: 0;
+    font-size: 12px;
+  }
+  .ql-editor {
+    min-height: 120px;
+    padding: 10px;
+  }
+</style>
+
+<script>
+  // ---------------------------
+  // Add Tasks Modal (multi-task)
+  // ---------------------------
+
+  // Keep a simple array as source of truth, so we can re-render with correct indexes.
+  let addTaskRows = [];
+
+  function openAddTasksModal(challengeId) {
+    const modal = document.getElementById("addTasksModal");
+    const hiddenId = document.getElementById("addTasksChallengeId");
+
+    if (hiddenId) hiddenId.value = challengeId || "";
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    // Default to 1 empty row
+    if (!addTaskRows.length) {
+      addTaskRows = [createEmptyRow()];
+    }
+
+    renderTaskRows();
+  }
+
+  function closeAddTasksModal() {
+    const modal = document.getElementById("addTasksModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+
+  function createEmptyRow() {
+    return {
+      title: "",
+      frequency: "DAILY",
+      dayNumber: "",
+      weekNumber: "",
+      isMilestone: false,
+      instructionsHtml: "",
+    };
+  }
+
+  function resetTaskRows() {
+    addTaskRows = [createEmptyRow()];
+    renderTaskRows();
+  }
+
+  function addTaskRow() {
+    // Save current editor values into addTaskRows before pushing new
+    syncDomToRows();
+    addTaskRows.push(createEmptyRow());
+    renderTaskRows();
+  }
+
+  function removeTaskRow(index) {
+    if (addTaskRows.length === 1) return; // keep at least 1
+    syncDomToRows();
+    addTaskRows.splice(index, 1);
+    renderTaskRows();
+  }
+
+  function updateTasksCount() {
+    const el = document.getElementById("addTasksCount");
+    if (el) el.textContent = String(addTaskRows.length);
+  }
+
+  function taskRowTemplate(idx, row) {
+    const safeTitle = escapeHtml(row.title || "");
+
+    return `
+      <div class="task-row bg-gray-50 p-4 rounded-xl border border-gray-200" data-index="${idx}">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-[11px] font-semibold text-gray-800">
+            Task ${idx + 1}
+          </div>
+
+          <button
+            type="button"
+            class="text-[10px] px-2 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50"
+            onclick="removeTaskRow(${idx})"
+            ${addTaskRows.length === 1 ? "disabled" : ""}
+            ${addTaskRows.length === 1 ? 'style="opacity:.5;cursor:not-allowed"' : ""}
+          >
+            Remove
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Title -->
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Task Title
+            </label>
+            <input
+              type="text"
+              data-field="title"
+              value="${safeTitle}"
+              required
+              minlength="3"
+              maxlength="200"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              placeholder="e.g. Read 2 chapters"
+            />
+          </div>
+
+          <!-- Instructions (Rich Text - Quill) -->
+          <div>
+            <label class="block text-[11px] font-medium text-gray-700 mb-1">
+              Instructions (Rich Text)
+            </label>
+
+            <div class="border border-gray-300 rounded-lg bg-white overflow-hidden">
+              <div
+                class="task-instructions-editor"
+                data-field="instructions-editor"
+                style="min-height:120px;"
+              ></div>
+            </div>
+
+            <!-- Hidden input holding HTML -->
+            <input type="hidden" data-field="instructions" value="" />
+
+            <p class="text-[11px] text-gray-500 mt-1">
+              Supports formatting, lists and links.
+            </p>
+          </div>
+
+          <!-- Day/Week/Cadence -->
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                Day #
+              </label>
+              <input
+                type="number"
+                data-field="dayNumber"
+                min="1"
+                max="365"
+                value="${row.dayNumber ?? ""}"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+                placeholder="1"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                Week #
+              </label>
+              <input
+                type="number"
+                data-field="weekNumber"
+                min="1"
+                max="52"
+                value="${row.weekNumber ?? ""}"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
+                placeholder="1"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-gray-700 mb-1">
+                Cadence
+              </label>
+              <select
+                data-field="frequency"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              >
+                <option value="DAILY" ${row.frequency === "DAILY" ? "selected" : ""}>Daily</option>
+                <option value="WEEKLY" ${row.frequency === "WEEKLY" ? "selected" : ""}>Weekly</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Milestone -->
+          <div>
+            <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
+              <input
+                type="checkbox"
+                data-field="isMilestone"
+                ${row.isMilestone ? "checked" : ""}
+                class="rounded border-gray-300 text-[var(--color-primary)]
+                       focus:ring-[var(--color-primary)]"
+              />
+              Milestone task
+            </label>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTaskRows() {
+    const list = document.getElementById("addTasksList");
+    if (!list) return;
+
+    list.innerHTML = addTaskRows.map((row, idx) => taskRowTemplate(idx, row)).join("");
+
+    // init quill editors after DOM update
+    document.querySelectorAll("#addTasksList .task-row").forEach((rowEl) => {
+      initTaskEditor(rowEl);
+    });
+
+    updateTasksCount();
+  }
+
+  function initTaskEditor(rowEl) {
+    const idx = Number(rowEl.getAttribute("data-index"));
+    const editorEl = rowEl.querySelector('[data-field="instructions-editor"]');
+    const hiddenEl = rowEl.querySelector('[data-field="instructions"]');
+
+    if (!editorEl || !hiddenEl) return;
+
+    // Create quill
+    const quill = new Quill(editorEl, {
+      theme: "snow",
+      placeholder: "Write task instructions…",
+      modules: {
+        toolbar: [
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link"],
+          ["clean"],
+        ],
+      },
+    });
+
+    // Load existing html (from state)
+    const html = addTaskRows?.[idx]?.instructionsHtml || "";
+    if (html) {
+      quill.clipboard.dangerouslyPasteHTML(html);
+      hiddenEl.value = html;
+    } else {
+      hiddenEl.value = "";
+    }
+
+    // Sync changes
+    quill.on("text-change", () => {
+      const currentHtml = (quill.root?.innerHTML || "").trim();
+      const cleaned = currentHtml === "<p><br></p>" ? "" : currentHtml;
+
+      hiddenEl.value = cleaned;
+      // update state live
+      if (addTaskRows[idx]) addTaskRows[idx].instructionsHtml = cleaned;
+    });
+
+    // store reference for possible later access
+    rowEl.__quill = quill;
+  }
+
+  function syncDomToRows() {
+    // Persist all visible inputs into addTaskRows before re-render
+    document.querySelectorAll("#addTasksList .task-row").forEach((rowEl) => {
+      const idx = Number(rowEl.getAttribute("data-index"));
+      const row = addTaskRows[idx];
+      if (!row) return;
+
+      row.title = (rowEl.querySelector('[data-field="title"]')?.value || "").trim();
+      row.frequency = rowEl.querySelector('[data-field="frequency"]')?.value || "DAILY";
+
+      const day = parseInt(rowEl.querySelector('[data-field="dayNumber"]')?.value || "", 10);
+      const week = parseInt(rowEl.querySelector('[data-field="weekNumber"]')?.value || "", 10);
+
+      row.dayNumber = Number.isNaN(day) ? "" : day;
+      row.weekNumber = Number.isNaN(week) ? "" : week;
+
+      row.isMilestone = !!rowEl.querySelector('[data-field="isMilestone"]')?.checked;
+
+      // instructionsHtml is updated live by quill,
+      // but keep fallback:
+      row.instructionsHtml =
+        (rowEl.querySelector('[data-field="instructions"]')?.value || "").trim();
+    });
+  }
+
+  function buildAddTasksPayload() {
+    syncDomToRows();
+
+    // Convert state into DTO payload: { tasks: CreateChallengeTaskDto[] }
+    const tasks = addTaskRows
+      .map((t) => {
+        const title = (t.title || "").trim();
+        const instructions = (t.instructionsHtml || "").trim();
+
+        if (!title && !instructions) return null; // skip empty rows
+
+        const payload = {
+          title,
+          instructions, // ✅ Rich text HTML string
+          frequency: t.frequency || "DAILY",
+          isMilestone: !!t.isMilestone,
+        };
+
+        // Only include numbers if present
+        if (t.dayNumber !== "" && t.dayNumber !== null && t.dayNumber !== undefined) {
+          payload.dayNumber = Number(t.dayNumber);
+        }
+        if (t.weekNumber !== "" && t.weekNumber !== null && t.weekNumber !== undefined) {
+          payload.weekNumber = Number(t.weekNumber);
+        }
+
+        return payload;
+      })
+      .filter(Boolean);
+
+    return { tasks };
+  }
+
+  function clientValidateTasks(tasks) {
+    // Match your DTO + validate() expectations:
+    // DAILY => dayNumber required
+    // WEEKLY => weekNumber required
+    for (let i = 0; i < tasks.length; i++) {
+      const t = tasks[i];
+      if (!t.title || t.title.length < 3) {
+        return `Task ${i + 1}: title is required (min 3 chars).`;
+      }
+      if (!t.instructions || t.instructions.replace(/<[^>]*>/g, "").trim().length < 10) {
+        return `Task ${i + 1}: instructions is required (min 10 chars).`;
+      }
+      if (t.frequency === "DAILY" && (!("dayNumber" in t) || !t.dayNumber)) {
+        return `Task ${i + 1}: dayNumber is required for DAILY tasks.`;
+      }
+      if (t.frequency === "WEEKLY" && (!("weekNumber" in t) || !t.weekNumber)) {
+        return `Task ${i + 1}: weekNumber is required for WEEKLY tasks.`;
+      }
+    }
+    return null;
+  }
+
+  // Submit handler
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("addTasksForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const challengeId = document.getElementById("addTasksChallengeId")?.value;
+      if (!challengeId) {
+        alert("Missing challengeId.");
+        return;
+      }
+
+      const submitBtn = document.querySelector(
+        'button[form="addTasksForm"][type="submit"]'
+      );
+
+      const originalText = submitBtn ? submitBtn.textContent : "Save tasks";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving...";
+      }
+
+      try {
+        const payload = buildAddTasksPayload();
+
+        if (!payload.tasks.length) {
+          alert("Please add at least one task.");
+          return;
+        }
+
+        // quick client-side validation for better UX
+        const err = clientValidateTasks(payload.tasks);
+        if (err) {
+          alert(err);
+          return;
+        }
+
+        // 🔁 adjust endpoint to your API (example)
+        // This matches AddTasksDto: { tasks: [...] }
+        const res = await fetch(`/challenges/${challengeId}/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          alert(errJson.message || "Failed to add tasks.");
+          return;
+        }
+
+        closeAddTasksModal();
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        alert(error?.message || "Unexpected error occurred.");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+  });
+
+  // tiny helper
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+</script>

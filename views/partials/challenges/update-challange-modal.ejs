@@ -1,17 +1,24 @@
+<!-- Update Challenge Modal (NO tasks + Rich Text Description via Quill + Cover Image Upload + coverImageUrl in payload) -->
 <div
   id="updateChallengeModal"
   class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4"
 >
   <div
     class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 text-xs overflow-hidden flex flex-col max-h-[90vh]"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="updateChallengeTitle"
   >
     <!-- Header -->
     <div class="flex items-center justify-between mb-4 flex-shrink-0">
-      <h3 class="text-base font-semibold text-gray-800">Update Challenge</h3>
+      <h3 id="updateChallengeTitle" class="text-base font-semibold text-gray-800">
+        Update Challenge
+      </h3>
       <button
         type="button"
         class="text-gray-400 hover:text-gray-600 text-xl leading-none"
         onclick="closeUpdateChallengeModal()"
+        aria-label="Close modal"
       >
         ×
       </button>
@@ -30,7 +37,7 @@
           <input
             type="text"
             name="title"
-            id="updateChallengeTitle"
+            id="updateChallengeTitleInput"
             required
             minlength="3"
             maxlength="100"
@@ -38,18 +45,52 @@
           />
         </div>
 
+        <!-- ✅ Cover Image Upload -->
+        <div>
+          <label class="block text-[11px] font-medium text-gray-700 mb-1">
+            Cover image (optional)
+          </label>
+          <input
+            type="file"
+            name="coverUrl"
+            id="updateChallengeCoverUrl"
+            accept="image/png,image/jpeg,image/webp"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          />
+          <p class="text-[11px] text-gray-500 mt-1">
+            Upload a new image to replace the current cover.
+          </p>
+
+          <!-- ✅ keep current coverImageUrl (from DB) so it can be included in payload if user doesn't upload -->
+          <input
+            type="hidden"
+            name="coverImageUrl"
+            id="updateChallengeCoverImageUrl"
+          />
+        </div>
+
+        <!-- ✅ Description (Rich Text - Quill) -->
         <div>
           <label class="block text-[11px] font-medium text-gray-700 mb-1">
             Description
           </label>
+
+          <div
+            id="updateChallengeDescriptionEditor"
+            class="bg-white border border-gray-300 rounded-lg"
+            style="min-height: 160px"
+          ></div>
+
+          <!-- Hidden textarea that gets serialized -->
           <textarea
-            name="description"
-            id="updateChallengeDescription"
-            rows="3"
-            minlength="10"
-            maxlength="5000"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+            id="updateChallengeDescriptionHtml"
+            name="descriptionHtml"
+            class="hidden"
           ></textarea>
+
+          <p class="text-[11px] text-gray-500 mt-1">
+            Supports formatting, lists, and links.
+          </p>
         </div>
 
         <!-- COMMUNITY & STATUS -->
@@ -153,22 +194,18 @@
           </div>
         </div>
 
-        <!-- TASKS SECTION -->
-        <div class="border-t border-gray-200 pt-4">
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-[11px] font-semibold text-gray-800">Tasks</h4>
-            <button
-              type="button"
-              class="text-[11px] px-2 py-1 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:bg-[var(--color-secondary-light)]"
-              onclick="addUpdateTaskItem()"
-            >
-              + Add Task
-            </button>
-          </div>
-
-          <div id="updateTaskList" class="space-y-3">
-            <!-- Empty, will be dynamically populated with new tasks -->
-          </div>
+        <!-- Optional checkbox -->
+        <div>
+          <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
+            <input
+              type="checkbox"
+              id="updateChallengeRequireDualConfirmation"
+              name="requireDualConfirmation"
+              value="true"
+              class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+            />
+            Require dual confirmation (married)
+          </label>
         </div>
       </form>
     </div>
@@ -194,197 +231,218 @@
 </div>
 
 <style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #c6c6c6;
-    border-radius: 10px;
-  }
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #c6c6c6; border-radius: 10px; }
 </style>
 
 <script>
+  /* ✅ Quill instance for update challenge description */
+  let updateChallengeDescriptionQuill;
+
+  function ensureUpdateChallengeQuill() {
+    if (updateChallengeDescriptionQuill) return;
+
+    const editorEl = document.getElementById("updateChallengeDescriptionEditor");
+    if (!editorEl) return;
+
+    updateChallengeDescriptionQuill = new Quill("#updateChallengeDescriptionEditor", {
+      theme: "snow",
+      placeholder: "Update the challenge description...",
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, false] }],
+          ["bold", "italic", "underline"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link"],
+          ["clean"],
+        ],
+      },
+    });
+  }
+
   async function openUpdateChallengeModal(button) {
-    const id = button.getAttribute('data-challenge-id');
+    const id = button.getAttribute("data-challenge-id");
     if (!id) return;
 
-    const modal = document.getElementById('updateChallengeModal');
-    const form = document.getElementById('updateChallengeForm');
-    const taskList = document.getElementById('updateTaskList');
+    const modal = document.getElementById("updateChallengeModal");
+    const form = document.getElementById("updateChallengeForm");
 
-    // Reset form & tasks (clear any previous tasks)
     form.reset();
-    taskList.innerHTML = ''; // Ensure no prefilled tasks
 
-    // Show modal
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    // clear file input
+    const fileInput = document.getElementById("updateChallengeCoverUrl");
+    if (fileInput) fileInput.value = "";
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    ensureUpdateChallengeQuill();
 
     try {
-      // Adjust this endpoint if different
       const res = await fetch(`/challenges/single/${id}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch challenge (status ${res.status})`);
-      }
+      if (!res.ok) throw new Error(`Failed to fetch challenge (status ${res.status})`);
+
       const json = await res.json();
       const challenge = json.data || json;
 
       populateUpdateChallengeModal(challenge);
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Failed to load challenge details.');
+      alert(err.message || "Failed to load challenge details.");
       closeUpdateChallengeModal();
     }
   }
 
   function populateUpdateChallengeModal(challenge) {
-    document.getElementById('updateChallengeId').value = challenge.id;
+    document.getElementById("updateChallengeId").value = challenge.id;
+    document.getElementById("updateChallengeTitleInput").value = challenge.title || "";
 
-    // Basic fields
-    document.getElementById('updateChallengeTitle').value =
-      challenge.title || '';
-    document.getElementById('updateChallengeDescription').value =
-      challenge.description || '';
+    document.getElementById("updateChallengeCommunity").value = challenge.community || "";
+    document.getElementById("updateChallengeStatus").value = challenge.status || "";
+    document.getElementById("updateChallengeVisibility").value = challenge.visibility || "";
+    document.getElementById("updateChallengeFrequency").value = challenge.frequency || "";
 
-    // Selects
-    document.getElementById('updateChallengeCommunity').value =
-      challenge.community || '';
-    document.getElementById('updateChallengeStatus').value =
-      challenge.status || '';
-    document.getElementById('updateChallengeVisibility').value =
-      challenge.visibility || '';
-    document.getElementById('updateChallengeFrequency').value =
-      challenge.frequency || '';
+    document.getElementById("updateChallengeDurationDays").value =
+      typeof challenge.durationDays === "number" ? challenge.durationDays : "";
 
-    // Numbers & optional strings
-    document.getElementById('updateChallengeDurationDays').value =
-      typeof challenge.durationDays === 'number' ? challenge.durationDays : '';
-    document.getElementById('updateChallengeCompletionBadgeCode').value =
-      challenge.completionBadgeCode || '';
+    document.getElementById("updateChallengeCompletionBadgeCode").value =
+      challenge.completionBadgeCode || "";
 
-    // Tasks: Start with empty list, user will add tasks
+    const dual = document.getElementById("updateChallengeRequireDualConfirmation");
+    if (dual) dual.checked = !!challenge.requireDualConfirmation;
+
+    // ✅ store existing coverImageUrl
+    const coverImageUrlEl = document.getElementById("updateChallengeCoverImageUrl");
+    if (coverImageUrlEl) {
+      coverImageUrlEl.value = challenge.coverImageUrl || challenge.coverUrl || "";
+    }
+
+    // ✅ Quill content
+    const html = challenge.descriptionHtml || challenge.description || "";
+    if (updateChallengeDescriptionQuill) {
+      if (!html) updateChallengeDescriptionQuill.setContents([]);
+      else updateChallengeDescriptionQuill.clipboard.dangerouslyPasteHTML(html);
+    }
+
+    // keep hidden textarea synced
+    const hidden = document.getElementById("updateChallengeDescriptionHtml");
+    if (hidden) hidden.value = html || "";
   }
 
   function closeUpdateChallengeModal() {
-    const modal = document.getElementById('updateChallengeModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    const modal = document.getElementById("updateChallengeModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+
+    if (updateChallengeDescriptionQuill) updateChallengeDescriptionQuill.setContents([]);
+
+    const hidden = document.getElementById("updateChallengeDescriptionHtml");
+    if (hidden) hidden.value = "";
+
+    const coverImageUrlEl = document.getElementById("updateChallengeCoverImageUrl");
+    if (coverImageUrlEl) coverImageUrlEl.value = "";
+
+    const fileInput = document.getElementById("updateChallengeCoverUrl");
+    if (fileInput) fileInput.value = "";
   }
 
-  function addUpdateTaskItem() {
-    const taskList = document.getElementById('updateTaskList');
+  function buildUpdateChallengeFormData() {
+    const form = document.getElementById("updateChallengeForm");
 
-    // Create a new task item
-    const taskItem = document.createElement('div');
-    taskItem.className =
-      'task-item space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200';
+    const fd = new FormData();
 
-    taskItem.innerHTML = `
-      <div class="flex items-center justify-between mb-1">
-        <span class="text-[11px] font-semibold text-gray-700">Task</span>
-        <button
-          type="button"
-          class="text-[10px] px-2 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 remove-task-btn"
-          onclick="removeUpdateTaskItem(this)"
-        >
-          Remove
-        </button>
-      </div>
+    const getVal = (name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? String(el.value || "").trim() : "";
+    };
 
-      <div>
-        <label class="block text-[11px] font-medium text-gray-700 mb-1">Task Title</label>
-        <input
-          type="text"
-          name="tasks[0].title"
-          minlength="3"
-          maxlength="200"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-        />
-      </div>
+    // Basic fields
+    fd.append("title", getVal("title"));
+    fd.append("community", getVal("community"));
+    fd.append("status", getVal("status"));
+    fd.append("visibility", getVal("visibility"));
+    fd.append("frequency", getVal("frequency"));
 
-      <div>
-        <label class="block text-[11px] font-medium text-gray-700 mb-1">Instructions</label>
-        <textarea
-          name="tasks[0].instructions"
-          rows="2"
-          minlength="10"
-          maxlength="1000"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-        ></textarea>
-      </div>
+    // numbers
+    const durationDays = parseInt(getVal("durationDays"), 10);
+    if (!Number.isNaN(durationDays)) fd.append("durationDays", String(durationDays));
 
-      <div class="grid grid-cols-3 gap-2">
-        <div>
-          <label class="block text-[11px] font-medium text-gray-700 mb-1">Day #</label>
-          <input type="number" name="tasks[0].dayNumber" min="1" max="365" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"/>
-        </div>
+    // optional
+    const badge = getVal("completionBadgeCode");
+    if (badge) fd.append("completionBadgeCode", badge);
 
-        <div>
-          <label class="block text-[11px] font-medium text-gray-700 mb-1">Week #</label>
-          <input type="number" name="tasks[0].weekNumber" min="1" max="52" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"/>
-        </div>
+    const dualCheckbox = document.getElementById("updateChallengeRequireDualConfirmation");
+    if (dualCheckbox) fd.append("requireDualConfirmation", dualCheckbox.checked ? "true" : "false");
 
-        <div>
-          <label class="block text-[11px] font-medium text-gray-700 mb-1">Cadence</label>
-          <select name="tasks[0].frequency" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs">
-            <option value="DAILY">Daily</option>
-            <option value="WEEKLY">Weekly</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label class="inline-flex items-center gap-2 text-[11px] text-gray-700">
-          <input type="checkbox" name="tasks[0].isMilestone" value="true" class="rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"/>
-          Milestone task
-        </label>
-      </div>
-    `;
-    taskList.appendChild(taskItem);
-  }
-
-  function removeUpdateTaskItem(button) {
-    const taskItem = button.closest('.task-item');
-    if (taskItem) {
-      taskItem.remove();
+    // ✅ Quill → HTML (rich text)
+    let html = "";
+    if (updateChallengeDescriptionQuill) {
+      html = updateChallengeDescriptionQuill.root?.innerHTML || "";
+      if (html === "<p><br></p>" || html.trim() === "") html = "";
     }
+
+    if (html) {
+      // fd.append("descriptionHtml", html);
+      fd.append("description", html); // if your backend expects description
+    }
+
+    // ✅ Existing cover URL (if no new file uploaded, backend can keep it)
+    const existingUrl = getVal("coverImageUrl");
+    if (existingUrl) fd.append("coverImageUrl", existingUrl);
+
+    // ✅ File (binary)
+    const fileInput = document.getElementById("updateChallengeCoverUrl");
+    if (fileInput?.files?.[0]) {
+      fd.append("coverUrl", fileInput.files[0]); // MUST match FileInterceptor('coverUrl')
+    }
+
+    return fd;
   }
 
-  // Handle form submission
-  document
-    .getElementById('updateChallengeForm')
-    .addEventListener('submit', async function (e) {
+  document.addEventListener("DOMContentLoaded", function () {
+    ensureUpdateChallengeQuill();
+
+    const form = document.getElementById("updateChallengeForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const id = document.getElementById('updateChallengeId').value;
+      const id = document.getElementById("updateChallengeId").value;
       if (!id) {
-        alert('Challenge ID is missing.');
+        alert("Challenge ID is missing.");
         return;
       }
 
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const originalText = submitBtn ? submitBtn.textContent : null;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.textContent : "Save changes";
+
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        submitBtn.textContent = "Saving...";
       }
 
-      const payload = serializeUpdateChallengeForm();
-
       try {
+        const formData = buildUpdateChallengeFormData();
+
         const res = await fetch(`/challenges/update-challenge/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+          method: "PUT",
+          body: formData, // ✅ multipart/form-data
+          // ❌ DO NOT set Content-Type
         });
 
         if (!res.ok) {
-          alert('Failed to update challenge.');
+          let msg = "Failed to update challenge.";
+          try {
+            const errJson = await res.json();
+            if (errJson?.message) {
+              msg = Array.isArray(errJson.message)
+                ? errJson.message.join("\n")
+                : errJson.message;
+            }
+          } catch (_) {}
+          alert(msg);
           return;
         }
 
@@ -392,7 +450,7 @@
         window.location.reload();
       } catch (err) {
         console.error(err);
-        alert(err.message || 'An unexpected error occurred.');
+        alert(err?.message || "An unexpected error occurred.");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -400,89 +458,5 @@
         }
       }
     });
-
-  function serializeUpdateChallengeForm() {
-    const form = document.getElementById('updateChallengeForm');
-    const data = {};
-
-    const getVal = (name) => {
-      const el = form.querySelector(`[name="${name}"]`);
-      return el ? el.value.trim() : '';
-    };
-
-    // Collecting challenge data
-    data.title = getVal('title');
-    data.description = getVal('description') || undefined;
-    data.bookTitle = getVal('bookTitle') || undefined;
-    data.bookAuthor = getVal('bookAuthor') || undefined;
-    data.community = getVal('community');
-    data.status = getVal('status');
-    data.visibility = getVal('visibility');
-    data.frequency = getVal('frequency');
-
-    // Collecting optional numeric fields
-    const durationDays = parseInt(getVal('durationDays'), 10);
-    data.durationDays = isNaN(durationDays) ? undefined : durationDays;
-
-    const badge = getVal('completionBadgeCode');
-    data.completionBadgeCode = badge || undefined;
-
-    // Collecting checkbox data
-    const dualCheckbox = document.getElementById(
-      'updateChallengeRequireDualConfirmation',
-    );
-    data.requireDualConfirmation = dualCheckbox
-      ? dualCheckbox.checked
-      : undefined;
-
-    // Tasks section
-    const taskList = document.getElementById('updateTaskList');
-    const taskItems = taskList.querySelectorAll(
-      '.task-item:not(.task-item-template)',
-    );
-    const tasks = [];
-
-    taskItems.forEach((item) => {
-      const titleEl = item.querySelector('input[name$=".title"]');
-      const instructionsEl = item.querySelector(
-        'textarea[name$=".instructions"]',
-      );
-      const dayEl = item.querySelector('input[name$=".dayNumber"]');
-      const weekEl = item.querySelector('input[name$=".weekNumber"]');
-      const freqEl = item.querySelector('select[name$=".frequency"]');
-      const milestoneEl = item.querySelector('input[name$=".isMilestone"]');
-
-      const title = titleEl ? titleEl.value.trim() : '';
-      const instructions = instructionsEl ? instructionsEl.value.trim() : '';
-
-      // Skip empty tasks
-      if (!title && !instructions) return;
-
-      const task = {
-        title,
-        instructions,
-        frequency: freqEl ? freqEl.value : 'DAILY',
-      };
-
-      if (dayEl && dayEl.value) {
-        const dayNum = parseInt(dayEl.value, 10);
-        if (!isNaN(dayNum)) task.dayNumber = dayNum;
-      }
-
-      if (weekEl && weekEl.value) {
-        const weekNum = parseInt(weekEl.value, 10);
-        if (!isNaN(weekNum)) task.weekNumber = weekNum;
-      }
-
-      if (milestoneEl && milestoneEl.checked) {
-        task.isMilestone = true;
-      }
-
-      tasks.push(task);
-    });
-
-    data.tasks = tasks;
-
-    return data;
-  }
+  });
 </script>

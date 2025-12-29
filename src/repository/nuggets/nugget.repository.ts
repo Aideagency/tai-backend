@@ -194,6 +194,50 @@ export class NuggetRepository extends BaseRepository<
     });
   }
 
+  async getNuggetWithEngagementStats(nuggetId: number) {
+    const qb = this.query('n')
+      .leftJoinAndSelect('n.admin', 'admin')
+
+      // likes count
+      .addSelect((sub) => {
+        return sub
+          .select('COUNT(1)', 'cnt')
+          .from(NuggetLikeEntity, 'nl')
+          .where('nl.nugget.id = n.id');
+      }, 'likesCount')
+
+      // comments count
+      .addSelect((sub) => {
+        return sub
+          .select('COUNT(1)', 'cnt')
+          .from(NuggetCommentEntity, 'nc')
+          .where('nc.nugget.id = n.id');
+      }, 'commentsCount')
+
+      .where('n.id = :id', { id: nuggetId });
+
+    const { entities, raw } = await qb.getRawAndEntities();
+
+    const nugget = entities?.[0];
+    if (!nugget) return null;
+
+    const row = raw?.[0] ?? {};
+    const likesCount = Number(row.likesCount ?? 0);
+    const commentsCount = Number(row.commentsCount ?? 0);
+
+    // if your NuggetEntity has shareCount, return it from the entity itself
+    const shareCount = Number((nugget as any).shareCount ?? 0);
+
+    return {
+      nugget,
+      engagement: {
+        likesCount,
+        commentsCount,
+        shareCount,
+      },
+    };
+  }
+
   // ✅ ADD — insert without loading entities; rely on unique constraint
   async addLike(nuggetId: number, userId: number) {
     // If you’re on Postgres, you can use .orIgnore() pattern:
@@ -267,7 +311,7 @@ export class NuggetRepository extends BaseRepository<
         'c.id AS id',
         'c.comment AS comment',
         'c.createdAt AS "createdAt"',
-        `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."userName", '') AS "displayName"`,
+        `COALESCE(NULLIF(trim(concat_ws(' ', u.first_name, u.last_name)), ''), u."user_name", '') AS "displayName"`,
         'u.id AS userId',
       ])
       .where('c.nugget.id = :id', { id: params.nuggetId }) // <-- correct filter

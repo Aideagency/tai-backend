@@ -188,6 +188,7 @@
       }
 
       const data = await res.json();
+      console.log(data)
 
       // Expecting shape: { event, stats, registrations }
       const event = data.event || data; // fallback if you return plain event

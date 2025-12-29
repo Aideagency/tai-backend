@@ -45,7 +45,7 @@ export class UserRepository extends BaseRepository<
     const normalized = (identifier || '').toLowerCase();
     const user = await this.query('u')
       .where('LOWER(u.email_address) = :id', { id: normalized })
-      .orWhere('LOWER(u.userName) = :id', { id: normalized })
+      .orWhere('LOWER(u.user_name) = :id', { id: normalized })
       .getOne();
 
     if (!user) throw new BadRequestException('Wrong username or password');
