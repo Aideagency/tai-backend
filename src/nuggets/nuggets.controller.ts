@@ -19,7 +19,7 @@ import { CommentDto } from './dtos/comment.dto';
 import { ListCommentsQuery } from './dtos/list-comments.query';
 import { NuggetType } from 'src/database/entities/nugget.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiQuery } from '@nestjs/swagger';
 import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
 import { UpdateNuggetDto } from './dtos/update-nugget.dto';
 
@@ -28,6 +28,7 @@ import { UpdateNuggetDto } from './dtos/update-nugget.dto';
 export class NuggetController {
   constructor(private readonly nuggetService: NuggetService) {}
 
+  @ApiExcludeEndpoint()
   @Post()
   @UseGuards(AdminJwtGuard)
   create(@Body() dto: CreateNuggetDto, @Req() req: any) {
@@ -35,6 +36,7 @@ export class NuggetController {
     return this.nuggetService.createNugget(dto, adminId);
   }
 
+  @ApiExcludeEndpoint()
   @Put(':id')
   @UseGuards(AdminJwtGuard)
   update(
@@ -46,20 +48,20 @@ export class NuggetController {
     return this.nuggetService.updateNugget(id, dto, adminId);
   }
 
-  @Get('all-nuggets-json')
-  async addAllNuggetsFromJson() {
-    // console.log('Adding nuggets from JSON file...');
-    const data = await this.nuggetService.getNuggetWithEngagementStats(3);
-    return {
-      status: 200,
-      message: 'Nuggets added successfully from JSON file',
-      data,
-    };
-  }
+  // @Get('all-nuggets-json')
+  // async addAllNuggetsFromJson() {
+  //   // console.log('Adding nuggets from JSON file...');
+  //   const data = await this.nuggetService.getNuggetWithEngagementStats(3);
+  //   return {
+  //     status: 200,
+  //     message: 'Nuggets added successfully from JSON file',
+  //     data,
+  //   };
+  // }
 
+  @ApiExcludeEndpoint()
   @Get('details/:id')
   async nuggetInfo(@Param('id', ParseIntPipe) id: number) {
-
     const data = await this.nuggetService.getNuggetWithEngagementStats(id);
     return {
       status: 200,
