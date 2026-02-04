@@ -30,7 +30,7 @@ import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.serv
 export class AuthService {
   private readonly JWT_SECRET = process.env.JWT_SECRET;
   private readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+  private readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRATION || '15m';
   private readonly JWT_REFRESH_EXPIRES_IN =
     process.env.JWT_REFRESH_EXPIRES_IN || '1d';
 
@@ -40,7 +40,7 @@ export class AuthService {
     private readonly logger: TracerLogger,
     private readonly emailService: EmailService,
     // private readonly lessonRepo: LessonRepository,
-    private readonly courseRepo: CourseRepository,
+    // private readonly courseRepo: CourseRepository,
     private readonly cloudinary: CloudinaryService,
   ) {}
 

@@ -328,8 +328,6 @@ export class AdminViewsController {
   async getNuggets(@Req() req: any, @Query() query: NuggetSearchQueryDto) {
     const response = await this.viewsService.getAllNuggets(query);
 
-    console.log(response);
-
     // supports either wrapped or raw, just like books
     const data = response;
 

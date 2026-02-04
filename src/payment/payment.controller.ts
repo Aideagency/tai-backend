@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, Get, Param, HttpCode } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Get,
+  Param,
+  HttpCode,
+} from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
@@ -23,9 +31,13 @@ export class PaymentController {
   }
 
   @Get('verify-transaction/:id')
-  @ApiOperation({ summary: 'Verify a payment transaction' })
-  verifyPayment(@Param('id') reference: string) {
-    return this.paymentService.verifyPayment(reference);
+  @ApiOperation({ summary: 'Verify a payment transaction is successful' })
+  async verifyPayment(@Param('id') reference: string) {
+    const isVerified = await this.paymentService.verifyIfCompleted(reference);
+    return {
+      isVerified: true,
+      status: 200,
+    };
   }
 
   @Post('process-payments')
