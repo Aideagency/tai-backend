@@ -51,7 +51,7 @@ export class NuggetController {
   // @Get('all-nuggets-json')
   // async addAllNuggetsFromJson() {
   //   // console.log('Adding nuggets from JSON file...');
-  //   const data = await this.nuggetService.getNuggetWithEngagementStats(3);
+  //   const data = await this.nuggetService.addNuggetsFromJson();
   //   return {
   //     status: 200,
   //     message: 'Nuggets added successfully from JSON file',

@@ -215,4 +215,26 @@ export class PaymentService {
       await this.transactionRepository.findOneByReference(txRef);
     return !!existingTransaction;
   }
+
+  async verifyIfCompleted(txRef: string): Promise<boolean> {
+    try {
+      const existingTransaction =
+        await this.transactionRepository.findOneByReference(txRef);
+
+      return (
+        !!existingTransaction &&
+        existingTransaction.status === TransactionStatus.Success
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error verifying if transaction is completed for txRef=${txRef}: `,
+        error?.stack || error,
+      );
+
+      throw new HttpException(
+        'Error verifying transaction status',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
