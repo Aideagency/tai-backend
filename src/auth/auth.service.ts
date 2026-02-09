@@ -497,19 +497,19 @@ export class AuthService {
 
       user.password = await Helper.hashPassword(dto.new_password);
 
-      const emailData = {
-        first_name: user.first_name,
-        email: user.email_address,
-        date: Helper.getCurrentTimeDescription(),
-        ipAddress: ipAddress || 'Unknown',
-      };
+      // const emailData = {
+      //   first_name: user.first_name,
+      //   email: user.email_address,
+      //   date: Helper.getCurrentTimeDescription(),
+      //   ipAddress: ipAddress || 'Unknown',
+      // };
 
-      await this.emailService.sendMail({
-        to: user.email_address,
-        subject: 'Password Reset Confirmation',
-        template: 'reset-password',
-        data: emailData,
-      });
+      // await this.emailService.sendMail({
+      //   to: user.email_address,
+      //   subject: 'Password Reset Confirmation',
+      //   template: 'reset-password',
+      //   data: emailData,
+      // });
 
       await this.userRepository.save(user);
     } catch (e) {
@@ -536,6 +536,7 @@ export class AuthService {
         last_name,
         email_address,
       } = dto;
+      console.log(dto);
 
       // Birth date
       if (birth_date) {

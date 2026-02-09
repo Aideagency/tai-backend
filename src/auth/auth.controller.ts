@@ -179,7 +179,7 @@ export class AuthController {
 
     return {
       statusCode: 200,
-      message: 'OTP sent to your registered email address.',
+      message: 'Password changed successfully.',
     };
   }
 
