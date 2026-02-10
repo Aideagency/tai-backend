@@ -79,6 +79,7 @@ export class NuggetController {
     enum: NuggetType, // Assuming NuggetType is an enum
     description: 'Type of the nugget (optional, fallback to latest)',
   })
+  @Get('daily')
   getDaily(@Query('type') type?: NuggetType, @Req() req?: any) {
     const userId = req?.user?.id;
     return this.nuggetService.getDailyNugget(

@@ -19,6 +19,7 @@ export enum NuggetType {
   GENERAL = 'GENERAL',
 }
 
+@Index('idx_nuggets_type_active_id', ['nuggetType', 'isActive', 'id'])
 @Entity({ name: 'nuggets' })
 export class NuggetEntity extends CustomEntity {
   /**
