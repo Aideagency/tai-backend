@@ -1,7 +1,7 @@
 // src/repository/nugget/nugget.repository.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, DataSource } from 'typeorm';
 import { BaseRepository } from '../base.repository';
 import { paginateRaw } from 'nestjs-typeorm-paginate';
 
@@ -10,6 +10,8 @@ import { NuggetLikeEntity } from 'src/database/entities/nugget-like.entity';
 import { NuggetCommentEntity } from 'src/database/entities/nugget-comment.entity';
 import { DeepPartial } from 'typeorm';
 import { AdminEntity } from 'src/database/entities/admin.entity';
+import { DailyNuggetEntity } from 'src/database/entities/daily-nugget.entity';
+import { NuggetRotationStateEntity } from 'src/database/entities/nugget-rotation-state.entity';
 
 export interface NuggetSearchParams {
   page?: number;
@@ -39,11 +41,17 @@ export class NuggetRepository extends BaseRepository<
   protected logger = new Logger(NuggetRepository.name);
 
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(NuggetEntity) nuggetRepo: Repository<NuggetEntity>,
     @InjectRepository(NuggetLikeEntity)
     private readonly likeRepo: Repository<NuggetLikeEntity>,
     @InjectRepository(NuggetCommentEntity)
     private readonly commentRepo: Repository<NuggetCommentEntity>,
+    @InjectRepository(DailyNuggetEntity)
+    private readonly dailyRepo: Repository<DailyNuggetEntity>,
+
+    @InjectRepository(NuggetRotationStateEntity)
+    private readonly rotationRepo: Repository<NuggetRotationStateEntity>,
   ) {
     super(nuggetRepo);
   }
@@ -319,5 +327,104 @@ export class NuggetRepository extends BaseRepository<
 
     // IMPORTANT: pass the QB itself (no getRawMany here)
     return paginateRaw(qb, { page, limit });
+  }
+
+  private toDateKeyUTC(d = new Date()): string {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  async getDailyRotatingNugget(
+    type: NuggetType = NuggetType.GENERAL,
+    now = new Date(),
+  ) {
+    const dateKey = this.toDateKeyUTC(now);
+
+    // Fast path: read cached mapping for today
+    const cached = await this.dailyRepo.findOne({
+      where: { dateKey, nuggetType: type },
+      relations: { nugget: true },
+    });
+    if (cached?.nugget) return cached.nugget;
+
+    // Transaction: assign today's nugget atomically
+    return this.dataSource.transaction(async (manager) => {
+      const dailyRepoTxn = manager.getRepository(DailyNuggetEntity);
+      const rotationRepoTxn = manager.getRepository(NuggetRotationStateEntity);
+      const nuggetRepoTxn = manager.getRepository(NuggetEntity);
+
+      // Re-check inside txn (handles race)
+      const existing = await dailyRepoTxn.findOne({
+        where: { dateKey, nuggetType: type },
+        relations: { nugget: true },
+      });
+      if (existing?.nugget) return existing.nugget;
+
+      // Lock rotation row for this type
+      let state = await rotationRepoTxn
+        .createQueryBuilder('s')
+        .setLock('pessimistic_write')
+        .where('s.nuggetType = :type', { type })
+        .getOne();
+
+      if (!state) {
+        state = rotationRepoTxn.create({
+          nuggetType: type,
+          lastNuggetId: 0,
+          lastDateKey: null,
+        });
+        state = await rotationRepoTxn.save(state);
+      }
+
+      const lastId = state.lastNuggetId ?? 0;
+
+      // Next by id ASC after lastId
+      let next = await nuggetRepoTxn
+        .createQueryBuilder('n')
+        .where('n.isActive = true')
+        .andWhere('n.nuggetType = :type', { type })
+        .andWhere('n.id > :lastId', { lastId })
+        .orderBy('n.id', 'ASC')
+        .limit(1)
+        .getOne();
+
+      // Wrap to first
+      if (!next) {
+        next = await nuggetRepoTxn
+          .createQueryBuilder('n')
+          .where('n.isActive = true')
+          .andWhere('n.nuggetType = :type', { type })
+          .orderBy('n.id', 'ASC')
+          .limit(1)
+          .getOne();
+      }
+
+      if (!next) return null; // no active nuggets of this type
+
+      // Insert today's mapping (unique index prevents duplicates)
+      try {
+        await dailyRepoTxn.insert({
+          dateKey,
+          nuggetType: type,
+          nuggetId: next.id,
+        });
+      } catch (e: any) {
+        // If another instance inserted first, just return what exists
+        const already = await dailyRepoTxn.findOne({
+          where: { dateKey, nuggetType: type },
+          relations: { nugget: true },
+        });
+        return already?.nugget ?? next;
+      }
+
+      // Update cursor
+      state.lastNuggetId = next.id;
+      state.lastDateKey = dateKey;
+      await rotationRepoTxn.save(state);
+
+      return next;
+    });
   }
 }

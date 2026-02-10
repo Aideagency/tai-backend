@@ -61,6 +61,8 @@ import { LessonSectionRepository } from './resourses/lesson-section.repository';
 import { SectionAttachmentRepository } from './resourses/section-attachment.repository';
 import { SectionAttachmentEntity } from 'src/database/entities/section-attachment.entity';
 import { LessonAttachmentEntity } from 'src/database/entities/lesson-attachment.entity';
+import { DailyNuggetEntity } from 'src/database/entities/daily-nugget.entity';
+import { NuggetRotationStateEntity } from 'src/database/entities/nugget-rotation-state.entity';
 
 @Module({
   imports: [
@@ -92,6 +94,8 @@ import { LessonAttachmentEntity } from 'src/database/entities/lesson-attachment.
       CounsellingBookingEntity,
       RefundRequestEntity,
       CourseEntity,
+      DailyNuggetEntity,
+      NuggetRotationStateEntity,
       // UserLessonProgressEntity,
       // UserCourseProgressEntity,
       LessonEntity,

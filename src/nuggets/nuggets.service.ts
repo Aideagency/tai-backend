@@ -65,32 +65,12 @@ export class NuggetService {
   }
 
   // ---------- Daily (or latest fallback) ----------
-  async getDailyNugget(
-    type?: NuggetType,
-    currentUserId?: number,
-  ): Promise<{
-    nugget: NuggetEntity | null;
-    // engagement: {
-    //   likesCount: number;
-    //   commentsCount: number;
-    //   likedByMe: boolean;
-    // };
-  }> {
-    let nugget = await this.nuggetRepository.getTodayNugget(type);
-    if (!nugget) nugget = await this.nuggetRepository.getRandomNugget();
-    if (!nugget) {
-      return {
-        nugget: null,
-        // engagement: { likesCount: 0, commentsCount: 0, likedByMe: false },
-      };
-    }
+  async getDailyNugget(type?: NuggetType, currentUserId?: number) {
+    const nugget = await this.nuggetRepository.getDailyRotatingNugget(
+      (type ?? NuggetType.GENERAL) as NuggetType,
+    );
 
-    // const engagement = await this.nuggetRepository.getEngagementCounts(
-    //   nugget.id,
-    //   currentUserId,
-    // );
-
-    return { nugget };
+    return { nugget: nugget ?? null };
   }
 
   // ---------- Details / info with engagement ----------
