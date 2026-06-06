@@ -176,7 +176,7 @@ export class CounsellingController {
   }
 
   // Confirm booking payment by id + transactionRef (internal/admin endpoint)
-  @UseGuards(JwtGuards)
+  @UseGuards(AdminJwtGuard)
   @Post('booking/confirm/:bookingId')
   @ApiBearerAuth()
   @ApiExcludeEndpoint()
@@ -215,13 +215,17 @@ export class CounsellingController {
   }
 
   // Find booking by transaction reference
+  @UseGuards(AdminJwtGuard)
   @Get('booking/find/:reference')
+  @ApiBearerAuth()
   @ApiExcludeEndpoint()
   async findBookingByReference(@Param('reference') reference: string) {
     return this.counsellingService.findBookingByRef(reference);
   }
 
+  @UseGuards(AdminJwtGuard)
   @Get('booking/:id/find')
+  @ApiBearerAuth()
   @ApiExcludeEndpoint()
   async findBookingById(@Param('id') id: number) {
     return this.counsellingService.getBooking(id);
@@ -231,18 +235,17 @@ export class CounsellingController {
 
   // Simple endpoint to handle async payment confirmation
   // (could be called from a payment webhook controller as well)
+  @UseGuards(JwtGuards)
   @Post('payment/confirm')
   @ApiExcludeEndpoint()
   async handlePaymentConfirmation(
     @Body()
     body: {
       reference: string;
-      email: string;
     },
   ) {
-    await this.counsellingService.handlePaymentConfirmation(
+    await this.counsellingService.confirmVerifiedPaymentReference(
       body.reference,
-      body.email,
     );
     return { message: 'Payment confirmation processed' };
   }

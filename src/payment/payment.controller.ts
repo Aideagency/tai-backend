@@ -6,10 +6,12 @@ import {
   Get,
   Param,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { InitializePaymentDto } from './dto/initialize-payment.dto';
+import { JwtGuards } from 'src/auth/jwt.guards';
 
 @Controller('payment')
 export class PaymentController {
@@ -22,20 +24,25 @@ export class PaymentController {
   }
 
   @Post('initialize')
+  @UseGuards(JwtGuards)
   @ApiOperation({ summary: 'Initialize a new transaction' })
   create(@Body() dto: InitializePaymentDto, @Req() req: any) {
     return this.paymentService.initializePayment({
-      email: dto.email,
+      email: req.user.email_address,
       amount: String(dto.amount * 100),
     });
   }
 
   @Get('verify-transaction/:id')
+  @UseGuards(JwtGuards)
   @ApiOperation({ summary: 'Verify a payment transaction is successful' })
-  async verifyPayment(@Param('id') reference: string) {
-    const isVerified = await this.paymentService.verifyIfCompleted(reference);
+  async verifyPayment(@Param('id') reference: string, @Req() req: any) {
+    const isVerified = await this.paymentService.verifyIfCompleted(
+      reference,
+      req.user.email_address,
+    );
     return {
-      isVerified: true,
+      isVerified,
       status: 200,
     };
   }
@@ -45,9 +52,10 @@ export class PaymentController {
   @HttpCode(200)
   // @ApiExcludeEndpoint()
   async processPayment(@Req() req: any) {
-    await this.paymentService.verifyWebhookSignature(req);
+    const result = await this.paymentService.verifyWebhookSignature(req);
     return {
       status: 200,
+      isVerified: result.isVerified,
       message: 'Transaction Processed',
     };
   }

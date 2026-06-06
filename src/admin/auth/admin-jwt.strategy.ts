@@ -38,6 +38,8 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
         adminId: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
+        email_address: user.email_address,
+        role: user.role,
       },
     };
   }

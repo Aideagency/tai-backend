@@ -1,8 +1,25 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class AdminJwtGuard extends AuthGuard('admin-jwt') {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const res = context.switchToHttp().getResponse();
+
+    try {
+      const canActivate = (await super.canActivate(context)) as boolean;
+      return canActivate;
+    } catch (err) {
+      res.clearCookie('admin_token');
+      res.redirect('/admin-views/login');
+      return false;
+    }
+  }
+
   getRequest(context: ExecutionContext) {
     const req = context.switchToHttp().getRequest();
 
@@ -15,18 +32,10 @@ export class AdminJwtGuard extends AuthGuard('admin-jwt') {
   }
 
   // ⭐ This handles expired token, invalid token, etc.
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
-    const res = context.switchToHttp().getResponse();
-    const req = context.switchToHttp().getRequest();
-
+  handleRequest(err: any, user: any) {
     // If passport throws Unauthorized OR user is missing…
     if (err || !user) {
-      // Clear cookie (optional but recommended)
-      res.clearCookie('admin_token');
-
-      // Redirect to login page
-      res.redirect('/admin-views/login');
-      return null;
+      throw err || new UnauthorizedException('Admin authentication required');
     }
 
     return user;

@@ -27,6 +27,7 @@ import { GetEventsFilterDto } from './dtos/get-events-query.dto';
 import { UpdateEventDto } from './dtos/update-event.dto';
 import { EventEntity } from 'src/database/entities/event.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
+import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
 
 @Controller('events')
 export class EventController {
@@ -108,6 +109,7 @@ export class EventController {
     return this.eventService.registerForEvent(req, eventId);
   }
 
+  @UseGuards(AdminJwtGuard)
   @Get('find/:reference')
   @ApiBearerAuth()
   async findByReference(@Param('reference') reference: string) {
