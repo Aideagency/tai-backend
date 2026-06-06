@@ -70,8 +70,10 @@ export class AdminViewsController {
   @Get('dashboard')
   @UseGuards(AdminJwtGuard)
   @Render('dashboard')
-  getDashboard(@Req() req: any) {
-    return { admin: req.user };
+  async getDashboard(@Req() req: any) {
+    const dashboard = await this.viewsService.getDashboardSummary();
+
+    return { admin: req.user, dashboard };
   }
 
   @Get('users')

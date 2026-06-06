@@ -37,6 +37,22 @@ export class NuggetController {
   }
 
   @ApiExcludeEndpoint()
+  @Get('samples/daily')
+  getDailySamples() {
+    return {
+      items: this.nuggetService.getDailyNuggetSamples(),
+    };
+  }
+
+  @ApiExcludeEndpoint()
+  @Post('seed/daily-samples')
+  @UseGuards(AdminJwtGuard)
+  seedDailySamples(@Req() req: any) {
+    const adminId = req.user?.id ?? undefined;
+    return this.nuggetService.seedDailyNuggetSamples(adminId);
+  }
+
+  @ApiExcludeEndpoint()
   @Put(':id')
   @UseGuards(AdminJwtGuard)
   update(
@@ -79,7 +95,6 @@ export class NuggetController {
     enum: NuggetType, // Assuming NuggetType is an enum
     description: 'Type of the nugget (optional, fallback to latest)',
   })
-  @Get('daily')
   getDaily(@Query('type') type?: NuggetType, @Req() req?: any) {
     const userId = req?.user?.id;
     return this.nuggetService.getDailyNugget(

@@ -16,6 +16,58 @@ import { UpdateNuggetDto } from './dtos/update-nugget.dto';
 export class NuggetService {
   constructor(private readonly nuggetRepository: NuggetRepository) {}
 
+  private readonly dailyNuggetSamples: CreateNuggetDto[] = [
+    {
+      title: 'Daily Anchor',
+      body: 'Begin today by anchoring your attention on what is true, peaceful, and life-giving.',
+      nuggetType: NuggetType.GENERAL,
+    },
+    {
+      title: 'Season of Becoming',
+      body: 'Singleness is not a waiting room; it is a sacred season for becoming whole, wise, and deeply rooted.',
+      nuggetType: NuggetType.SINGLE,
+    },
+    {
+      title: 'Choose Us Again',
+      body: 'A strong marriage is built in small daily choices: listen gently, forgive quickly, and keep choosing us.',
+      nuggetType: NuggetType.MARRIED,
+    },
+    {
+      title: 'Model the Way',
+      body: 'Parenting teaches loudest through example; become the kind of person you hope your children will trust and follow.',
+      nuggetType: NuggetType.PARENT,
+    },
+  ];
+
+  getDailyNuggetSamples() {
+    return this.dailyNuggetSamples;
+  }
+
+  async seedDailyNuggetSamples(adminId?: number | null) {
+    const results = [];
+
+    for (const sample of this.dailyNuggetSamples) {
+      const existing = await this.nuggetRepository.findOne({
+        body: sample.body,
+        nuggetType: sample.nuggetType,
+      });
+
+      if (existing) {
+        results.push({ status: 'existing', nugget: existing });
+        continue;
+      }
+
+      const nugget = await this.createNugget(sample, adminId);
+      results.push({ status: 'created', nugget });
+    }
+
+    return {
+      created: results.filter((item) => item.status === 'created').length,
+      existing: results.filter((item) => item.status === 'existing').length,
+      items: results,
+    };
+  }
+
   // ---------- Create ----------
   async createNugget(
     dto: CreateNuggetDto,

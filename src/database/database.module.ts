@@ -4,6 +4,20 @@ import { ConfigModule } from '@nestjs/config';
 
 require('dotenv').config();
 
+function shouldUseDatabaseSsl(url: string): boolean {
+  const value = process.env.DATABASE_SSL?.toLowerCase();
+
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+
+  return (
+    process.env.NODE_ENV === 'production' ||
+    url.includes('supabase.co') ||
+    url.includes('pooler.supabase.com') ||
+    url.includes('sslmode=require')
+  );
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +32,7 @@ require('dotenv').config();
         }
 
         const isProd = process.env.NODE_ENV === 'production';
+        const useSsl = shouldUseDatabaseSsl(url);
 
         // Optional visibility (no secrets):
         // eslint-disable-next-line no-console
@@ -29,9 +44,8 @@ require('dotenv').config();
         return {
           type: 'postgres',
           url,
-          // Supabase requires SSL; with some environments you may need this:
-          ssl: true,
-          extra: { ssl: { rejectUnauthorized: false } },
+          ssl: useSsl ? { rejectUnauthorized: false } : false,
+          extra: useSsl ? { ssl: { rejectUnauthorized: false } } : undefined,
 
           autoLoadEntities: true,
           synchronize: false, // set true only if you know what you’re doing in dev
