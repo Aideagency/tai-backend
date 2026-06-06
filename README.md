@@ -1,99 +1,166 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# TAI Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+TAI Backend is the NestJS API and admin server for The Agudah Institute platform. It powers authentication, user profiles, community features, learning resources, events, counselling bookings, payments, books, articles, and the server-rendered admin dashboard.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The project is organized as a modular Nest application backed by PostgreSQL/TypeORM, with integrations for Supabase auth, Paystack payments, Cloudinary media, Resend/SMTP/SendGrid email, the Bible API, WordPress articles, Google OAuth, and Zoho Learn.
 
-## Description
+## Core Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Authentication and accounts**: signup, login, email verification, password reset, JWT refresh tokens, profile updates, Supabase support, and Google OAuth routes.
+- **Admin operations**: admin auth, user management, password resets, suspension/restoration flows, and EJS-powered admin views.
+- **Learning and content**: courses, lessons, lesson sections, attachments, course progress, course access, books, book downloads, nuggets, daily nuggets, and external WordPress articles.
+- **Community**: posts, comments, likes, follows, follower requests, connection details, prayer wall posts, amens, comments, reports, sharing, and answered-prayer tracking.
+- **Spiritual growth challenges**: challenge creation, tasks, enrollment, daily task progress, partner confirmations, completion flows, reflections, and badges.
+- **Events and counselling**: event registration, counselling booking, payment confirmation, cancellation, refund request flows, and admin listing views.
+- **Payments**: Paystack initialization, verification, webhook processing, transaction records, and refund handling.
+- **Infrastructure**: PostgreSQL migrations, repository abstraction, email templates, Cloudinary uploads, structured logging, Swagger API docs, and EJS static/admin assets.
 
-## Project setup
+## Tech Stack
 
-```bash
-$ yarn install
+- Node.js + TypeScript
+- NestJS 10
+- PostgreSQL with TypeORM
+- EJS admin views
+- Passport strategies for JWT, local auth, Google OAuth, and Supabase
+- Paystack, Cloudinary, Resend, SendGrid, Nodemailer, Zoho Learn, WordPress, and Bible API integrations
+
+## Project Structure
+
+```text
+src/
+  admin/             Admin APIs and admin authentication
+  admin-views/       Server-rendered EJS dashboard routes
+  articles/          WordPress article proxy
+  auth/              User authentication and profile flows
+  bible/             Bible API integration
+  books/             Book catalog, downloads, and admin book APIs
+  challenges/        Challenge, task, progress, and badge workflows
+  common/            Shared HTTP helpers and utilities
+  connections/       Follow and connection management
+  counselling/       Counselling sessions, bookings, and payments
+  courses/           Course, lesson, section, attachment, and progress APIs
+  database/          TypeORM entities and migrations
+  event/             Events, registrations, and cancellation flows
+  infrastructure/    Email and Cloudinary providers
+  nuggets/           Nuggets, daily nuggets, likes, comments, and shares
+  payment/           Paystack transactions and webhooks
+  post/              Social posts, likes, and comments
+  prayer-wall/       Prayer requests, amens, comments, and reports
+  refund-request/    Refund request APIs
+  repository/        Repository layer around TypeORM entities
+  user/              User module
+views/               EJS admin pages, partials, and static assets
 ```
 
-## Compile and run the project
+## Requirements
+
+- Node.js 20 or newer is recommended
+- Yarn
+- PostgreSQL database URL, usually Supabase-compatible because the TypeORM config enables SSL
+
+## Getting Started
+
+Install dependencies:
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+yarn install
 ```
 
-## Run tests
+Create your environment file:
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+cp .env.example .env
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Update `.env` with real credentials, then run migrations:
 
 ```bash
-$ yarn install -g mau
-$ mau deploy
+yarn migrate-up
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Start the app in watch mode:
 
-## Resources
+```bash
+yarn start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+The server listens on `PORT`. Swagger docs are available at:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```text
+http://localhost:<PORT>/api/v1/backend
+```
 
-## Support
+The admin login view is available at:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```text
+http://localhost:<PORT>/admin-views/login
+```
 
-## Stay in touch
+## Scripts
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+yarn start          # Start Nest normally
+yarn start:dev      # Start Nest in watch mode
+yarn build          # Compile the app to dist/
+yarn start:prod     # Run the compiled app
+yarn lint           # Run ESLint with auto-fix
+yarn test           # Run unit tests
+yarn test:e2e       # Run e2e tests
+yarn test:cov       # Run tests with coverage
+yarn migrate-up     # Run pending TypeORM migrations
+yarn migrate-down   # Revert the latest TypeORM migration
+```
 
-## License
+## Database
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The app uses TypeORM with `DATABASE_URL`. Runtime configuration is in `src/database/database.module.ts`, while migration CLI configuration is in `src/config/typeorm.config-migrations.ts`.
+
+Important database defaults:
+
+- `synchronize` is disabled.
+- SSL is controlled by `DATABASE_SSL`. Use `DATABASE_SSL=false` for local Postgres and `DATABASE_SSL=true` for Supabase or other hosted Postgres providers that require SSL.
+- Application entities are loaded automatically at runtime.
+- Migrations live in `src/database/migrations`.
+
+To generate a migration:
+
+```bash
+yarn migration:generate -- MigrationName
+```
+
+## API Documentation
+
+Swagger is configured in `src/main.ts` and mounted at `/api/v1/backend`. Most APIs use resource-based controller prefixes, including:
+
+- `/auth`
+- `/admin/auth`
+- `/admin/users`
+- `/admin-views`
+- `/articles`
+- `/bible`
+- `/books`
+- `/admin/books`
+- `/challenges`
+- `/connections`
+- `/counselling`
+- `/courses`
+- `/admin/courses`
+- `/events`
+- `/nuggets`
+- `/payment`
+- `/posts`
+- `/prayers`
+- `/refund-requests`
+
+## Environment
+
+Use `.env.example` as the source of truth for local configuration. At minimum, local development needs `PORT`, `NODE_ENV`, `DATABASE_URL`, JWT/session secrets, and credentials for whichever external services your flow exercises.
+
+Do not commit real secrets.
+
+## Notes
+
+- The app serves EJS views from `views/` and static assets from the same directory.
+- CORS is enabled with credential support and dynamic origins.
+- Global validation strips non-whitelisted DTO properties and rejects unknown fields.
+- Paystack webhooks are signature-checked and restricted to known Paystack IPs before business fulfillment is triggered.

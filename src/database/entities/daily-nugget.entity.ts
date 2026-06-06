@@ -33,6 +33,13 @@ export class DailyNuggetEntity {
   @Column({ type: 'int', nullable: false })
   nuggetId: number;
 
+  @Column({ type: 'timestamp', precision: 6, nullable: false })
+  assignedAt: Date;
+
+  @Index('idx_daily_nuggets_type_expires_at')
+  @Column({ type: 'timestamp', precision: 6, nullable: false })
+  expiresAt: Date;
+
   @ManyToOne(() => NuggetEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'nuggetId' })
   nugget: NuggetEntity;

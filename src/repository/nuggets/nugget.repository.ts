@@ -1,7 +1,13 @@
 // src/repository/nugget/nugget.repository.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, DataSource } from 'typeorm';
+import {
+  Repository,
+  SelectQueryBuilder,
+  Brackets,
+  DataSource,
+  MoreThan,
+} from 'typeorm';
 import { BaseRepository } from '../base.repository';
 import { paginateRaw } from 'nestjs-typeorm-paginate';
 
@@ -336,20 +342,28 @@ export class NuggetRepository extends BaseRepository<
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  private addHours(date: Date, hours: number): Date {
+    return new Date(date.getTime() + hours * 60 * 60 * 1000);
+  }
+
   async getDailyRotatingNugget(
     type: NuggetType = NuggetType.GENERAL,
     now = new Date(),
   ) {
     const dateKey = this.toDateKeyUTC(now);
 
-    // Fast path: read cached mapping for today
+    // Fast path: read the active 24-hour assignment for this type.
     const cached = await this.dailyRepo.findOne({
-      where: { dateKey, nuggetType: type },
+      where: {
+        nuggetType: type,
+        expiresAt: MoreThan(now),
+      },
       relations: { nugget: true },
+      order: { assignedAt: 'DESC', id: 'DESC' },
     });
     if (cached?.nugget) return cached.nugget;
 
-    // Transaction: assign today's nugget atomically
+    // Transaction: assign the next nugget atomically for the next 24 hours.
     return this.dataSource.transaction(async (manager) => {
       const dailyRepoTxn = manager.getRepository(DailyNuggetEntity);
       const rotationRepoTxn = manager.getRepository(NuggetRotationStateEntity);
@@ -357,25 +371,36 @@ export class NuggetRepository extends BaseRepository<
 
       // Re-check inside txn (handles race)
       const existing = await dailyRepoTxn.findOne({
-        where: { dateKey, nuggetType: type },
+        where: {
+          nuggetType: type,
+          expiresAt: MoreThan(now),
+        },
         relations: { nugget: true },
+        order: { assignedAt: 'DESC', id: 'DESC' },
       });
       if (existing?.nugget) return existing.nugget;
 
+      await rotationRepoTxn
+        .createQueryBuilder()
+        .insert()
+        .into(NuggetRotationStateEntity)
+        .values({
+          nuggetType: type,
+          lastNuggetId: 0,
+          lastDateKey: null,
+        })
+        .orIgnore()
+        .execute();
+
       // Lock rotation row for this type
-      let state = await rotationRepoTxn
+      const state = await rotationRepoTxn
         .createQueryBuilder('s')
         .setLock('pessimistic_write')
         .where('s.nuggetType = :type', { type })
         .getOne();
 
       if (!state) {
-        state = rotationRepoTxn.create({
-          nuggetType: type,
-          lastNuggetId: 0,
-          lastDateKey: null,
-        });
-        state = await rotationRepoTxn.save(state);
+        throw new Error(`Unable to initialize nugget rotation for ${type}`);
       }
 
       const lastId = state.lastNuggetId ?? 0;
@@ -403,18 +428,27 @@ export class NuggetRepository extends BaseRepository<
 
       if (!next) return null; // no active nuggets of this type
 
-      // Insert today's mapping (unique index prevents duplicates)
+      const expiresAt = this.addHours(now, 24);
+
+      // Insert active mapping. Unique date/type index still prevents duplicates
+      // per date, while expiresAt enforces the actual 24-hour rotation window.
       try {
         await dailyRepoTxn.insert({
           dateKey,
           nuggetType: type,
           nuggetId: next.id,
+          assignedAt: now,
+          expiresAt,
         });
       } catch (e: any) {
         // If another instance inserted first, just return what exists
         const already = await dailyRepoTxn.findOne({
-          where: { dateKey, nuggetType: type },
+          where: {
+            nuggetType: type,
+            expiresAt: MoreThan(now),
+          },
           relations: { nugget: true },
+          order: { assignedAt: 'DESC', id: 'DESC' },
         });
         return already?.nugget ?? next;
       }
