@@ -95,7 +95,7 @@ export class BooksController {
     @Param('ref') ref: string,
     @Req() req: any,
   ): Promise<ApiResponse<any>> {
-    const data = await this.booksService.getBookByRef(ref);
+    const data = await this.booksService.getBookByRef(ref, req.user.id);
 
     return {
       success: true,

@@ -153,7 +153,7 @@ export class CounsellingService {
     body: { startsAt: string; clientNotes?: string },
   ) {
     const userId = req.user.id;
-    const userEmail = req.user.email;
+    const userEmail = req.user.email_address;
     const userFirstName = req.user.first_name;
 
     const counselling =
@@ -274,11 +274,27 @@ export class CounsellingService {
     bookingId: number,
     transactionRef: string,
   ): Promise<CounsellingBookingEntity> {
-    const booking = await this.counsellingBookingRepository.confirmPayment(
-      bookingId,
-      transactionRef,
+    const booking = await this.counsellingBookingRepository.findOne({
+      id: bookingId,
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+
+    if (booking.reference !== transactionRef) {
+      throw new BadRequestException(
+        'Transaction reference does not match this booking',
+      );
+    }
+
+    await this.paymentService.processVerifiedPaymentReference(transactionRef);
+
+    return this.counsellingBookingRepository.findOne(
+      { id: bookingId },
+      { counselling: true, user: true },
     );
-    return booking;
+  }
+
+  async confirmVerifiedPaymentReference(reference: string) {
+    return this.paymentService.processVerifiedPaymentReference(reference);
   }
 
   // Cancel booking (by user)

@@ -23,6 +23,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // enable Nest logger (remove the next line entirely or set levels as needed)
     logger: ['error'],
+    rawBody: true,
     // logger: false,
     cors: {
       origin: true,

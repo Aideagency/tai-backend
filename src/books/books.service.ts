@@ -1,6 +1,7 @@
 // src/modules/books/books.service.ts
 import {
   BadRequestException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -73,12 +74,12 @@ export class BooksService {
     if (book.accessType === BookAccessType.PAID) {
       const transaction = new TransactionEntity();
       const paymentResponse = await this.paymentService.initializePayment({
-        email: req.user.email,
+        email: req.user.email_address,
         amount: String(book.price * 100),
       });
 
       transaction.transaction_ref = paymentResponse.reference;
-      transaction.email_address = req.user.email;
+      transaction.email_address = req.user.email_address;
       transaction.paid_for = PaidFor.BOOK;
       transaction.actualAmount = book.price;
       await this.transactionRepo.save(transaction);
@@ -122,8 +123,13 @@ export class BooksService {
     };
   }
 
-  async getBookByRef(ref: string) {
-    return this.booksRepo.findDownloadByTransactionRef(ref);
+  async getBookByRef(ref: string, userId: number) {
+    const download = await this.booksRepo.findDownloadByTransactionRef(ref);
+    if (download.user?.id !== userId) {
+      throw new ForbiddenException('You do not have access to this download');
+    }
+
+    return download;
   }
 
   async handlePaymentConfirmation(ref: string, email: string) {

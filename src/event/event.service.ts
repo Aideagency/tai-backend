@@ -84,12 +84,12 @@ export class EventService {
     if (Number(event.price) > 0) {
       const transaction = new TransactionEntity();
       const paymentResponse = await this.paymentService.initializePayment({
-        email: req.user.email,
+        email: req.user.email_address,
         amount: String(event.price * 100),
       });
 
       transaction.transaction_ref = paymentResponse.reference;
-      transaction.email_address = req.user.email;
+      transaction.email_address = req.user.email_address;
       transaction.paid_for = PaidFor.EVENT;
       transaction.actualAmount = event.price;
       await this.transactionRepo.save(transaction);
@@ -121,7 +121,7 @@ export class EventService {
         });
 
       await this.emailService.sendMail({
-        to: req.user.email,
+        to: req.user.email_address,
         subject: 'Event Registration',
         template: 'event-registration',
         data: {
