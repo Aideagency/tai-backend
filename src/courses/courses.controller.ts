@@ -118,8 +118,11 @@ export class CoursesController {
   @ApiOkResponse({
     description: 'Get full course content (course + lessons + stats)',
   })
-  async getCourseContent(@Param('courseId', ParseIntPipe) courseId: number) {
-    return this.coursesService.getCourseContent(courseId);
+  async getCourseContent(
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @Req() req: any,
+  ) {
+    return this.coursesService.getCourseContent(courseId, req.user.id);
   }
 
   @Post(':courseId/enroll')
