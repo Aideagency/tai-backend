@@ -275,15 +275,19 @@ export class CoursesService {
    * Full course view: course info + lessons + attachments + stats
    * (Access control comes later)
    */
-  async getCourseContent(courseId: number) {
-    const course = await this.findOne(courseId);
-    const { lessons, stats } =
-      await this.lessonRepo.getCourseLessonsWithStats(courseId);
+  async getCourseContent(courseId: number, userId: number) {
+    const fullCourse = await this.courseRepo.getFullCourseForUser(
+      courseId,
+      userId,
+    );
+    const { course, isEnrolled, isActive, stats } = fullCourse;
 
     return {
       course,
-      lessons,
+      lessons: course.lessons ?? [],
       stats,
+      isEnrolled,
+      isActive,
     };
   }
 

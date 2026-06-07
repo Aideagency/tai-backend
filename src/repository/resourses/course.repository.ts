@@ -1,5 +1,5 @@
 // course.repository.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 import {
@@ -170,7 +170,13 @@ export class CourseRepository extends BaseRepository<
     userId: number,
     filters: CourseListFilters = {},
   ): Promise<{
-    items: Array<CourseEntity & { isEnrolled: boolean; isActive: boolean }>;
+    items: Array<
+      CourseEntity & {
+        isEnrolled: boolean;
+        isActive: boolean;
+        lessonCount: number;
+      }
+    >;
     meta: {
       totalItems: number;
       itemsPerPage: number;
@@ -221,6 +227,18 @@ export class CourseRepository extends BaseRepository<
       'isActive',
     );
 
+    // lessonCount = number of active lessons in the course
+    qb.addSelect(
+      `(
+        SELECT COUNT(1)
+        FROM lessons l
+        WHERE l.course_id = c.id
+          AND l.deleted = false
+          AND l."deletedAt" IS NULL
+      )`,
+      'lessonCount',
+    );
+
     qb.setParameters({ userId, now });
 
     qb.orderBy(`c.${orderBy}`, orderDir);
@@ -235,6 +253,7 @@ export class CourseRepository extends BaseRepository<
       ...course,
       isEnrolled: raw[idx]?.isEnrolled === true || raw[idx]?.isEnrolled === 't',
       isActive: raw[idx]?.isActive === true || raw[idx]?.isActive === 't',
+      lessonCount: Number(raw[idx]?.lessonCount ?? 0),
     }));
 
     return {
@@ -290,7 +309,7 @@ export class CourseRepository extends BaseRepository<
         WHERE ca2.course_id = c.id
           AND ca2.user_id = :userId
           AND ca2.status = 'ACTIVE'
-          AND (ca2.endsAt IS NULL OR ca2.endsAt >= :now)
+          AND (ca2."endsAt" IS NULL OR ca2."endsAt" >= :now)
       )`,
       'isActive',
     );
@@ -301,7 +320,7 @@ export class CourseRepository extends BaseRepository<
 
     const course = entities?.[0];
     if (!course) {
-      throw new Error(`Course not found (id=${courseId})`);
+      throw new NotFoundException('Course not found');
     }
 
     const isEnrolled =
