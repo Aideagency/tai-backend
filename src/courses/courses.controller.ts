@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -107,7 +108,7 @@ export class CoursesController {
   @ApiOperation({
     summary: 'Get full course content (course + lessons + stats)',
     description:
-      'Returns a full course payload including course information, ordered lessons, and course stats. This is best for rendering a complete course view.',
+      'Returns a full course payload including course information, ordered lessons, and course stats. The logged-in user must have active enrollment/access for the course.',
   })
   @ApiParam({
     name: 'courseId',
@@ -117,6 +118,10 @@ export class CoursesController {
   })
   @ApiOkResponse({
     description: 'Get full course content (course + lessons + stats)',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'The logged-in user is not enrolled or does not have active access to this course.',
   })
   async getCourseContent(
     @Param('courseId', ParseIntPipe) courseId: number,

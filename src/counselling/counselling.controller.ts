@@ -17,7 +17,9 @@ import {
   ApiBody,
   ApiConsumes,
   ApiExcludeEndpoint,
+  ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -35,6 +37,7 @@ import { CreateCounsellingDto } from './dtos/create-counselling.dto';
 import { CancelBookingDto } from './dtos/cancel-booking.dto';
 import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
 import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
+import { BookingHistoryQueryDto } from './dtos/booking-history-query.dto';
 
 @ApiTags('counselling')
 @Controller('counselling')
@@ -115,6 +118,49 @@ export class CounsellingController {
     @Req() req: any,
   ) {
     return this.counsellingService.getUserBookings(req.user.id, counsellingId);
+  }
+
+  @UseGuards(JwtGuards)
+  @Get('bookings/history')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my counselling booking history',
+    description:
+      "Returns the logged-in user's counselling bookings. Use period=all, period=past, or period=upcoming to filter the history.",
+  })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['all', 'past', 'upcoming'],
+    description: 'Filter booking history by time period. Defaults to all.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination. Defaults to 1.',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Number of bookings per page. Defaults to 20.',
+  })
+  @ApiQuery({
+    name: 'counsellingId',
+    required: false,
+    type: Number,
+    description:
+      'Optional counselling plan ID. When provided, only bookings for that counselling plan are returned.',
+  })
+  @ApiOkResponse({
+    description: 'Counselling booking history fetched successfully.',
+  })
+  async getMyBookingHistory(
+    @Req() req: any,
+    @Query() query: BookingHistoryQueryDto,
+  ) {
+    return this.counsellingService.getUserBookingHistory(req.user.id, query);
   }
 
   @UseGuards(AdminJwtGuard)

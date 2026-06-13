@@ -111,6 +111,50 @@ export class ConnectionsController {
   }
 
   @ApiOperation({
+    summary: 'List followers of a connection',
+    description:
+      'Returns users who follow the specified connection/user. This does not require the logged-in user to be friends with or following that connection.',
+  })
+  @ApiParam({
+    name: 'connectionId',
+    description: 'User ID whose followers should be returned',
+    example: '456',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Followers fetched successfully.',
+  })
+  @Get(':connectionId/followers')
+  async listConnectionFollowers(
+    @Param('connectionId') connectionId: string,
+    @Query() query: FollowListQueryDto,
+  ) {
+    return this.connections.listConnectionFollowers(connectionId, query);
+  }
+
+  @ApiOperation({
+    summary: 'Get connection activity history',
+    description:
+      'Returns posts and visible prayers created by the specified connection/user, ordered newest first. This does not require the logged-in user to be friends with or following that connection.',
+  })
+  @ApiParam({
+    name: 'connectionId',
+    description: 'User ID whose posts and prayers should be returned',
+    example: '456',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Connection activity history fetched successfully.',
+  })
+  @Get(':connectionId/activity')
+  async getConnectionActivityHistory(@Param('connectionId') connectionId: string) {
+    return {
+      status: 200,
+      data: await this.connections.getConnectionActivityHistory(connectionId),
+    };
+  }
+
+  @ApiOperation({
     summary: 'List pending followers of a user',
     description:
       'Returns pending follows of a user. Supports pagination, sorting, and optional quick search.',

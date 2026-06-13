@@ -122,6 +122,19 @@ export class ConnectionsService {
     return this.follows.listFollowers(userId, params);
   }
 
+  /** Followers of any connection/user, independent of my relationship to them */
+  async listConnectionFollowers(
+    connectionId: number | string,
+    params: FollowListParams = {},
+  ) {
+    return this.follows.listFollowers(connectionId, params);
+  }
+
+  /** Posts and visible prayers created by a connection/user */
+  async getConnectionActivityHistory(connectionId: number | string) {
+    return this.follows.getUserContentFeed(connectionId);
+  }
+
   /** Who THIS user follows (following) */
   async listFollowing(userId: number | string, params: FollowListParams = {}) {
     return this.follows.listFollowing(userId, params);
