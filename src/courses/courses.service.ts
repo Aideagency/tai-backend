@@ -1,6 +1,7 @@
 // src/modules/courses/courses.service.ts
 import {
   BadRequestException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -281,6 +282,12 @@ export class CoursesService {
       userId,
     );
     const { course, isEnrolled, isActive, stats } = fullCourse;
+
+    if (!isActive) {
+      throw new ForbiddenException(
+        'You need to enroll in this course to access its content',
+      );
+    }
 
     return {
       course,

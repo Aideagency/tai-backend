@@ -12,6 +12,7 @@ import {
   CounsellingBookingStatus,
 } from 'src/database/entities/counselling-booking.entity';
 import { CounsellingEntity } from 'src/database/entities/counselling.entity';
+import { BookingHistoryPeriod } from 'src/counselling/dtos/booking-history-query.dto';
 
 export interface CounsellingBookingSearchParams {
   page?: number;
@@ -24,6 +25,7 @@ export interface CounsellingBookingSearchParams {
   q?: string; // search by counselling title or user email/name
   createdFrom?: Date;
   createdTo?: Date;
+  period?: BookingHistoryPeriod;
 
   // sorting
   orderBy?: 'createdAt' | 'id' | 'startsAt' | 'paidAt';
@@ -75,6 +77,16 @@ export class CounsellingBookingRepository extends BaseRepository<
       qb.andWhere('r.createdAt <= :ct', { ct: params.createdTo });
     }
 
+    if (params.period && params.period !== 'all') {
+      const now = new Date();
+      if (params.period === 'past') {
+        qb.andWhere('r.startsAt < :now', { now });
+      }
+      if (params.period === 'upcoming') {
+        qb.andWhere('r.startsAt >= :now', { now });
+      }
+    }
+
     // Simple text search against counselling title OR user email/name
     if (params.q) {
       const q = `%${params.q.toLowerCase()}%`;
@@ -107,6 +119,24 @@ export class CounsellingBookingRepository extends BaseRepository<
         counselling: { id: counsellingId } as any,
       },
       // relations: ['user'],
+    });
+  }
+
+  async findUserBookingHistory(params: {
+    userId: number;
+    counsellingId?: number;
+    period?: BookingHistoryPeriod;
+    page?: number;
+    pageSize?: number;
+  }) {
+    return this.searchPaginated({
+      userId: params.userId,
+      counsellingId: params.counsellingId,
+      period: params.period ?? 'all',
+      page: Number(params.page) || 1,
+      pageSize: Number(params.pageSize) || 20,
+      orderBy: 'startsAt',
+      orderDir: params.period === 'past' ? 'DESC' : 'ASC',
     });
   }
 

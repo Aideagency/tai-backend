@@ -19,6 +19,9 @@ import {
   ApiBody,
   ApiConsumes,
   ApiExcludeEndpoint,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,6 +31,7 @@ import { UpdateEventDto } from './dtos/update-event.dto';
 import { EventEntity } from 'src/database/entities/event.entity';
 import { JwtGuards } from 'src/auth/jwt.guards';
 import { AdminJwtGuard } from 'src/admin/auth/admin-jwt.guard';
+import { EventHistoryQueryDto } from './dtos/event-history-query.dto';
 
 @Controller('events')
 export class EventController {
@@ -93,6 +97,39 @@ export class EventController {
   @ApiBearerAuth()
   async fetchEvents(@Query() query: GetEventsFilterDto) {
     return this.eventService.getAllEvents(query);
+  }
+
+  @UseGuards(JwtGuards)
+  @Get('history')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get my event application history',
+    description:
+      "Returns the logged-in user's event registrations. Use period=upcoming, period=past, or period=all to filter the history. Defaults to upcoming events first.",
+  })
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['upcoming', 'past', 'all'],
+    description: 'Filter event history by time period. Defaults to upcoming.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination. Defaults to 1.',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Number of registrations per page. Defaults to 20.',
+  })
+  @ApiOkResponse({
+    description: 'Event application history fetched successfully.',
+  })
+  async getMyEventHistory(@Req() req: any, @Query() query: EventHistoryQueryDto) {
+    return this.eventService.getUserEventHistory(req.user.id, query);
   }
 
   @UseGuards(JwtGuards)

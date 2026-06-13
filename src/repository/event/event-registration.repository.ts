@@ -15,6 +15,7 @@ import {
   EventEntity,
   // RegistrationStatus,
 } from 'src/database/entities/event.entity';
+import { EventHistoryPeriod } from 'src/event/dtos/event-history-query.dto';
 // import { TransactionEntity } from 'src/database/entities/transaction.entity';
 
 export interface RegistrationSearchParams {
@@ -102,6 +103,41 @@ export class EventRegistrationRepository extends BaseRepository<
       where: { user: { id: userId } as any, event: { id: eventId } as any },
       relations: ['event', 'transaction'],
     });
+  }
+
+  async findUserEventHistory(params: {
+    userId: number;
+    period?: EventHistoryPeriod;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const page = Math.max(Number(params.page) || 1, 1);
+    const pageSize = Math.max(Number(params.pageSize) || 20, 1);
+    const period = params.period ?? 'upcoming';
+    const now = new Date();
+
+    const qb = this.query('r')
+      .leftJoinAndSelect('r.event', 'e')
+      .where('r."userId" = :userId', { userId: params.userId })
+      .setParameter('now', now);
+
+    if (period === 'past') {
+      qb.andWhere('e."endsAt" < :now');
+      qb.orderBy('e.startsAt', 'DESC');
+    } else if (period === 'upcoming') {
+      qb.andWhere('e."endsAt" >= :now');
+      qb.orderBy('e.startsAt', 'ASC');
+    } else {
+      qb.addSelect(
+        'CASE WHEN e."endsAt" >= :now THEN 0 ELSE 1 END',
+        'eventPeriodRank',
+      );
+      qb.orderBy('eventPeriodRank', 'ASC').addOrderBy('e.startsAt', 'ASC');
+    }
+
+    qb.addOrderBy('r.id', 'DESC');
+
+    return this.paginate({ page, limit: pageSize }, {}, { id: 'DESC' }, {}, qb);
   }
 
   /** Create registration (RSVP or pending payment) */

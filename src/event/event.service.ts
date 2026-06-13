@@ -21,6 +21,7 @@ import {
 import { TransactionRepository } from 'src/repository/transaction/transaction.repository';
 import { EmailService } from 'src/infrastructure/communication/email/email.service';
 import { TracerLogger } from 'src/logger/logger.service';
+import { EventHistoryQueryDto } from './dtos/event-history-query.dto';
 
 // import { RegistrationStatus } from 'src/database/entities/event.entity';
 
@@ -201,6 +202,20 @@ export class EventService {
     const events = await this.eventRepository.searchEventsPaginated(params);
 
     return events;
+  }
+
+  async getUserEventHistory(userId: number, query: EventHistoryQueryDto) {
+    const period =
+      query.period === 'all' || query.period === 'past'
+        ? query.period
+        : 'upcoming';
+
+    return this.eventRegistrationRepository.findUserEventHistory({
+      userId,
+      period,
+      page: Number(query.page) || 1,
+      pageSize: Number(query.pageSize) || 20,
+    });
   }
 
   // Get a single event by ID

@@ -30,6 +30,7 @@ import {
 import { RefundRequestRepository } from 'src/repository/refund/refund-request.repository';
 import { RescheduleBookingDto } from './dtos/reshedule-booking.dto';
 import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
+import { BookingHistoryQueryDto } from './dtos/booking-history-query.dto';
 // import { GetCounsellingsFilterDto } from './dtos/get-counselling-query.dto';
 
 @Injectable()
@@ -128,6 +129,23 @@ export class CounsellingService {
     //   { counselling: { id: counsellingId } },
     //   ['user'],
     // );
+  }
+
+  async getUserBookingHistory(userId: number, query: BookingHistoryQueryDto) {
+    const period =
+      query.period === 'past' || query.period === 'upcoming'
+        ? query.period
+        : 'all';
+
+    return this.counsellingBookingRepository.findUserBookingHistory({
+      userId,
+      counsellingId: query.counsellingId
+        ? Number(query.counsellingId)
+        : undefined,
+      period,
+      page: Number(query.page) || 1,
+      pageSize: Number(query.pageSize) || 20,
+    });
   }
 
   // Get a single counselling offer
