@@ -1,7 +1,8 @@
 // src/dto/get-posts.dto.ts
-import { IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { CommunityTag } from 'src/database/entities/user.entity';
 
 export class GetPostsDto {
   @ApiPropertyOptional({
@@ -29,4 +30,13 @@ export class GetPostsDto {
   @IsString({ message: 'Search query must be a string.' })
   @IsOptional()
   q?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter posts by community.',
+    enum: CommunityTag,
+    example: CommunityTag.MARRIED,
+  })
+  @IsEnum(CommunityTag)
+  @IsOptional()
+  community?: CommunityTag;
 }

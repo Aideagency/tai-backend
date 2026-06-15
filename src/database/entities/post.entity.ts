@@ -11,7 +11,8 @@ import { CustomEntity } from './custom.entity';
 import { PostCommentEntity } from './post-comment.entity';
 import { PostLikeEntity } from './post-like.entity';
 import { PostShareEntity } from './post-share.entity';
-import { UserEntity } from './user.entity';
+import { UserEntity, CommunityTag } from './user.entity';
+import { PostAttachmentEntity } from './post-attachment.entity';
 
 @Entity({ name: 'posts' })
 export class PostEntity extends CustomEntity {
@@ -26,6 +27,14 @@ export class PostEntity extends CustomEntity {
    */
   @Column({ type: 'text', nullable: false })
   body: string;
+
+  @Column({
+    type: 'enum',
+    enum: CommunityTag,
+    enumName: 'posts_community_enum',
+    nullable: true,
+  })
+  community: CommunityTag | null;
 
   /**
    * Optional URL link (e.g., for sharing links or embedded content like YouTube).
@@ -80,4 +89,9 @@ export class PostEntity extends CustomEntity {
 
   @OneToMany(() => PostShareEntity, (s) => s.post, { cascade: true })
   shares: PostShareEntity[];
+
+  @OneToMany(() => PostAttachmentEntity, (attachment) => attachment.post, {
+    cascade: true,
+  })
+  attachments: PostAttachmentEntity[];
 }

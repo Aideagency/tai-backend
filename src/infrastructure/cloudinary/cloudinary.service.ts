@@ -18,14 +18,18 @@ export class CloudinaryService {
     options?: {
       folder?: string;
       publicId?: string;
-      resourceType?: 'image' | 'raw';
+      resourceType?: 'image' | 'raw' | 'video';
     },
   ) {
     if (!file) return null;
 
     const resourceType =
       options?.resourceType ??
-      (file.mimetype.includes('pdf') ? 'raw' : 'image');
+      (file.mimetype.startsWith('image/')
+        ? 'image'
+        : file.mimetype.startsWith('video/')
+          ? 'video'
+          : 'raw');
 
     return new Promise<{
       url: string;
@@ -56,7 +60,10 @@ export class CloudinaryService {
   /**
    * Delete file from Cloudinary
    */
-  async deleteFile(publicId: string, resourceType: 'image' | 'raw' = 'image') {
+  async deleteFile(
+    publicId: string,
+    resourceType: 'image' | 'raw' | 'video' = 'image',
+  ) {
     if (!publicId) return;
 
     return this.cloudinary.uploader.destroy(publicId, {

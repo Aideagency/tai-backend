@@ -10,14 +10,25 @@ import {
   UseGuards,
   Req,
   ParseIntPipe,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { AddCommentDto } from './dtos/add-comment.dto';
 import { CreatePostDto } from './dtos/create-post.dto';
 import { GetPostsDto } from './dtos/get-post.dto';
 import { JwtGuards } from 'src/auth/jwt.guards';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiExcludeEndpoint,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { GetPostCommentsDto } from './dtos/get-post-comment.dto';
+import { CommunityTag } from 'src/database/entities/user.entity';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('posts')
 @UseGuards(JwtGuards)
@@ -26,14 +37,54 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   // Create a new post
+  @ApiOperation({
+    summary: 'Create a post',
+    description:
+      'Creates a post. Accepts multipart/form-data and uploads up to 4 attachment files to Cloudinary.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['body'],
+      properties: {
+        body: {
+          type: 'string',
+          example: 'This is an example of a post body.',
+        },
+        title: {
+          type: 'string',
+          example: 'Rejuvenating family values',
+        },
+        community: {
+          type: 'string',
+          enum: Object.values(CommunityTag),
+          example: CommunityTag.MARRIED,
+        },
+        attachments: {
+          type: 'array',
+          maxItems: 4,
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   @Post('create')
-  async createPost(@Req() req: any, @Body() createPostDto: CreatePostDto) {
+  @UseInterceptors(
+    FilesInterceptor('attachments', 4, {
+      limits: { fileSize: 1024 * 1024 },
+    }),
+  )
+  async createPost(
+    @Req() req: any,
+    @Body() createPostDto: CreatePostDto,
+    @UploadedFiles() attachments: Express.Multer.File[] = [],
+  ) {
     const userId = req.user['id'];
-    await this.postService.createPost(
-      userId,
-      createPostDto.body,
-      createPostDto.title,
-    );
+    await this.postService.createPost(userId, createPostDto, attachments);
 
     return {
       status: 201,
@@ -53,6 +104,31 @@ export class PostController {
     };
   }
 
+  @ApiOperation({
+    summary: 'List post communities',
+    description:
+      'Returns the available community values that can be assigned to a post.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Post communities fetched successfully.',
+    schema: {
+      example: {
+        status: 200,
+        message: 'Communities fetched successfully',
+        data: ['SINGLE', 'MARRIED', 'PARENT'],
+      },
+    },
+  })
+  @Get('communities')
+  async getPostCommunities() {
+    return {
+      status: 200,
+      message: 'Communities fetched successfully',
+      data: Object.values(CommunityTag),
+    };
+  }
+
   // Get a single post by ID
   @Get(':postId/post-detail')
   async getPost(
@@ -69,18 +145,60 @@ export class PostController {
   }
 
   // Update a post (only allowed by post owner or admin)
+  @ApiOperation({
+    summary: 'Update a post',
+    description:
+      'Updates a post. When attachment files are provided, they replace the existing post attachments.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['body'],
+      properties: {
+        body: {
+          type: 'string',
+          example: 'This is an updated post body.',
+        },
+        title: {
+          type: 'string',
+          example: 'Updated family values note',
+        },
+        community: {
+          type: 'string',
+          enum: Object.values(CommunityTag),
+          example: CommunityTag.PARENT,
+        },
+        attachments: {
+          type: 'array',
+          maxItems: 4,
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   @Put(':postId/update')
+  @ApiExcludeEndpoint()
+  @UseInterceptors(
+    FilesInterceptor('attachments', 4, {
+      limits: { fileSize: 1024 * 1024 },
+    }),
+  )
   async updatePost(
     @Param('postId', ParseIntPipe) postId: number,
     @Req() req: any,
     @Body() updatePostDto: CreatePostDto,
+    @UploadedFiles() attachments: Express.Multer.File[] = [],
   ) {
     const userId = req.user['id'];
     await this.postService.updatePost(
       postId,
       userId,
-      updatePostDto.body,
-      updatePostDto.title,
+      updatePostDto,
+      attachments,
     );
 
     return {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -11,15 +12,41 @@ import { PostEntity } from 'src/database/entities/post.entity';
 import { PostLikeEntity } from 'src/database/entities/post-like.entity';
 import { PostCommentEntity } from 'src/database/entities/post-comment.entity';
 import { PostShareEntity } from 'src/database/entities/post-share.entity';
-import { UserEntity } from 'src/database/entities/user.entity';
+import {
+  CommunityTag,
+  MaritalStatus,
+  UserEntity,
+} from 'src/database/entities/user.entity';
+import { CreatePostDto } from './dtos/create-post.dto';
+import { CloudinaryService } from 'src/infrastructure/cloudinary/cloudinary.service';
+import { PostAttachmentType } from 'src/database/entities/post-attachment.entity';
+import { UserRepository } from 'src/repository/user/user.repository';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly postRepository: PostRepository) {}
+  private readonly maxAttachmentSizeBytes = 1024 * 1024;
+
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly userRepository: UserRepository,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
 
   // Create a post
-  async createPost(userId: number, body: string, title?: string) {
-    return this.postRepository.createPost({ body, userId, title });
+  async createPost(
+    userId: number,
+    payload: CreatePostDto,
+    attachmentFiles: Express.Multer.File[] = [],
+  ) {
+    await this.assertUserCanPostToCommunity(userId, payload.community);
+
+    const attachments = await this.uploadPostAttachments(attachmentFiles);
+
+    return this.postRepository.createPost({
+      ...payload,
+      attachments: attachments.length ? attachments : payload.attachments,
+      userId,
+    });
   }
 
   // Get a post with like status
@@ -36,8 +63,8 @@ export class PostService {
   async updatePost(
     postId: number,
     userId: number,
-    body: string,
-    title?: string,
+    payload: CreatePostDto,
+    attachmentFiles: Express.Multer.File[] = [],
   ) {
     const post = await this.postRepository.findOne(
       { id: postId, user: { id: userId } }, // ← where
@@ -52,7 +79,14 @@ export class PostService {
       throw new ForbiddenException('You are not allowed to edit this post');
     }
 
-    return this.postRepository.updatePost(postId, { body, title });
+    await this.assertUserCanPostToCommunity(userId, payload.community);
+
+    const attachments = await this.uploadPostAttachments(attachmentFiles);
+
+    return this.postRepository.updatePost(postId, {
+      ...payload,
+      attachments: attachments.length ? attachments : payload.attachments,
+    });
   }
 
   // Delete a post (only allowed by the post owner or admin)
@@ -112,5 +146,89 @@ export class PostService {
 
   async getPostComments(params: CommentSearchParams) {
     return this.postRepository.listCommentsPaginated(params);
+  }
+
+  private async assertUserCanPostToCommunity(
+    userId: number,
+    community?: CommunityTag,
+  ) {
+    if (!community) return;
+
+    const user = await this.userRepository.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const userCommunities = this.getUserCommunities(user);
+    if (!userCommunities.includes(community)) {
+      throw new ForbiddenException(
+        'You cannot create or update a post for a community you do not belong to.',
+      );
+    }
+  }
+
+  private getUserCommunities(user: UserEntity): CommunityTag[] {
+    const communities: CommunityTag[] = [];
+
+    if (user.is_parent) {
+      communities.push(CommunityTag.PARENT);
+    }
+    if (user.marital_status === MaritalStatus.SINGLE) {
+      communities.push(CommunityTag.SINGLE);
+    }
+    if (user.marital_status === MaritalStatus.MARRIED) {
+      communities.push(CommunityTag.MARRIED);
+    }
+
+    return communities;
+  }
+
+  private async uploadPostAttachments(files: Express.Multer.File[] = []) {
+    if (files.length > 4) {
+      throw new BadRequestException('A post can have at most 4 attachments.');
+    }
+
+    const oversizedFile = files.find(
+      (file) => file.size > this.maxAttachmentSizeBytes,
+    );
+    if (oversizedFile) {
+      throw new BadRequestException(
+        'Each post attachment must be 1MB or smaller.',
+      );
+    }
+
+    return Promise.all(
+      files.map(async (file) => {
+        const upload = await this.cloudinary.uploadFile(file, {
+          folder: 'posts/attachments',
+        });
+
+        return {
+          type: this.getAttachmentType(file.mimetype),
+          url: upload.url,
+          title: file.originalname,
+          publicId: upload.publicId,
+          mimeType: file.mimetype,
+          resourceType: upload.resourceType,
+          sizeBytes: file.size,
+        };
+      }),
+    );
+  }
+
+  private getAttachmentType(mimeType: string): PostAttachmentType {
+    if (mimeType.startsWith('image/')) return PostAttachmentType.IMAGE;
+    if (mimeType.startsWith('video/')) return PostAttachmentType.VIDEO;
+    if (
+      mimeType.includes('pdf') ||
+      mimeType.includes('document') ||
+      mimeType.includes('word') ||
+      mimeType.includes('presentation') ||
+      mimeType.includes('spreadsheet')
+    ) {
+      return PostAttachmentType.DOCUMENT;
+    }
+
+    return PostAttachmentType.OTHER;
   }
 }

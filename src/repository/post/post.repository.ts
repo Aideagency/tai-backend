@@ -13,6 +13,8 @@ import { PostEntity } from 'src/database/entities/post.entity';
 import { PostLikeEntity } from 'src/database/entities/post-like.entity';
 import { PostCommentEntity } from 'src/database/entities/post-comment.entity';
 import { PostShareEntity } from 'src/database/entities/post-share.entity';
+import { PostAttachmentEntity } from 'src/database/entities/post-attachment.entity';
+import { CommunityTag } from 'src/database/entities/user.entity';
 // import { UserEntity } from 'src/database/entities/user.entity';
 import { DeepPartial } from 'typeorm';
 
@@ -20,6 +22,8 @@ export interface PostSearchParams {
   page?: number;
   pageSize?: number;
   q?: string; // free-text on post body
+  community?: CommunityTag;
+  includeInactive?: boolean;
   orderBy?: 'createdAt' | 'id';
   orderDir?: 'ASC' | 'DESC';
 }
@@ -47,6 +51,8 @@ export class PostRepository extends BaseRepository<
     private readonly commentRepo: Repository<PostCommentEntity>,
     @InjectRepository(PostShareEntity)
     private readonly shareRepo: Repository<PostShareEntity>,
+    @InjectRepository(PostAttachmentEntity)
+    private readonly attachmentRepo: Repository<PostAttachmentEntity>,
   ) {
     super(postRepo);
   }
@@ -57,11 +63,23 @@ export class PostRepository extends BaseRepository<
   ): SelectQueryBuilder<PostEntity> {
     const qb = this.query('p')
       .leftJoin('p.user', 'user') // not AndSelect; we'll control selection explicitly
+      .leftJoin('p.attachments', 'attachments')
       .select([
         // --- Post fields you want ---
         'p.id',
+        'p.title',
         'p.body',
+        'p.community',
         'p.createdAt',
+        'attachments.id',
+        'attachments.type',
+        'attachments.url',
+        'attachments.title',
+        'attachments.publicId',
+        'attachments.mimeType',
+        'attachments.resourceType',
+        'attachments.sizeBytes',
+        'attachments.createdAt',
 
         // --- Minimal user fields (must include user.id to hydrate relation) ---
         'user.id',
@@ -75,6 +93,16 @@ export class PostRepository extends BaseRepository<
       qb.andWhere('LOWER(p.body) ILIKE :q', { q });
     }
 
+    if (params.community) {
+      qb.andWhere('p.community = :community', {
+        community: params.community,
+      });
+    }
+
+    if (!params.includeInactive) {
+      qb.andWhere('p.isActive = true');
+    }
+
     qb.orderBy(`p.${params.orderBy || 'id'}`, params.orderDir || 'DESC');
     return qb;
   }
@@ -84,15 +112,25 @@ export class PostRepository extends BaseRepository<
     body,
     userId,
     title,
+    community,
+    attachments,
   }: {
     body: string;
     userId: number;
     title?: string;
+    community?: CommunityTag;
+    attachments?: DeepPartial<PostAttachmentEntity>[];
   }): Promise<PostEntity> {
+    this.assertAttachmentLimit(attachments);
+
     const entity = this.repository.create({
       body,
       user: { id: userId } as any, // associating user
       title: title ?? null, // optional title
+      community: community ?? null,
+      attachments: attachments?.map((attachment) =>
+        this.attachmentRepo.create(attachment),
+      ),
     });
 
     return this.save(entity);
@@ -101,15 +139,35 @@ export class PostRepository extends BaseRepository<
   // ---------- Update Post ----------
   async updatePost(
     postId: number,
-    { body, title }: { body: string; title?: string },
+    {
+      body,
+      title,
+      community,
+      attachments,
+    }: {
+      body: string;
+      title?: string;
+      community?: CommunityTag;
+      attachments?: DeepPartial<PostAttachmentEntity>[];
+    },
   ): Promise<PostEntity> {
     const post = await this.findOne(postId);
     if (!post) {
       throw new Error('Post not found');
     }
 
+    this.assertAttachmentLimit(attachments);
+
     post.body = body;
     post.title = title ?? post.title;
+    post.community = community ?? post.community;
+
+    if (attachments) {
+      await this.attachmentRepo.delete({ postId });
+      post.attachments = attachments.map((attachment) =>
+        this.attachmentRepo.create(attachment),
+      );
+    }
 
     return this.save(post);
   }
@@ -504,5 +562,13 @@ export class PostRepository extends BaseRepository<
       map.get(Number(r.postId))!.shareCount = Number(r.cnt);
 
     return map;
+  }
+
+  private assertAttachmentLimit(
+    attachments?: DeepPartial<PostAttachmentEntity>[],
+  ) {
+    if (attachments && attachments.length > 4) {
+      throw new ForbiddenException('A post can have at most 4 attachments.');
+    }
   }
 }

@@ -372,6 +372,54 @@ export class AdminViewsController {
     };
   }
 
+  @Get('posts')
+  @UseGuards(AdminJwtGuard)
+  @Render('posts')
+  async getPosts(@Req() req: any, @Query() query: any) {
+    const response = await this.viewsService.listPosts(query);
+
+    return {
+      admin: req.user,
+      items: response.items,
+      stats: response.stats,
+      meta: {
+        currentPage: response.page,
+        itemsPerPage: response.pageSize,
+        totalItems: response.totalItems,
+        totalPages: response.totalPages,
+      },
+      filters: {
+        q: query.q || '',
+        status: query.status || 'all',
+        community: query.community || '',
+      },
+      q: query.q || '',
+      currentPath: req.originalUrl,
+    };
+  }
+
+  @Post('posts/:postId/deactivate')
+  @UseGuards(AdminJwtGuard)
+  async deactivatePost(
+    @Param('postId', ParseIntPipe) postId: number,
+    @Body('redirectTo') redirectTo: string,
+    @Res() res: Response,
+  ) {
+    await this.viewsService.setPostActiveStatus(postId, false);
+    return res.redirect(redirectTo || '/admin-views/posts');
+  }
+
+  @Post('posts/:postId/activate')
+  @UseGuards(AdminJwtGuard)
+  async activatePost(
+    @Param('postId', ParseIntPipe) postId: number,
+    @Body('redirectTo') redirectTo: string,
+    @Res() res: Response,
+  ) {
+    await this.viewsService.setPostActiveStatus(postId, true);
+    return res.redirect(redirectTo || '/admin-views/posts');
+  }
+
   @Get('logout')
   @UseGuards(AdminJwtGuard)
   logout(@Res() res: Response) {
