@@ -67,7 +67,7 @@ export class PostRepository extends BaseRepository<
         'user.id',
         'user.first_name', // or 'user.first_name' if your column/property is snake_case
         'user.last_name', // or 'user.last_name'
-        'user.profilePicture', // or 'user.profile_picture'
+        'user.profilePictureUrl',
       ]);
 
     if (params.q) {
@@ -387,8 +387,8 @@ export class PostRepository extends BaseRepository<
         'c.body AS comment',
         'c.createdAt AS "createdAt"',
         `COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), u."user_name") AS "displayName"`,
-        'u.profilePicture AS "profile_picture"',
-        'u.id AS "userId"'
+        'u."profilePictureUrl" AS "profile_picture"',
+        'u.id AS "userId"',
       ])
       .where('p.id = :id', { id: params.postId })
       .orderBy(`c.${params.orderBy || 'id'}`, params.orderDir || 'DESC')
