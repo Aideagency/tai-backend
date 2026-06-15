@@ -29,6 +29,7 @@ import { FollowRepository } from './connection/follow.repository';
 import { FollowEntity } from 'src/database/entities/follow.entity';
 import { PostRepository } from './post/post.repository';
 import { PostEntity } from 'src/database/entities/post.entity';
+import { PostAttachmentEntity } from 'src/database/entities/post-attachment.entity';
 import { PostLikeEntity } from 'src/database/entities/post-like.entity';
 import { PostCommentEntity } from 'src/database/entities/post-comment.entity';
 import { PostShareEntity } from 'src/database/entities/post-share.entity';
@@ -85,6 +86,7 @@ import { NuggetRotationStateEntity } from 'src/database/entities/nugget-rotation
       UserChallengeEntity,
       FollowEntity,
       PostEntity,
+      PostAttachmentEntity,
       PostLikeEntity,
       PostCommentEntity,
       PostShareEntity,

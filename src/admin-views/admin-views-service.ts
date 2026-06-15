@@ -65,6 +65,17 @@ import {
 } from 'src/database/entities/course.entity';
 import { NuggetEntity } from 'src/database/entities/nugget.entity';
 import { DailyNuggetEntity } from 'src/database/entities/daily-nugget.entity';
+import { PostEntity } from 'src/database/entities/post.entity';
+
+export type AdminPostStatusFilter = 'all' | 'active' | 'deactivated';
+
+export interface AdminPostsQuery {
+  page?: number | string;
+  pageSize?: number | string;
+  q?: string;
+  status?: AdminPostStatusFilter;
+  community?: string;
+}
 
 @Injectable()
 export class AdminViewsService {
@@ -323,5 +334,81 @@ export class AdminViewsService {
 
   async getAllNuggets(params: NuggetSearchQueryDto) {
     return this.nuggetService.getNuggets(params);
+  }
+
+  async listPosts(params: AdminPostsQuery = {}) {
+    const page = Math.max(Number(params.page) || 1, 1);
+    const pageSize = Math.max(Number(params.pageSize) || 20, 1);
+    const status = params.status || 'all';
+    const q = (params.q || '').trim();
+
+    const postRepo = this.dataSource.getRepository(PostEntity);
+    const qb = postRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.attachments', 'attachments')
+      .orderBy('post.createdAt', 'DESC')
+      .addOrderBy('attachments.createdAt', 'ASC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    if (status === 'active') {
+      qb.andWhere('post.isActive = true');
+    }
+
+    if (status === 'deactivated') {
+      qb.andWhere('post.isActive = false');
+    }
+
+    if (params.community) {
+      qb.andWhere('post.community = :community', {
+        community: params.community,
+      });
+    }
+
+    if (q) {
+      qb.andWhere(
+        `(
+          LOWER(post.title) ILIKE :q OR
+          LOWER(post.body) ILIKE :q OR
+          LOWER(user.first_name) ILIKE :q OR
+          LOWER(user.last_name) ILIKE :q OR
+          LOWER(user.email_address) ILIKE :q
+        )`,
+        { q: `%${q.toLowerCase()}%` },
+      );
+    }
+
+    const [items, totalItems] = await qb.getManyAndCount();
+    const [totalPosts, activePosts, deactivatedPosts] = await Promise.all([
+      postRepo.count(),
+      postRepo.count({ where: { isActive: true } }),
+      postRepo.count({ where: { isActive: false } }),
+    ]);
+
+    return {
+      items,
+      totalItems,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(totalItems / pageSize)),
+      stats: {
+        totalPosts,
+        activePosts,
+        deactivatedPosts,
+      },
+    };
+  }
+
+  async setPostActiveStatus(postId: number, isActive: boolean) {
+    const postRepo = this.dataSource.getRepository(PostEntity);
+    const post = await postRepo.findOne({ where: { id: postId } });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    post.isActive = isActive;
+    return postRepo.save(post);
   }
 }

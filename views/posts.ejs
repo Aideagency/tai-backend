@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Posts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #55D368;
+      --color-primary-light: #6FE886;
+      --color-primary-dark: #2FA748;
+
+      --color-secondary: #8EE29A;
+      --color-secondary-light: #A8F7B3;
+      --color-secondary-dark: #65B171;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gray-100">
+  <div class="flex">
+    <%- include('partials/sidebar', { admin, currentPath: "posts" }) %>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+      <%- include('partials/header', { admin, pageTitle: 'Posts' }) %>
+
+      <main class="p-6 space-y-6">
+        <section class="bg-white rounded-2xl shadow-sm border-l-4 border-[var(--color-primary)] p-4 flex flex-col gap-4">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <h3 class="text-base font-semibold text-[var(--color-primary-dark)]">
+                Post Moderation
+              </h3>
+              <p class="text-xs text-gray-500">
+                Review posts and deactivate content that should no longer appear publicly.
+              </p>
+            </div>
+
+            <form method="GET" action="/admin-views/posts" class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full lg:w-auto">
+              <input type="text" name="q" placeholder="Search title, body, author..." value="<%= (filters && filters.q) || q || '' %>" class="flex-1 md:w-64 rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]" />
+
+              <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]">
+                <option value="all" <%= !filters || filters.status === 'all' ? 'selected' : '' %>>All posts</option>
+                <option value="active" <%= filters && filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                <option value="deactivated" <%= filters && filters.status === 'deactivated' ? 'selected' : '' %>>Deactivated</option>
+              </select>
+
+              <select name="community" class="rounded-lg border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]">
+                <option value="">All communities</option>
+                <option value="SINGLE" <%= filters && filters.community === 'SINGLE' ? 'selected' : '' %>>Single</option>
+                <option value="MARRIED" <%= filters && filters.community === 'MARRIED' ? 'selected' : '' %>>Married</option>
+                <option value="PARENT" <%= filters && filters.community === 'PARENT' ? 'selected' : '' %>>Parent</option>
+              </select>
+
+              <button type="submit" class="inline-flex items-center justify-center rounded-lg bg-[var(--color-primary)] text-white text-xs font-semibold px-3 py-2 hover:bg-[var(--color-primary-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-light)]">
+                Apply
+              </button>
+            </form>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <a href="/admin-views/posts?status=all" class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-[var(--color-primary-light)] hover:bg-white">
+              <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500">Total Posts</p>
+              <p class="mt-1 text-2xl font-bold text-gray-900"><%= stats?.totalPosts || 0 %></p>
+            </a>
+            <a href="/admin-views/posts?status=active" class="rounded-xl border border-green-100 bg-green-50 px-4 py-3 transition hover:border-green-300 hover:bg-white">
+              <p class="text-[11px] font-medium uppercase tracking-wide text-green-700">Active</p>
+              <p class="mt-1 text-2xl font-bold text-green-700"><%= stats?.activePosts || 0 %></p>
+            </a>
+            <a href="/admin-views/posts?status=deactivated" class="rounded-xl border border-red-100 bg-red-50 px-4 py-3 transition hover:border-red-300 hover:bg-white">
+              <p class="text-[11px] font-medium uppercase tracking-wide text-red-700">Deactivated</p>
+              <p class="mt-1 text-2xl font-bold text-red-700"><%= stats?.deactivatedPosts || 0 %></p>
+            </a>
+          </div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-sm p-4">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs table-auto">
+              <thead>
+                <tr class="border-b bg-gray-50 text-gray-600">
+                  <th class="px-3 py-2 text-left font-medium">#</th>
+                  <th class="px-3 py-2 text-left font-medium">Post</th>
+                  <th class="px-3 py-2 text-left font-medium">Author</th>
+                  <th class="px-3 py-2 text-left font-medium">Community</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-left font-medium">Stats</th>
+                  <th class="px-3 py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% if (items && items.length > 0) { %>
+                <% items.forEach(function(post, index) { %>
+                <tr class="hover:bg-gray-50 align-top">
+                  <td class="px-3 py-3 text-gray-500">
+                    <%= (meta.itemsPerPage * (meta.currentPage - 1)) + (index + 1) %>
+                  </td>
+                  <td class="px-3 py-3">
+                    <div class="max-w-xl">
+                      <div class="font-semibold text-gray-900">
+                        <%= post.title || 'Untitled post' %>
+                      </div>
+                      <div class="mt-1 line-clamp-2 text-gray-600">
+                        <%= post.body || '-' %>
+                      </div>
+                      <div class="mt-2 flex flex-wrap gap-2 text-[10px] text-gray-500">
+                        <span>ID: <%= post.id %></span>
+                        <span>Created: <%= post.createdAt ? new Date(post.createdAt).toLocaleString() : '-' %></span>
+                        <span>Attachments: <%= post.attachments ? post.attachments.length : 0 %></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3">
+                    <div class="font-medium text-gray-800">
+                      <%= [post.user?.first_name, post.user?.last_name].filter(Boolean).join(' ') || '-' %>
+                    </div>
+                    <div class="text-[10px] text-gray-500">
+                      <%= post.user?.email_address || '' %>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3">
+                    <% if (post.community) { %>
+                    <span class="inline-flex items-center rounded-full bg-[var(--color-secondary-light)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-secondary-dark)]">
+                      <%= post.community %>
+                    </span>
+                    <% } else { %>
+                    <span class="text-gray-400">-</span>
+                    <% } %>
+                  </td>
+                  <td class="px-3 py-3">
+                    <% if (post.isActive) { %>
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                      Active
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                      Deactivated
+                    </span>
+                    <% } %>
+                  </td>
+                  <td class="px-3 py-3 text-gray-600">
+                    <div>Likes: <%= post.likeCount || 0 %></div>
+                    <div>Comments: <%= post.commentCount || 0 %></div>
+                    <div>Shares: <%= post.shareCount || 0 %></div>
+                  </td>
+                  <td class="px-3 py-3 text-right whitespace-nowrap">
+                    <% const redirectTo = currentPath || '/admin-views/posts'; %>
+                    <% if (post.isActive) { %>
+                    <form method="POST" action="/admin-views/posts/<%= post.id %>/deactivate" class="inline" onsubmit="return confirm('Deactivate this post? It will no longer show publicly.');">
+                      <input type="hidden" name="redirectTo" value="<%= redirectTo %>" />
+                      <button type="submit" class="inline-flex items-center rounded-md border border-red-500 px-2 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-50">
+                        Deactivate
+                      </button>
+                    </form>
+                    <% } else { %>
+                    <form method="POST" action="/admin-views/posts/<%= post.id %>/activate" class="inline" onsubmit="return confirm('Reactivate this post? It will become visible publicly again.');">
+                      <input type="hidden" name="redirectTo" value="<%= redirectTo %>" />
+                      <button type="submit" class="inline-flex items-center rounded-md border border-[var(--color-primary)] px-2 py-1 text-[11px] font-semibold text-[var(--color-primary-dark)] transition hover:bg-[var(--color-secondary-light)]">
+                        Activate
+                      </button>
+                    </form>
+                    <% } %>
+                  </td>
+                </tr>
+                <% }); %>
+                <% } else { %>
+                <tr>
+                  <td colspan="7" class="px-3 py-8 text-center text-xs text-gray-500">
+                    No posts found.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <% if (meta && meta.totalPages > 1) { %>
+          <div class="mt-4 flex flex-col gap-3 text-xs text-gray-600 md:flex-row md:items-center md:justify-between">
+            <div>
+              Page <span class="font-semibold"><%= meta.currentPage %></span>
+              of <span class="font-semibold"><%= meta.totalPages %></span> —
+              Showing <%= items.length %> of <%= meta.totalItems %> posts
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1">
+              <% const currentQ = (filters && filters.q) || q || ''; %>
+              <% const currentStatus = (filters && filters.status) || 'all'; %>
+              <% const currentCommunity = (filters && filters.community) || ''; %>
+              <% function buildQuery(pageNum) {
+                    let qs = '?page=' + pageNum;
+                    if (currentQ) qs += '&q=' + encodeURIComponent(currentQ);
+                    if (currentStatus) qs += '&status=' + encodeURIComponent(currentStatus);
+                    if (currentCommunity) qs += '&community=' + encodeURIComponent(currentCommunity);
+                    return qs;
+                  } %>
+
+              <% if (meta.currentPage > 1) { %>
+              <a href={"/admin-views/posts" + buildQuery(meta.currentPage - 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">Prev</a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">Prev</span>
+              <% } %>
+
+              <% for (let p = 1; p <= meta.totalPages; p++) { %>
+              <a href={"/admin-views/posts" + buildQuery(p)} class="px-2 py-1 rounded border text-xs <%= p === meta.currentPage ? 'border-[var(--color-primary)] bg-[var(--color-secondary-light)] text-[var(--color-primary-dark)] font-semibold' : 'border-gray-300 hover:bg-[var(--color-secondary-light)]' %>">
+                <%= p %>
+              </a>
+              <% } %>
+
+              <% if (meta.currentPage < meta.totalPages) { %>
+              <a href={"/admin-views/posts" + buildQuery(meta.currentPage + 1)} class="px-2 py-1 rounded border border-gray-300 hover:bg-[var(--color-secondary-light)]">Next</a>
+              <% } else { %>
+              <span class="px-2 py-1 rounded border border-gray-200 text-gray-400 cursor-not-allowed">Next</span>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+
+</html>
