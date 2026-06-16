@@ -11,6 +11,7 @@ import {
   Query,
   Delete,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { EventService } from './event.service';
 // import { EventRegistrationEntity } from 'src/database/entities/event-registration.entity';
@@ -135,8 +136,11 @@ export class EventController {
   @UseGuards(JwtGuards)
   @Get('event/:eventId')
   @ApiBearerAuth()
-  async fetchEvent(@Param('eventId') eventId: number) {
-    return await this.eventService.getEventById(eventId);
+  async fetchEvent(
+    @Param('eventId', ParseIntPipe) eventId: number,
+    @Req() req: any,
+  ) {
+    return await this.eventService.getEventById(eventId, req.user.id);
   }
 
   @UseGuards(JwtGuards)

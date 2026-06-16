@@ -219,9 +219,23 @@ export class EventService {
   }
 
   // Get a single event by ID
-  async getEventById(id: number) {
+  async getEventById(id: number, userId?: number) {
     const event = await this.eventRepository.findEventById(id);
-    return event;
+
+    if (!userId) {
+      return {
+        ...event,
+        isAttending: false,
+      };
+    }
+
+    const registration =
+      await this.eventRegistrationRepository.findUserRegistration(userId, id);
+
+    return {
+      ...event,
+      isAttending: registration?.status === RegistrationStatus.CONFIRMED,
+    };
   }
 
   async getDetailedEventById(id: number) {
