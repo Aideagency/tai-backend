@@ -21,7 +21,6 @@ export enum EventMode {
   OFFLINE = 'OFFLINE',
 }
 
-
 export enum RefundStatus {
   REQUESTED = 'REQUESTED',
   APPROVED = 'APPROVED',
