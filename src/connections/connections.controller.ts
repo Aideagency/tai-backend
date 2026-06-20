@@ -32,9 +32,9 @@ export class ConnectionsController {
   constructor(private readonly connections: ConnectionsService) {}
 
   @ApiOperation({
-    summary: 'Follow a user',
+    summary: 'Send a follow request',
     description:
-      'Creates (or restores) a follow edge from :meId → :targetUserId. Idempotent if already following.',
+      'Creates (or restores) a PENDING follow request from the logged-in user to :targetUserId. The target user must accept before the users are considered connected.',
   })
   @ApiParam({
     name: 'targetUserId',
@@ -43,7 +43,7 @@ export class ConnectionsController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Followed successfully (or restored).',
+    description: 'Follow request sent successfully (or existing request returned).',
   })
   @Post('follow/:targetUserId')
   async follow(

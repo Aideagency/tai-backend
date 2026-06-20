@@ -97,10 +97,15 @@ export class ConnectionsService {
     // console.log('EDGE', edge);
 
     // Get the list of mutual friends
-    const mutualFriends = await this.follows.getMutualFriends(
+    const mutualFriendEdges = await this.follows.getMutualFriends(
       userId,
       followeeId,
     );
+
+    const mutualFriends = mutualFriendEdges.map((edge) => ({
+      follower: this.toConnectionSummary(edge.follower),
+      followee: this.toConnectionSummary(edge.followee),
+    }));
 
     return {
       // connectionDetails,
@@ -108,6 +113,22 @@ export class ConnectionsService {
       user,
       userFeeds,
       mutualFriends,
+    };
+  }
+
+  private toConnectionSummary(
+    user: {
+      name: string;
+      email: string;
+      profilePicture: string | null;
+    } | null,
+  ) {
+    if (!user) return null;
+
+    return {
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture,
     };
   }
 

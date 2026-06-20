@@ -67,9 +67,11 @@ export class FollowRepository extends BaseRepository<
       // If soft-deleted or marked deleted, restore it
       if ((edge as any).isDeleted === true) {
         (edge as any).isDeleted = false;
+        edge.status = FollowStatus.PENDING;
+        return this.repository.save(edge);
       }
-      edge.status = FollowStatus.ACCEPTED; // or PENDING if your followee is private
-      return this.repository.save(edge);
+
+      return edge;
     }
 
     // Create new edge
@@ -77,7 +79,7 @@ export class FollowRepository extends BaseRepository<
       const created = this.repository.create({
         follower: { id: followerId } as UserEntity,
         followee: { id: followeeId } as UserEntity,
-        status: FollowStatus.ACCEPTED, // or PENDING
+        status: FollowStatus.PENDING,
       });
       return await this.repository.save(created);
     } catch (e) {
@@ -167,18 +169,20 @@ export class FollowRepository extends BaseRepository<
 
     const qb = this.followersQB(userId, params);
 
-    // Join follower user so you can return their profile fields
-    qb.leftJoinAndSelect('f.follower', 'follower');
+    qb.leftJoin('f.follower', 'follower');
+    this.selectConnectionUser(qb, 'follower');
 
     this.applyUserQuickSearch(qb, params, 'follower');
 
-    return this.paginate(
+    const result = await this.paginate(
       { page, limit: pageSize },
       {}, // filter already in qb
       { id: 'DESC' }, // ignored because we pass qb with order
-      { follower: true, followee: false },
+      {},
       qb,
     );
+
+    return this.sanitizeFollowPagination(result);
   }
 
   /**
@@ -190,18 +194,20 @@ export class FollowRepository extends BaseRepository<
 
     const qb = this.followingQB(userId, params);
 
-    // Join followee user so you can return their profile fields
-    qb.leftJoinAndSelect('f.followee', 'followee');
+    qb.leftJoin('f.followee', 'followee');
+    this.selectConnectionUser(qb, 'followee');
 
     this.applyUserQuickSearch(qb, params, 'followee');
 
-    return this.paginate(
+    const result = await this.paginate(
       { page, limit: pageSize },
       {},
       { id: 'DESC' },
-      { follower: false, followee: true },
+      {},
       qb,
     );
+
+    return this.sanitizeFollowPagination(result);
   }
 
   async listPendingFollowers(
@@ -213,18 +219,20 @@ export class FollowRepository extends BaseRepository<
 
     const qb = this.pendingFollowersQB(userId, params);
 
-    // Join followee user so you can return their profile fields
-    qb.leftJoinAndSelect('f.followee', 'followee');
+    qb.leftJoin('f.follower', 'follower');
+    this.selectConnectionUser(qb, 'follower');
 
-    this.applyUserQuickSearch(qb, params, 'followee');
+    this.applyUserQuickSearch(qb, params, 'follower');
 
-    return this.paginate(
+    const result = await this.paginate(
       { page, limit: pageSize },
       {},
       { id: 'DESC' },
-      { follower: false, followee: true },
+      {},
       qb,
     );
+
+    return this.sanitizeFollowPagination(result);
   }
 
   // async getMutualFriends(
@@ -255,9 +263,8 @@ export class FollowRepository extends BaseRepository<
   ) {
     const qb = this.repository
       .createQueryBuilder('f')
-      // join once and select the relations
-      .innerJoinAndSelect('f.follower', 'follower')
-      .innerJoinAndSelect('f.followee', 'followee')
+      .innerJoin('f.follower', 'follower')
+      .innerJoin('f.followee', 'followee')
       // followers of this followee
       .where('followee.id = :followeeId', { followeeId })
       // who are also followers of otherFollowerId
@@ -272,24 +279,31 @@ export class FollowRepository extends BaseRepository<
         { otherFollowerId },
       );
 
+    this.selectConnectionUser(qb, 'follower');
+    this.selectConnectionUser(qb, 'followee');
+
     const mutualFriends = await qb.getMany();
-    return mutualFriends;
+    return mutualFriends.map((edge) => this.toSafeFollowEdge(edge));
   }
 
   /**
    * Retrieve a specific follow edge.
    */
   async getEdge(followerId: number | string, followeeId: number | string) {
-    const edge = await this.repository.findOne({
-      where: {
-        follower: { id: followerId as any },
-        followee: { id: followeeId as any },
-      },
-      relations: ['follower', 'followee'],
-      withDeleted: true,
-    });
+    const qb = this.repository
+      .createQueryBuilder('f')
+      .withDeleted()
+      .leftJoin('f.follower', 'follower')
+      .leftJoin('f.followee', 'followee')
+      .where('f.follower_id = :followerId', { followerId })
+      .andWhere('f.followee_id = :followeeId', { followeeId });
+
+    this.selectConnectionUser(qb, 'follower');
+    this.selectConnectionUser(qb, 'followee');
+
+    const edge = await qb.getOne();
     if (!edge) throw new NotFoundException('Follow not found');
-    return edge;
+    return this.toSafeFollowEdge(edge);
   }
 
   /**
@@ -409,6 +423,49 @@ export class FollowRepository extends BaseRepository<
       `(LOWER(${alias}.first_name) ILIKE :q OR LOWER(${alias}.last_name) ILIKE :q OR LOWER(${alias}.email_address) ILIKE :q OR ${alias}.phone_no ILIKE :q)`,
       { q },
     );
+  }
+
+  private selectConnectionUser(
+    qb: SelectQueryBuilder<FollowEntity>,
+    alias: 'follower' | 'followee',
+  ) {
+    qb.addSelect([
+      `${alias}.id`,
+      `${alias}.first_name`,
+      `${alias}.last_name`,
+      `${alias}.email_address`,
+      `${alias}.profilePictureUrl`,
+    ]);
+  }
+
+  private toSafeConnectionUser(user?: UserEntity) {
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      name: [user.first_name, user.last_name].filter(Boolean).join(' ').trim(),
+      email: user.email_address,
+      profilePicture: user.profilePictureUrl ?? null,
+    };
+  }
+
+  private toSafeFollowEdge(edge: FollowEntity) {
+    return {
+      id: edge.id,
+      status: edge.status,
+      createdAt: edge.created_at,
+      follower: this.toSafeConnectionUser(edge.follower),
+      followee: this.toSafeConnectionUser(edge.followee),
+    };
+  }
+
+  private sanitizeFollowPagination(result: any) {
+    return {
+      ...result,
+      items: result.items.map((edge: FollowEntity) =>
+        this.toSafeFollowEdge(edge),
+      ),
+    };
   }
 
   /**

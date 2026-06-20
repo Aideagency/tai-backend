@@ -3,8 +3,8 @@ import { CustomEntity } from './custom.entity';
 import { UserEntity } from './user.entity';
 
 export enum FollowStatus {
-  ACCEPTED = 'ACCEPTED', // default for public accounts
-  PENDING = 'PENDING', // for private accounts (optional)
+  ACCEPTED = 'ACCEPTED',
+  PENDING = 'PENDING',
   BLOCKED = 'BLOCKED', // if you add blocking later
 }
 
@@ -18,7 +18,7 @@ export class FollowEntity extends CustomEntity {
   @JoinColumn({ name: 'followee_id' })
   followee: UserEntity;
 
-  @Column({ type: 'enum', enum: FollowStatus, default: FollowStatus.ACCEPTED })
+  @Column({ type: 'enum', enum: FollowStatus, default: FollowStatus.PENDING })
   status: FollowStatus;
 
   // optional: soft delete / mute / notes
