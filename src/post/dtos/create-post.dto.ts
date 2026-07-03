@@ -99,12 +99,13 @@ export class CreatePostDto {
     description:
       'Body of the post, which can be a rich text or plain text. Should provide meaningful content for your audience.',
     example: 'This is an example of a post body.',
+    minLength: 1,
     maxLength: 1000,
   })
   @IsString({ message: 'Post body must be a string.' })
   @IsNotEmpty({ message: 'Post body cannot be empty.' })
-  @MinLength(10, {
-    message: 'Post body should be at least 10 characters long.',
+  @MinLength(1, {
+    message: 'Post body should be at least 1 character long.',
   })
   @MaxLength(1000, { message: 'Post body should not exceed 1000 characters.' })
   @sanitizeText()
