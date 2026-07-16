@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   HttpCode,
   Post,
@@ -230,6 +231,34 @@ export class AuthController {
     return {
       statusCode: 200,
       user,
+    };
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @UseGuards(JwtGuards)
+  @ApiBearerAuth()
+  @Delete('users/me')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Delete the currently logged-in user account',
+    description:
+      'Deletes the authenticated user account using the user id from the access token. No user id or params are accepted.',
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'User account deleted successfully',
+      },
+    },
+  })
+  @ApiBadRequestResponse()
+  async deleteMyAccount(@Request() req): Promise<any> {
+    await this.authService.deleteMyAccount(req.user.id);
+
+    return {
+      statusCode: 200,
+      message: 'User account deleted successfully',
     };
   }
 

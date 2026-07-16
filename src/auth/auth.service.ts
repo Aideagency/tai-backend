@@ -279,6 +279,30 @@ export class AuthService {
     }
   }
 
+  async deleteMyAccount(userId: number): Promise<void> {
+    try {
+      const user = await this.userRepository.findByUserId(userId);
+      if (!user) throw new NotFoundException('User not found');
+
+      user.refresh_token = null;
+      await this.userRepository.save(user);
+
+      const deleted = await this.userRepository.softDelete(user.id);
+      if (!deleted) {
+        throw new InternalServerErrorException('Could not delete user account');
+      }
+    } catch (error) {
+      this.logger.error(error);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Could not delete user account');
+    }
+  }
+
   async verifyEmail(dto: VerifyEmailDto, email: string): Promise<void> {
     try {
       const user = await this.userRepository.findByEmail(email);
